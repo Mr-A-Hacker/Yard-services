@@ -1,7 +1,8 @@
 import os
 import random
 import sqlite3
-from flask import Flask, render_template, request, redirect, url_for, flash
+from functools import wraps
+from flask import Flask, render_template, request, redirect, url_for, flash, abort
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from flask_bcrypt import Bcrypt
 
@@ -31,6 +32,7 @@ def init_db():
         email TEXT UNIQUE NOT NULL,
         password_hash TEXT NOT NULL,
         phone TEXT,
+        is_admin INTEGER DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """)
@@ -62,21 +64,33 @@ init_db()
 # User Model
 # -----------------------------
 class User(UserMixin):
-    def __init__(self, id, email, password_hash):
+    def __init__(self, id, email, password_hash, is_admin=0):
         self.id = id
         self.email = email
         self.password_hash = password_hash
+        self.is_admin = bool(is_admin)
 
 @login_manager.user_loader
 def load_user(user_id):
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
-    cursor.execute("SELECT id, email, password_hash FROM users WHERE id=?", (user_id,))
+    cursor.execute("SELECT id, email, password_hash, is_admin FROM users WHERE id=?", (user_id,))
     row = cursor.fetchone()
     conn.close()
     if row:
         return User(*row)
     return None
+
+# -----------------------------
+# Admin Decorator
+# -----------------------------
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated or not current_user.is_admin:
+            abort(403)
+        return f(*args, **kwargs)
+    return decorated_function
 
 # -----------------------------
 # Routes
@@ -119,12 +133,12 @@ def login():
 
         conn = sqlite3.connect(DB_NAME)
         cursor = conn.cursor()
-        cursor.execute("SELECT id, email, password_hash FROM users WHERE email=?", (email,))
+        cursor.execute("SELECT id, email, password_hash, is_admin FROM users WHERE email=?", (email,))
         row = cursor.fetchone()
         conn.close()
 
         if row and bcrypt.check_password_hash(row[2], password):
-            user = User(row[0], row[1], row[2])
+            user = User(row[0], row[1], row[2], row[3])
             login_user(user)
             flash("Logged in successfully!", "success")
             return redirect(url_for("dashboard"))
@@ -176,6 +190,23 @@ def request_service():
         return render_template("confirmation.html", token=token, payment=payment)
 
     return render_template("request_form.html")
+
+# --- Admin Dashboard ---
+@app.route("/admin")
+@admin_required
+def admin_dashboard():
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT id, email, phone, created_at FROM users")
+    users = cursor.fetchall()
+
+    cursor.execute("SELECT id, user_id, address, phone, email, payment, note, date, time, token, created_at FROM requests")
+    requests = cursor.fetchall()
+
+    conn.close()
+
+    return render_template("admin_dashboard.html", users=users, requests=requests)
 
 # -----------------------------
 # Run App
