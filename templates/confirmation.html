@@ -1,0 +1,8 @@
+{% if payment == "zelle" %}
+  <p>Go to Zelle and pay <strong>(313) 451-2552</strong>.</p>
+  <p>Your token: <strong>{{ token }}</strong></p>
+  <p>Please copy this token into the Zelle note section when you pay.</p>
+{% else %}
+  <p>You chose Cash. Pay when service arrives.</p>
+{% endif %}
+<a href="{{ url_for('dashboard') }}">Back to Dashboard</a>
