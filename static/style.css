@@ -1,0 +1,79 @@
+/* General body styling */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  color: #333;
+  min-height: 100vh;
+}
+
+/* Headings */
+h1, h2, h3 {
+  font-weight: 700;
+  color: #212529;
+}
+
+/* Navbar (if you add one later) */
+.navbar {
+  background-color: #0d6efd;
+}
+.navbar a {
+  color: #fff !important;
+  font-weight: 500;
+}
+
+/* Buttons */
+.btn-primary {
+  background-color: #0d6efd;
+  border: none;
+}
+.btn-primary:hover {
+  background-color: #0b5ed7;
+}
+
+.btn-success {
+  background-color: #198754;
+  border: none;
+}
+.btn-success:hover {
+  background-color: #157347;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  border: none;
+}
+.btn-danger:hover {
+  background-color: #bb2d3b;
+}
+
+/* Cards */
+.card {
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* Forms */
+input, textarea, select {
+  border-radius: 8px !important;
+}
+
+/* Confirmation token badge */
+.token-badge {
+  font-size: 1.5rem;
+  padding: 10px 20px;
+  background: #ffc107;
+  color: #212529;
+  border-radius: 8px;
+  display: inline-block;
+  margin-top: 10px;
+}
+
+/* Footer */
+footer {
+  background-color: #212529;
+  color: #fff;
+  text-align: center;
+  padding: 15px;
+  margin-top: 40px;
+}
