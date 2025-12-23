@@ -1,15 +1,71 @@
-<h2>Request Service</h2>
-<form method="POST">
-  <label>Address:</label><input type="text" name="address" required><br>
-  <label>Phone:</label><input type="text" name="phone" required><br>
-  <label>Email:</label><input type="email" name="email" value="{{ current_user.email }}" required><br>
-  <label>Payment:</label>
-  <select name="payment" required>
-    <option value="cash">Cash</option>
-    <option value="zelle">Zelle</option>
-  </select><br>
-  <label>Note:</label><textarea name="note"></textarea><br>
-  <label>Date:</label><input type="date" name="date" required><br>
-  <label>Time:</label><input type="time" name="time" required><br>
-  <button type="submit">Submit Request</button>
-</form>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Request Service - Yard Services</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+      <a class="navbar-brand fw-bold" href="{{ url_for('home') }}">🚂 Yard Services</a>
+    </div>
+  </nav>
+
+  <!-- Request Form -->
+  <div class="container mt-5">
+    <h2 class="text-center fw-bold mb-4">📝 Request Service</h2>
+    <form method="POST" class="card p-4 shadow-sm mx-auto" style="max-width: 600px;">
+      
+      <div class="mb-3">
+        <label for="address" class="form-label">📍 Address</label>
+        <input type="text" id="address" name="address" class="form-control" required>
+      </div>
+
+      <div class="mb-3">
+        <label for="phone" class="form-label">📞 Phone</label>
+        <input type="text" id="phone" name="phone" class="form-control" required>
+      </div>
+
+      <div class="mb-3">
+        <label for="email" class="form-label">✉️ Email</label>
+        <input type="email" id="email" name="email" class="form-control" value="{{ current_user.email }}" required>
+      </div>
+
+      <div class="mb-3">
+        <label for="payment" class="form-label">💵 Payment Method</label>
+        <select id="payment" name="payment" class="form-select" required>
+          <option value="cash">Cash</option>
+          <option value="zelle">Zelle</option>
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label for="note" class="form-label">📝 Note</label>
+        <textarea id="note" name="note" class="form-control" rows="3"></textarea>
+      </div>
+
+      <div class="mb-3">
+        <label for="date" class="form-label">📅 Date</label>
+        <input type="date" id="date" name="date" class="form-control" required>
+      </div>
+
+      <div class="mb-3">
+        <label for="time" class="form-label">⏰ Time</label>
+        <input type="time" id="time" name="time" class="form-control" required>
+      </div>
+
+      <button type="submit" class="btn btn-primary w-100">Submit Request 🚀</button>
+    </form>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-dark text-white text-center py-3 mt-5">
+    <small>© 2025 Yard Services. All rights reserved.</small>
+  </footer>
+
+</body>
+</html>
