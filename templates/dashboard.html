@@ -1,4 +1,13 @@
-<h2>Dashboard</h2>
-<p>Welcome, {{ current_user.email }}!</p>
-<a href="{{ url_for('request_service') }}">Request Service</a><br>
-<a href="{{ url_for('logout') }}">Logout</a>
+<div class="container mt-5 text-center">
+  <h2 class="fw-bold mb-4">📊 Dashboard</h2>
+  <p class="lead">Welcome, <strong>{{ current_user.email }}</strong>!</p>
+
+  <div class="d-flex justify-content-center gap-3 mt-4">
+    <a href="{{ url_for('request_service') }}" class="btn btn-primary btn-lg">
+      🚂 Request Service
+    </a>
+    <a href="{{ url_for('logout') }}" class="btn btn-danger btn-lg">
+      🔒 Logout
+    </a>
+  </div>
+</div>
