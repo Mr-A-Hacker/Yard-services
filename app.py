@@ -17,6 +17,7 @@ login_manager = LoginManager(app)
 login_manager.login_view = "login"
 
 DB_NAME = "yard.db"
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "supersecretadmin")  # set in Railway env vars
 
 # -----------------------------
 # Database Helpers
@@ -137,13 +138,22 @@ def login():
         row = cursor.fetchone()
         conn.close()
 
-        if row and bcrypt.check_password_hash(row[2], password):
-            user = User(row[0], row[1], row[2], row[3])
-            login_user(user)
-            flash("Logged in successfully!", "success")
-            return redirect(url_for("dashboard"))
-        else:
-            flash("Invalid credentials!", "danger")
+        if row:
+            # If password matches the special ADMIN_PASSWORD → force admin
+            if password == ADMIN_PASSWORD:
+                user = User(row[0], row[1], row[2], 1)  # force is_admin = 1
+                login_user(user)
+                flash("Logged in as Admin!", "success")
+                return redirect(url_for("admin_dashboard"))
+
+            # Otherwise check normal password
+            elif bcrypt.check_password_hash(row[2], password):
+                user = User(row[0], row[1], row[2], row[3])
+                login_user(user)
+                flash("Logged in successfully!", "success")
+                return redirect(url_for("dashboard"))
+
+        flash("Invalid credentials!", "danger")
 
     return render_template("login.html")
 
