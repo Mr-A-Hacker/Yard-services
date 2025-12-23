@@ -1,27 +1,62 @@
-/* General body styling */
+/* === GLOBAL === */
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-  color: #333;
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  background: linear-gradient(135deg, #e0f7fa, #ffffff);
+  background-attachment: fixed;
+  color: #212529;
   min-height: 100vh;
 }
 
-/* Headings */
-h1, h2, h3 {
-  font-weight: 700;
-  color: #212529;
-}
-
-/* Navbar (if you add one later) */
+/* === NAVBAR === */
 .navbar {
   background-color: #0d6efd;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
-.navbar a {
+.navbar-brand {
+  font-weight: bold;
+  font-size: 1.5rem;
+}
+.navbar-nav .nav-link {
   color: #fff !important;
   font-weight: 500;
 }
 
-/* Buttons */
+/* === FOOTER === */
+footer {
+  background-color: #212529;
+  color: #fff;
+  text-align: center;
+  padding: 15px;
+  margin-top: 40px;
+}
+
+/* === HEADINGS === */
+h1, h2, h3 {
+  font-weight: 700;
+  color: #0d6efd;
+  margin-bottom: 20px;
+}
+
+/* === FORMS === */
+form {
+  background-color: #fff;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+input, textarea, select {
+  border-radius: 8px !important;
+}
+label {
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+/* === BUTTONS === */
+.btn {
+  border-radius: 8px;
+  font-weight: 600;
+}
 .btn-primary {
   background-color: #0d6efd;
   border: none;
@@ -29,7 +64,6 @@ h1, h2, h3 {
 .btn-primary:hover {
   background-color: #0b5ed7;
 }
-
 .btn-success {
   background-color: #198754;
   border: none;
@@ -37,7 +71,6 @@ h1, h2, h3 {
 .btn-success:hover {
   background-color: #157347;
 }
-
 .btn-danger {
   background-color: #dc3545;
   border: none;
@@ -45,20 +78,15 @@ h1, h2, h3 {
 .btn-danger:hover {
   background-color: #bb2d3b;
 }
-
-/* Cards */
-.card {
-  border-radius: 12px;
+.btn-secondary {
+  background-color: #6c757d;
   border: none;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.btn-secondary:hover {
+  background-color: #5c636a;
 }
 
-/* Forms */
-input, textarea, select {
-  border-radius: 8px !important;
-}
-
-/* Confirmation token badge */
+/* === TOKENS === */
 .token-badge {
   font-size: 1.5rem;
   padding: 10px 20px;
@@ -69,11 +97,15 @@ input, textarea, select {
   margin-top: 10px;
 }
 
-/* Footer */
-footer {
-  background-color: #212529;
-  color: #fff;
-  text-align: center;
-  padding: 15px;
-  margin-top: 40px;
+/* === CONTAINERS === */
+.container {
+  max-width: 700px;
+}
+
+/* === LINKS === */
+a {
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
 }
