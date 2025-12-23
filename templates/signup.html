@@ -1,7 +1,47 @@
-<h2>Sign Up</h2>
-<form method="POST">
-  <input type="email" name="email" placeholder="Email" required><br>
-  <input type="password" name="password" placeholder="Password" required><br>
-  <input type="text" name="phone" placeholder="Phone"><br>
-  <button type="submit">Sign Up</button>
-</form>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sign Up - Yard Services</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+      <a class="navbar-brand fw-bold" href="{{ url_for('home') }}">🚂 Yard Services</a>
+    </div>
+  </nav>
+
+  <!-- Sign Up Form -->
+  <div class="container mt-5">
+    <h2 class="text-center fw-bold mb-4">📝 Sign Up</h2>
+    <form method="POST" class="card p-4 shadow-sm mx-auto" style="max-width: 400px;">
+      <div class="mb-3">
+        <label for="email" class="form-label">✉️ Email</label>
+        <input type="email" id="email" name="email" class="form-control" placeholder="Enter your email" required>
+      </div>
+      <div class="mb-3">
+        <label for="password" class="form-label">🔒 Password</label>
+        <input type="password" id="password" name="password" class="form-control" placeholder="Enter a password" required>
+      </div>
+      <div class="mb-3">
+        <label for="phone" class="form-label">📞 Phone</label>
+        <input type="text" id="phone" name="phone" class="form-control" placeholder="Enter your phone number">
+      </div>
+      <button type="submit" class="btn btn-primary w-100">🚀 Sign Up</button>
+    </form>
+    <p class="text-center mt-3">
+      Already have an account? <a href="{{ url_for('login') }}">Login</a>
+    </p>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-dark text-white text-center py-3 mt-5">
+    <small>© 2025 Yard Services. All rights reserved.</small>
+  </footer>
+
+</body>
+</html>
