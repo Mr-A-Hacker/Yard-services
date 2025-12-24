@@ -48,6 +48,8 @@
         <tr>
           <th>ID</th>
           <th>User ID</th>
+          <th>Service</th>
+          <th>Cost</th>
           <th>Address</th>
           <th>Phone</th>
           <th>Email</th>
@@ -66,7 +68,7 @@
           <td>{{ r[0] }}</td>
           <td>{{ r[1] }}</td>
           <td>{{ r[2] }}</td>
-          <td>{{ r[3] }}</td>
+          <td>${{ "%.2f"|format(r[3]) if r[3] else "" }}</td>
           <td>{{ r[4] }}</td>
           <td>{{ r[5] }}</td>
           <td>{{ r[6] }}</td>
@@ -74,11 +76,59 @@
           <td>{{ r[8] }}</td>
           <td>{{ r[9] }}</td>
           <td>{{ r[10] }}</td>
+          <td>{{ r[11] }}</td>
+          <td>{{ r[12] }}</td>
           <td>
-            <!-- Delete Request Form -->
-            <form method="POST" action="{{ url_for('delete_request', request_id=r[0]) }}" 
-                  onsubmit="return confirm('Are you sure you want to delete this request?');">
+            <form method="POST" action="{{ url_for('delete_request', request_id=r[0]) }}"
+                  onsubmit="return confirm('Delete this request?');">
               <input type="password" name="password" placeholder="Admin Pass" required class="form-control mb-2">
+              <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- Services Management -->
+    <h4 class="mt-5">🛠 Manage Services</h4>
+    <form method="POST" action="{{ url_for('add_service') }}" class="card p-4 shadow-sm mb-4" style="max-width: 500px;">
+      <div class="mb-3">
+        <label for="name" class="form-label">Service Name</label>
+        <input type="text" id="name" name="name" placeholder="Service Name" class="form-control" required>
+      </div>
+      <div class="mb-3">
+        <label for="price" class="form-label">Price ($)</label>
+        <input type="number" step="0.01" id="price" name="price" placeholder="Price" class="form-control" required>
+      </div>
+      <button type="submit" class="btn btn-primary w-100">➕ Add Service</button>
+    </form>
+
+    <table class="table table-striped table-bordered shadow-sm">
+      <thead class="table-dark">
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Price</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in services %}
+        <tr>
+          <td>{{ s[0] }}</td>
+          <td>{{ s[1] }}</td>
+          <td>${{ "%.2f"|format(s[2]) }}</td>
+          <td class="d-flex gap-2">
+            <!-- Update Form -->
+            <form method="POST" action="{{ url_for('update_service', service_id=s[0]) }}" class="d-flex gap-2">
+              <input type="text" name="name" value="{{ s[1] }}" class="form-control form-control-sm" required>
+              <input type="number" step="0.01" name="price" value="{{ s[2] }}" class="form-control form-control-sm" required>
+              <button type="submit" class="btn btn-warning btn-sm">Update</button>
+            </form>
+            <!-- Delete Form -->
+            <form method="POST" action="{{ url_for('delete_service', service_id=s[0]) }}"
+                  onsubmit="return confirm('Delete this service?');">
               <button type="submit" class="btn btn-danger btn-sm">Delete</button>
             </form>
           </td>
