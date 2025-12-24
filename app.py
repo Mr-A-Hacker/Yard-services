@@ -5,9 +5,6 @@ from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from flask_bcrypt import Bcrypt
 
-# -----------------------------
-# Flask Setup
-# -----------------------------
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "fallbacksecret")
 bcrypt = Bcrypt(app)
@@ -16,16 +13,15 @@ login_manager = LoginManager(app)
 login_manager.login_view = "login"
 
 DB_NAME = "yard.db"
-ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin1")  # default admin password
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin1")
 
 # -----------------------------
-# Database Helpers
+# Database Setup
 # -----------------------------
 def init_db():
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
 
-    # Users table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -36,7 +32,14 @@ def init_db():
     )
     """)
 
-    # Requests table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS services (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        price REAL NOT NULL
+    )
+    """)
+
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS requests (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -53,15 +56,6 @@ def init_db():
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(user_id) REFERENCES users(id),
         FOREIGN KEY(service_id) REFERENCES services(id)
-    )
-    """)
-
-    # Services table
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS services (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        price REAL NOT NULL
     )
     """)
 
@@ -97,7 +91,6 @@ def load_user(user_id):
 def home():
     return render_template("home.html")
 
-# --- Sign Up ---
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
     if request.method == "POST":
@@ -122,7 +115,6 @@ def signup():
 
     return render_template("signup.html")
 
-# --- Login ---
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -145,7 +137,6 @@ def login():
 
     return render_template("login.html")
 
-# --- Logout ---
 @app.route("/logout")
 @login_required
 def logout():
@@ -153,13 +144,11 @@ def logout():
     flash("You have been logged out.", "info")
     return redirect(url_for("login"))
 
-# --- Dashboard ---
 @app.route("/dashboard")
 @login_required
 def dashboard():
     return render_template("dashboard.html")
 
-# --- Request Service ---
 @app.route("/request_service", methods=["GET", "POST"])
 @login_required
 def request_service():
@@ -202,7 +191,7 @@ def request_service():
 
     return render_template("request_form.html", services=services)
 
-# --- Admin Dashboard ---
+# --- Unified Admin Dashboard ---
 @app.route("/admin", methods=["GET", "POST"])
 def admin_dashboard():
     if request.method == "POST":
@@ -223,15 +212,17 @@ def admin_dashboard():
             """)
             requests = cursor.fetchall()
 
+            cursor.execute("SELECT id, name, price FROM services")
+            services = cursor.fetchall()
+
             conn.close()
 
-            return render_template("admin_dashboard.html", users=users, requests=requests)
+            return render_template("admin_dashboard.html", users=users, requests=requests, services=services)
 
         flash("Invalid admin password!", "danger")
 
     return render_template("admin_login.html")
 
-# --- Delete Request ---
 @app.route("/delete_request/<int:request_id>", methods=["POST"])
 def delete_request(request_id):
     password = request.form.get("password")
@@ -248,40 +239,6 @@ def delete_request(request_id):
     flash(f"Request {request_id} deleted successfully!", "success")
     return redirect(url_for("admin_dashboard"))
 
-# --- Manage Services ---
-@app.route("/admin/services", methods=["GET", "POST"])
-def manage_services():
-    if request.method == "POST":
-        name = request.form["name"]
-        price = request.form["price"]
-
-        conn = sqlite3.connect(DB_NAME)
-        cursor = conn.cursor()
-        cursor.execute("INSERT INTO services (name, price) VALUES (?, ?)", (name, price))
-        conn.commit()
-        conn.close()
-
-        flash("Service added successfully!", "success")
-        return redirect(url_for("manage_services"))
-
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute("SELECT id, name, price FROM services")
-    services = cursor.fetchall()
-    conn.close()
-
-    return render_template("manage_services.html", services=services)
-
-@app.route("/admin/services/delete/<int:service_id>", methods=["POST"])
-def delete_service(service_id):
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM services WHERE id=?", (service_id,))
-    conn.commit()
-    conn.close()
-    flash("Service deleted!", "info")
-    return redirect(url_for("manage_services"))
-
 @app.route("/admin/services/update/<int:service_id>", methods=["POST"])
 def update_service(service_id):
     name = request.form["name"]
@@ -293,10 +250,30 @@ def update_service(service_id):
     conn.commit()
     conn.close()
     flash("Service updated!", "success")
-    return redirect(url_for("manage_services"))
+    return redirect(url_for("admin_dashboard"))
 
-# -----------------------------
-# Run App
-# -----------------------------
+@app.route("/admin/services/delete/<int:service_id>", methods=["POST"])
+def delete_service(service_id):
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM services WHERE id=?", (service_id,))
+    conn.commit()
+    conn.close()
+    flash("Service deleted!", "info")
+    return redirect(url_for("admin_dashboard"))
+
+@app.route("/admin/services/add", methods=["POST"])
+def add_service():
+    name = request.form["name"]
+    price = request.form["price"]
+
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO services (name, price) VALUES (?, ?)", (name, price))
+    conn.commit()
+    conn.close()
+    flash("Service added!", "success")
+    return redirect(url_for("admin_dashboard"))
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
