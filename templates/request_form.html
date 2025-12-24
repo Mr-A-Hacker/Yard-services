@@ -20,21 +20,39 @@
     <h2 class="text-center fw-bold mb-4">📝 Request Service</h2>
     <form method="POST" class="card p-4 shadow-sm mx-auto" style="max-width: 600px;">
       
+      <!-- Address -->
       <div class="mb-3">
         <label for="address" class="form-label">📍 Address</label>
         <input type="text" id="address" name="address" class="form-control" required>
       </div>
 
+      <!-- Phone -->
       <div class="mb-3">
         <label for="phone" class="form-label">📞 Phone</label>
         <input type="text" id="phone" name="phone" class="form-control" required>
       </div>
 
+      <!-- Email -->
       <div class="mb-3">
         <label for="email" class="form-label">✉️ Email</label>
         <input type="email" id="email" name="email" class="form-control" value="{{ current_user.email }}" required>
       </div>
 
+      <!-- Service Selection -->
+      <div class="mb-3">
+        <label for="service" class="form-label">🛠 Service</label>
+        <select id="service" name="service" class="form-select" required onchange="updatePrice()">
+          <option value="">Select a service</option>
+          {% for s in services %}
+            <option value="{{ s[0] }}" data-price="{{ s[2] }}">{{ s[1] }} - ${{ s[2] }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Dynamic Price Display -->
+      <p id="servicePrice" class="fw-bold text-success"></p>
+
+      <!-- Payment Method -->
       <div class="mb-3">
         <label for="payment" class="form-label">💵 Payment Method</label>
         <select id="payment" name="payment" class="form-select" required>
@@ -43,21 +61,25 @@
         </select>
       </div>
 
+      <!-- Note -->
       <div class="mb-3">
         <label for="note" class="form-label">📝 Note</label>
         <textarea id="note" name="note" class="form-control" rows="3"></textarea>
       </div>
 
+      <!-- Date -->
       <div class="mb-3">
         <label for="date" class="form-label">📅 Date</label>
         <input type="date" id="date" name="date" class="form-control" required>
       </div>
 
+      <!-- Time -->
       <div class="mb-3">
         <label for="time" class="form-label">⏰ Time</label>
         <input type="time" id="time" name="time" class="form-control" required>
       </div>
 
+      <!-- Submit -->
       <button type="submit" class="btn btn-primary w-100">Submit Request 🚀</button>
     </form>
   </div>
@@ -66,6 +88,15 @@
   <footer class="bg-dark text-white text-center py-3 mt-5">
     <small>© 2025 Yard Services. All rights reserved.</small>
   </footer>
+
+  <!-- Script for dynamic price -->
+  <script>
+    function updatePrice() {
+      const select = document.getElementById("service");
+      const price = select.options[select.selectedIndex].getAttribute("data-price");
+      document.getElementById("servicePrice").innerText = price ? "Cost: $" + price : "";
+    }
+  </script>
 
 </body>
 </html>
