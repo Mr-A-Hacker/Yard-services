@@ -111,6 +111,27 @@ def signup():
 
     return render_template("signup.html")
 
+
+@app.route("/delete_request/<int:request_id>", methods=["POST"])
+def delete_request(request_id):
+    # Optional: protect with admin password again
+    password = request.form.get("password")
+    if password != ADMIN_PASSWORD:
+        flash("Invalid admin password!", "danger")
+        return redirect(url_for("admin_dashboard"))
+
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM requests WHERE id=?", (request_id,))
+    conn.commit()
+    conn.close()
+
+    flash(f"Request {request_id} deleted successfully!", "success")
+    return redirect(url_for("admin_dashboard"))
+
+
+
+
 # --- Login ---
 @app.route("/login", methods=["GET", "POST"])
 def login():
