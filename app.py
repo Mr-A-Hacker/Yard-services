@@ -41,6 +41,7 @@ def init_db():
     CREATE TABLE IF NOT EXISTS requests (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL,
+        service_id INTEGER,
         address TEXT NOT NULL,
         phone TEXT NOT NULL,
         email TEXT NOT NULL,
@@ -50,7 +51,17 @@ def init_db():
         time TEXT NOT NULL,
         token TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(user_id) REFERENCES users(id)
+        FOREIGN KEY(user_id) REFERENCES users(id),
+        FOREIGN KEY(service_id) REFERENCES services(id)
+    )
+    """)
+
+    # Services table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS services (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        price REAL NOT NULL
     )
     """)
 
@@ -111,27 +122,6 @@ def signup():
 
     return render_template("signup.html")
 
-
-@app.route("/delete_request/<int:request_id>", methods=["POST"])
-def delete_request(request_id):
-    # Optional: protect with admin password again
-    password = request.form.get("password")
-    if password != ADMIN_PASSWORD:
-        flash("Invalid admin password!", "danger")
-        return redirect(url_for("admin_dashboard"))
-
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM requests WHERE id=?", (request_id,))
-    conn.commit()
-    conn.close()
-
-    flash(f"Request {request_id} deleted successfully!", "success")
-    return redirect(url_for("admin_dashboard"))
-
-
-
-
 # --- Login ---
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -169,11 +159,24 @@ def logout():
 def dashboard():
     return render_template("dashboard.html")
 
-# --- Service Request ---
+# --- Request Service ---
 @app.route("/request_service", methods=["GET", "POST"])
 @login_required
 def request_service():
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, name, price FROM services")
+    services = cursor.fetchall()
+    conn.close()
+
     if request.method == "POST":
+        service_id = request.form["service"]
+        conn = sqlite3.connect(DB_NAME)
+        cursor = conn.cursor()
+        cursor.execute("SELECT name, price FROM services WHERE id=?", (service_id,))
+        service = cursor.fetchone()
+        conn.close()
+
         address = request.form["address"]
         phone = request.form["phone"]
         email = request.form["email"]
@@ -189,15 +192,15 @@ def request_service():
         conn = sqlite3.connect(DB_NAME)
         cursor = conn.cursor()
         cursor.execute("""
-            INSERT INTO requests (user_id, address, phone, email, payment, note, date, time, token)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (current_user.id, address, phone, email, payment, note, date, time, token))
+            INSERT INTO requests (user_id, service_id, address, phone, email, payment, note, date, time, token)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (current_user.id, service_id, address, phone, email, payment, note, date, time, token))
         conn.commit()
         conn.close()
 
-        return render_template("confirmation.html", token=token, payment=payment)
+        return render_template("confirmation.html", token=token, payment=payment, service=service)
 
-    return render_template("request_form.html")
+    return render_template("request_form.html", services=services)
 
 # --- Admin Dashboard ---
 @app.route("/admin", methods=["GET", "POST"])
@@ -211,7 +214,13 @@ def admin_dashboard():
             cursor.execute("SELECT id, email, phone, created_at FROM users")
             users = cursor.fetchall()
 
-            cursor.execute("SELECT id, user_id, address, phone, email, payment, note, date, time, token, created_at FROM requests")
+            cursor.execute("""
+                SELECT requests.id, requests.user_id, services.name, services.price,
+                       requests.address, requests.phone, requests.email, requests.payment,
+                       requests.note, requests.date, requests.time, requests.token, requests.created_at
+                FROM requests
+                LEFT JOIN services ON requests.service_id = services.id
+            """)
             requests = cursor.fetchall()
 
             conn.close()
@@ -221,6 +230,70 @@ def admin_dashboard():
         flash("Invalid admin password!", "danger")
 
     return render_template("admin_login.html")
+
+# --- Delete Request ---
+@app.route("/delete_request/<int:request_id>", methods=["POST"])
+def delete_request(request_id):
+    password = request.form.get("password")
+    if password != ADMIN_PASSWORD:
+        flash("Invalid admin password!", "danger")
+        return redirect(url_for("admin_dashboard"))
+
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM requests WHERE id=?", (request_id,))
+    conn.commit()
+    conn.close()
+
+    flash(f"Request {request_id} deleted successfully!", "success")
+    return redirect(url_for("admin_dashboard"))
+
+# --- Manage Services ---
+@app.route("/admin/services", methods=["GET", "POST"])
+def manage_services():
+    if request.method == "POST":
+        name = request.form["name"]
+        price = request.form["price"]
+
+        conn = sqlite3.connect(DB_NAME)
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO services (name, price) VALUES (?, ?)", (name, price))
+        conn.commit()
+        conn.close()
+
+        flash("Service added successfully!", "success")
+        return redirect(url_for("manage_services"))
+
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, name, price FROM services")
+    services = cursor.fetchall()
+    conn.close()
+
+    return render_template("manage_services.html", services=services)
+
+@app.route("/admin/services/delete/<int:service_id>", methods=["POST"])
+def delete_service(service_id):
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM services WHERE id=?", (service_id,))
+    conn.commit()
+    conn.close()
+    flash("Service deleted!", "info")
+    return redirect(url_for("manage_services"))
+
+@app.route("/admin/services/update/<int:service_id>", methods=["POST"])
+def update_service(service_id):
+    name = request.form["name"]
+    price = request.form["price"]
+
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute("UPDATE services SET name=?, price=? WHERE id=?", (name, price, service_id))
+    conn.commit()
+    conn.close()
+    flash("Service updated!", "success")
+    return redirect(url_for("manage_services"))
 
 # -----------------------------
 # Run App
