@@ -25,6 +25,52 @@ body {
 .navbar-nav .nav-link:hover {
   color: #ffc107 !important;
 }
+/* Snowfall animation */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,\
+  <svg xmlns='http://www.w3.org/2000/svg' width='10' height='10'>\
+  <circle cx='5' cy='5' r='2' fill='white'/>\
+  </svg>");
+  animation: snow 10s linear infinite;
+  opacity: 0.7;
+}
+
+@keyframes snow {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 1000px; }
+}
+
+/* Frosty blue UI */
+.navbar { background-color: #1e90ff !important; }
+.card { border: 2px solid #b3e5ff; }
+/* Spooky glow */
+body {
+  background-color: #0d0d0d;
+  color: #ffa500;
+}
+
+/* Flickering neon effect */
+.navbar, .card, h1, h2, h3, h4 {
+  animation: flicker 2s infinite;
+}
+
+@keyframes flicker {
+  0%, 18%, 22%, 25%, 53%, 57%, 100% {
+    opacity: 1;
+    text-shadow: 0 0 8px orange, 0 0 20px #ff6600;
+  }
+  20%, 24%, 55% {
+    opacity: 0.4;
+    text-shadow: none;
+  }
+}
 
 /* === FOOTER === */
 footer {
@@ -90,6 +136,72 @@ label {
   background: linear-gradient(180deg, #6c757d, #5c636a);
   border: none;
 }
+body {
+  background-color: black;
+  color: white;
+}
+
+/* Flashing SALE banner */
+body::after {
+  content: "🔥 BLACK FRIDAY SALE 🔥";
+  position: fixed;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: red;
+  color: white;
+  padding: 8px 20px;
+  font-weight: bold;
+  border-radius: 6px;
+  animation: flash 1s infinite;
+  z-index: 9999;
+}
+
+@keyframes flash {
+  0% { opacity: 1; }
+  50% { opacity: 0.2; }
+  100% { opacity: 1; }
+}
+body {
+  background: linear-gradient(#fff7d1, #ffe08a);
+}
+
+/* Sun glow pulse */
+.navbar {
+  background-color: #ffcc00 !important;
+  animation: sunpulse 3s infinite;
+}
+
+@keyframes sunpulse {
+  0% { box-shadow: 0 0 10px #ffcc00; }
+  50% { box-shadow: 0 0 30px #ff9900; }
+  100% { box-shadow: 0 0 10px #ffcc00; }
+}
+/* Falling leaves */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,\
+  <svg xmlns='http://www.w3.org/2000/svg' width='12' height='12'>\
+  <text x='0' y='10' font-size='12' fill='orange'>🍁</text>\
+  </svg>");
+  animation: leaves 12s linear infinite;
+  opacity: 0.8;
+}
+
+@keyframes leaves {
+  0% { background-position: 0 0; }
+  100% { background-position: -200px 1000px; }
+}
+
+/* Warm fall colors */
+.navbar { background-color: #b3541e !important; }
+.card { border: 2px solid #d98c4a; }
 
 /* === TOKENS === */
 .token-badge {
