@@ -22,6 +22,7 @@ def init_db():
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
 
+    # Users
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -32,6 +33,7 @@ def init_db():
     )
     """)
 
+    # Services
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS services (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -40,6 +42,7 @@ def init_db():
     )
     """)
 
+    # Requests
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS requests (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -56,6 +59,18 @@ def init_db():
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(user_id) REFERENCES users(id),
         FOREIGN KEY(service_id) REFERENCES services(id)
+    )
+    """)
+
+    # Ratings
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS ratings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        rating INTEGER NOT NULL,
+        comment TEXT,
+        submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(user_id) REFERENCES users(id)
     )
     """)
 
@@ -149,6 +164,7 @@ def logout():
 def dashboard():
     return render_template("dashboard.html")
 
+# --- Request Service ---
 @app.route("/request_service", methods=["GET", "POST"])
 @login_required
 def request_service():
@@ -191,9 +207,7 @@ def request_service():
 
     return render_template("request_form.html", services=services)
 
-
-
-
+# --- Rate Us ---
 @app.route("/rate_us", methods=["GET", "POST"])
 @login_required
 def rate_us():
@@ -203,16 +217,6 @@ def rate_us():
 
         conn = sqlite3.connect(DB_NAME)
         cursor = conn.cursor()
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS ratings (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER,
-                rating INTEGER NOT NULL,
-                comment TEXT,
-                submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY(user_id) REFERENCES users(id)
-            )
-        """)
         cursor.execute("INSERT INTO ratings (user_id, rating, comment) VALUES (?, ?, ?)",
                        (current_user.id, rating, comment))
         conn.commit()
@@ -223,7 +227,7 @@ def rate_us():
 
     return render_template("rate_us.html")
 
-# --- Unified Admin Dashboard ---
+# --- Admin Dashboard ---
 @app.route("/admin", methods=["GET", "POST"])
 def admin_dashboard():
     if request.method == "POST":
@@ -247,9 +251,18 @@ def admin_dashboard():
             cursor.execute("SELECT id, name, price FROM services")
             services = cursor.fetchall()
 
+            cursor.execute("""
+                SELECT ratings.id, users.email, ratings.rating, ratings.comment, ratings.submitted_at
+                FROM ratings
+                LEFT JOIN users ON ratings.user_id = users.id
+            """)
+            ratings = cursor.fetchall()
+
             conn.close()
 
-            return render_template("admin_dashboard.html", users=users, requests=requests, services=services)
+            return render_template("admin_dashboard.html",
+                                   users=users, requests=requests,
+                                   services=services, ratings=ratings)
 
         flash("Invalid admin password!", "danger")
 
@@ -288,24 +301,4 @@ def update_service(service_id):
 def delete_service(service_id):
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM services WHERE id=?", (service_id,))
-    conn.commit()
-    conn.close()
-    flash("Service deleted!", "info")
-    return redirect(url_for("admin_dashboard"))
-
-@app.route("/admin/services/add", methods=["POST"])
-def add_service():
-    name = request.form["name"]
-    price = request.form["price"]
-
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute("INSERT INTO services (name, price) VALUES (?, ?)", (name, price))
-    conn.commit()
-    conn.close()
-    flash("Service added!", "success")
-    return redirect(url_for("admin_dashboard"))
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    cursor.execute("DELETE FROM services
