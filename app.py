@@ -145,6 +145,17 @@ def add_service():
     return redirect(url_for("admin_dashboard"))
 
 
+@app.route("/admin/services/delete/<int:service_id>", methods=["POST"])
+def delete_service(service_id):
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM services WHERE id=?", (service_id,))
+    conn.commit()
+    conn.close()
+    flash("Service deleted!", "info")
+    return redirect(url_for("admin_dashboard"))
+
+
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
