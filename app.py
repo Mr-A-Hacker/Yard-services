@@ -1,6 +1,7 @@
 import os
 import random
 import sqlite3
+import datetime
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from flask_bcrypt import Bcrypt
@@ -82,6 +83,7 @@ def init_db():
         token TEXT UNIQUE NOT NULL,
         discount_percent INTEGER NOT NULL,
         active BOOLEAN DEFAULT 1,
+        expires_at TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """)
@@ -90,7 +92,6 @@ def init_db():
     conn.close()
 
 init_db()
-
 # -----------------------------
 # User Model
 # -----------------------------
@@ -112,12 +113,8 @@ def load_user(user_id):
     return None
 
 # -----------------------------
-# Routes
+# Routes: Signup / Login / Logout
 # -----------------------------
-@app.route("/")
-def home():
-    return render_template("home.html")
-
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
     if request.method == "POST":
@@ -142,6 +139,7 @@ def signup():
 
     return render_template("signup.html")
 
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -164,25 +162,6 @@ def login():
 
     return render_template("login.html")
 
-@app.route("/admin/promotions/add", methods=["POST"])
-def add_promotion():
-    name = request.form["name"]
-    token = request.form["token"].upper()
-    discount = int(request.form["discount"])
-
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute(
-        "INSERT INTO promotions (name, token, discount_percent) VALUES (?, ?, ?)",
-        (name, token, discount)
-    )
-    conn.commit()
-    conn.close()
-
-    flash("Promotion added!", "success")
-    return redirect(url_for("admin_dashboard"))
-
-
 
 @app.route("/logout")
 @login_required
@@ -190,12 +169,16 @@ def logout():
     logout_user()
     flash("You have been logged out.", "info")
     return redirect(url_for("login"))
-
+# -----------------------------
+# Dashboard
+# -----------------------------
 @app.route("/dashboard")
 @login_required
 def dashboard():
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
+
+    # Recent ratings
     cursor.execute("""
         SELECT ratings.rating, ratings.comment, ratings.submitted_at, users.email
         FROM ratings
@@ -205,30 +188,17 @@ def dashboard():
     """)
     ratings = cursor.fetchall()
 
-    cursor.execute("SELECT token, discount_percent FROM promotions WHERE active=1 ORDER BY created_at DESC LIMIT 1")
+    # Latest active promotion
+    cursor.execute("SELECT token, discount_percent, expires_at FROM promotions WHERE active=1 ORDER BY created_at DESC LIMIT 1")
     promo = cursor.fetchone()
 
     conn.close()
     return render_template("dashboard.html", ratings=ratings, promo=promo)
 
 
-@app.route("/admin/services/add", methods=["POST"])
-def add_service():
-    name = request.form["name"]
-    price = request.form["price"]
-
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute("INSERT INTO services (name, price) VALUES (?, ?)", (name, price))
-    conn.commit()
-    conn.close()
-
-    flash("Service added!", "success")
-    return redirect(url_for("admin_dashboard"))
-
-
-
-# --- Request Service ---
+# -----------------------------
+# Request Service
+# -----------------------------
 @app.route("/request_service", methods=["GET", "POST"])
 @login_required
 def request_service():
@@ -259,14 +229,19 @@ def request_service():
         if discount_token:
             conn = sqlite3.connect(DB_NAME)
             cursor = conn.cursor()
-            cursor.execute("SELECT discount_percent FROM promotions WHERE token=? AND active=1", (discount_token,))
+            cursor.execute("SELECT id, discount_percent, expires_at, active FROM promotions WHERE token=?", (discount_token,))
             promo = cursor.fetchone()
-            conn.close()
-            if promo:
-                discount = promo[0]
-                flash(f"{discount}% discount applied!", "success")
+            if promo and promo[3] == 1:  # active
+                expires_at = promo[2]
+                today = datetime.date.today().isoformat()
+                if not expires_at or today <= expires_at:
+                    discount = promo[1]
+                    flash(f"{discount}% discount applied!", "success")
+                else:
+                    flash("This discount token has expired.", "danger")
             else:
-                flash("Invalid or expired discount token.", "danger")
+                flash("Invalid discount token.", "danger")
+            conn.close()
 
         final_price = service[1] * (1 - discount / 100)
 
@@ -288,7 +263,10 @@ def request_service():
 
     return render_template("request_form.html", services=services)
 
-# --- Rate Us ---
+
+# -----------------------------
+# Rate Us
+# -----------------------------
 @app.route("/rate_us", methods=["GET", "POST"])
 @login_required
 def rate_us():
@@ -307,8 +285,9 @@ def rate_us():
         return redirect(url_for("dashboard"))
 
     return render_template("rate_us.html")
-
-# --- Admin Dashboard ---
+# -----------------------------
+# Admin Dashboard
+# -----------------------------
 @app.route("/admin", methods=["GET", "POST"])
 def admin_dashboard():
     if request.method == "POST":
@@ -344,7 +323,7 @@ def admin_dashboard():
             ratings = cursor.fetchall()
 
             # Promotions
-            cursor.execute("SELECT id, name, token, discount_percent, active, created_at FROM promotions")
+            cursor.execute("SELECT id, name, token, discount_percent, active, expires_at, created_at FROM promotions")
             promotions = cursor.fetchall()
 
             conn.close()
@@ -359,6 +338,11 @@ def admin_dashboard():
         flash("Invalid admin password!", "danger")
 
     return render_template("admin_login.html")
+
+
+# -----------------------------
+# Admin Utilities
+# -----------------------------
 @app.route("/delete_request/<int:request_id>", methods=["POST"])
 def delete_request(request_id):
     password = request.form.get("password")
@@ -373,6 +357,21 @@ def delete_request(request_id):
     conn.close()
 
     flash(f"Request {request_id} deleted successfully!", "success")
+    return redirect(url_for("admin_dashboard"))
+
+
+@app.route("/admin/services/add", methods=["POST"])
+def add_service():
+    name = request.form["name"]
+    price = request.form["price"]
+
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO services (name, price) VALUES (?, ?)", (name, price))
+    conn.commit()
+    conn.close()
+
+    flash("Service added!", "success")
     return redirect(url_for("admin_dashboard"))
 
 
@@ -391,6 +390,48 @@ def update_service(service_id):
     return redirect(url_for("admin_dashboard"))
 
 
+@app.route("/admin/services/delete/<int:service_id>", methods=["POST"])
+def delete_service(service_id):
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM services WHERE id=?", (service_id,))
+    conn.commit()
+    conn.close()
+
+    flash("Service deleted!", "info")
+    return redirect(url_for("admin_dashboard"))
+
+
+@app.route("/admin/promotions/add", methods=["POST"])
+def add_promotion():
+    name = request.form["name"]
+    token = request.form["token"].upper()
+    discount = int(request.form["discount"])
+    expires_at = request.form["expires_at"]
+
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO promotions (name, token, discount_percent, expires_at) VALUES (?, ?, ?, ?)",
+                   (name, token, discount, expires_at))
+    conn.commit()
+    conn.close()
+
+    flash("Promotion added!", "success")
+    return redirect(url_for("admin_dashboard"))
+
+
+@app.route("/admin/promotions/delete/<int:promo_id>", methods=["POST"])
+def delete_promotion(promo_id):
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM promotions WHERE id=?", (promo_id,))
+    conn.commit()
+    conn.close()
+
+    flash("Promotion deleted!", "info")
+    return redirect(url_for("admin_dashboard"))
+# -----------------------------
 # Run the app
+# -----------------------------
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
