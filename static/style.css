@@ -1,141 +1,173 @@
-/* ============================================
-   Yard Services - Global Base Styles
-   This file defines the default look of the site.
-   Seasonal themes override these styles.
-   ============================================ */
+/* ==========================================================
+   Yard Services - Global Base Styles (Updated Version)
+   ========================================================== */
 
-/* Global Reset */
+/* === GLOBAL === */
 body {
-  background-color: #f8f9fa;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  background: linear-gradient(135deg, #e0f7fa, #ffffff);
+  background-attachment: fixed;
+  color: #212529;
+  min-height: 100vh;
   margin: 0;
   padding: 0;
-  color: #212529;
 }
 
-/* Navbar */
+/* Smooth transitions for UI elements */
+* {
+  transition: all 0.15s ease-in-out;
+}
+
+/* === NAVBAR === */
 .navbar {
-  padding: 12px 20px;
-  font-size: 1.1rem;
+  background: linear-gradient(180deg, #0d6efd, #084298);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.2);
 }
-
 .navbar-brand {
   font-weight: bold;
-  font-size: 1.3rem;
+  font-size: 1.5rem;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+}
+.navbar-nav .nav-link {
+  color: #fff !important;
+  font-weight: 500;
+}
+.navbar-nav .nav-link:hover {
+  color: #ffc107 !important;
 }
 
-/* Headings */
-h1, h2, h3, h4, h5 {
+/* === FOOTER === */
+footer {
+  background-color: #212529;
+  color: #fff;
+  text-align: center;
+  padding: 15px;
+  margin-top: 40px;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.3);
+}
+
+/* === HEADINGS === */
+h1, h2, h3 {
   font-weight: 700;
-  color: #212529;
+  color: #0d6efd;
+  margin-bottom: 20px;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.15);
 }
 
-/* Cards */
+/* === CARDS === */
 .card {
-  border-radius: 10px;
-  border: 1px solid #dee2e6;
-  background-color: white;
+  border-radius: 12px;
+  border: 1px solid #e0e0e0;
+  background: #ffffff;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+  padding: 20px;
 }
 
-/* Tables */
+/* === FORMS === */
+form {
+  background: linear-gradient(145deg, #ffffff, #f1f1f1);
+  padding: 30px;
+  border-radius: 12px;
+  border: 1px solid #e0e0e0;
+  box-shadow: 4px 4px 8px rgba(0,0,0,0.1),
+              -4px -4px 8px rgba(255,255,255,0.7);
+}
+input, textarea, select {
+  border-radius: 8px !important;
+  border: 1px solid #ccc;
+  padding: 10px;
+  box-shadow: inset 2px 2px 4px rgba(0,0,0,0.1);
+}
+label {
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+/* === BUTTONS === */
+.btn {
+  border-radius: 10px;
+  font-weight: 600;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+}
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 10px rgba(0,0,0,0.25);
+}
+.btn-primary {
+  background: linear-gradient(180deg, #0d6efd, #0b5ed7);
+  border: none;
+}
+.btn-success {
+  background: linear-gradient(180deg, #198754, #157347);
+  border: none;
+}
+.btn-danger {
+  background: linear-gradient(180deg, #dc3545, #bb2d3b);
+  border: none;
+}
+.btn-secondary {
+  background: linear-gradient(180deg, #6c757d, #5c636a);
+  border: none;
+}
+
+/* === TABLES === */
 table {
-  border-radius: 8px;
+  border-radius: 10px;
   overflow: hidden;
 }
-
 .table th {
+  background-color: #0d6efd !important;
+  color: white;
   font-weight: bold;
 }
-
 .table td, .table th {
   vertical-align: middle;
+  padding: 12px;
 }
 
-/* Buttons */
-.btn {
-  font-weight: 600;
-  border-radius: 6px;
-}
-
-.btn-primary {
-  background-color: #0d6efd;
-  border-color: #0d6efd;
-}
-
-.btn-primary:hover {
-  background-color: #0b5ed7;
-}
-
-.btn-danger {
-  background-color: #dc3545;
-  border-color: #dc3545;
-}
-
-.btn-danger:hover {
-  background-color: #bb2d3b;
-}
-
-/* Forms */
-.form-control, .form-select {
-  border-radius: 6px;
-  padding: 10px;
-  font-size: 1rem;
-}
-
-/* Footer */
-footer {
-  margin-top: 40px;
-  padding: 15px 0;
-  font-size: 0.9rem;
-}
-
-/* Page Containers */
-.container {
-  max-width: 1200px;
-}
-
-/* Shadows */
-.shadow-sm {
-  box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075) !important;
-}
-
-/* Centered content helper */
-.center {
-  text-align: center;
-}
-
-/* Success / Error Flash Messages */
-.alert {
-  font-weight: 600;
+/* === TOKENS === */
+.token-badge {
+  font-size: 1.5rem;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #ffd54f, #ffb300);
+  color: #212529;
   border-radius: 8px;
+  display: inline-block;
+  margin-top: 10px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
 }
 
-/* Confirmation Page */
-.confirm-box {
-  border: 2px solid #198754;
-  padding: 20px;
+/* === FLASH MESSAGES === */
+.alert {
   border-radius: 10px;
-  background-color: #e9f7ef;
+  font-weight: 600;
+  padding: 15px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
 
-/* Admin Panel Enhancements */
-.admin-section-title {
-  margin-top: 40px;
-  margin-bottom: 15px;
-  font-size: 1.4rem;
-  font-weight: bold;
+/* === CONTAINERS === */
+.container {
+  max-width: 900px;
 }
 
-/* Responsive Fixes */
+/* === LINKS === */
+a {
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+  color: #0d6efd;
+}
+
+/* === RESPONSIVE FIXES === */
 @media (max-width: 768px) {
   .navbar-brand {
-    font-size: 1.1rem;
+    font-size: 1.2rem;
   }
-
-  .card {
-    padding: 15px;
+  form {
+    padding: 20px;
   }
-
   table {
     font-size: 0.9rem;
   }
