@@ -301,4 +301,4 @@ def update_service(service_id):
 def delete_service(service_id):
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM services
+    cursor
