@@ -152,6 +152,13 @@ def login():
 
     return render_template("login.html")
 
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    flash("You have been logged out.", "info")
+    return redirect(url_for("login"))
+
 @app.route("/dashboard")
 @login_required
 def dashboard():
@@ -168,19 +175,6 @@ def dashboard():
     conn.close()
 
     return render_template("dashboard.html", ratings=ratings)
-
-
-@app.route("/logout")
-@login_required
-def logout():
-    logout_user()
-    flash("You have been logged out.", "info")
-    return redirect(url_for("login"))
-
-@app.route("/dashboard")
-@login_required
-def dashboard():
-    return render_template("dashboard.html")
 
 # --- Request Service ---
 @app.route("/request_service", methods=["GET", "POST"])
@@ -314,19 +308,7 @@ def update_service(service_id):
     conn.close()
     flash("Service updated!", "success")
     return redirect(url_for("admin_dashboard"))
-
-@app.route("/admin/services/delete/<int:service_id>", methods=["POST"])
-def delete_service(service_id):
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM services WHERE id=?", (service_id,))
-    conn.commit()
-    conn.close()
-    flash("Service deleted!", "info")
-    return redirect(url_for("admin_dashboard"))
-# -----------------------------
 # Run the app
-# -----------------------------
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
 
