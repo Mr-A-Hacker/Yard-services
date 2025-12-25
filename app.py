@@ -208,6 +208,7 @@ def home():
 @app.route("/request_service", methods=["GET", "POST"])
 @login_required
 def request_service():
+    # Load available services
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     cursor.execute("SELECT id, name, price FROM services")
@@ -216,6 +217,8 @@ def request_service():
 
     if request.method == "POST":
         service_id = request.form["service"]
+
+        # Get service details
         conn = sqlite3.connect(DB_NAME)
         cursor = conn.cursor()
         cursor.execute("SELECT name, price FROM services WHERE id=?", (service_id,))
@@ -232,29 +235,37 @@ def request_service():
         discount_token = request.form.get("discount_token", "").upper()
 
         discount = 0
+        valid_token = False
+
+        # 🔎 Check token validity
         if discount_token:
             conn = sqlite3.connect(DB_NAME)
             cursor = conn.cursor()
-            cursor.execute("SELECT id, discount_percent, expires_at, active FROM promotions WHERE token=?", (discount_token,))
+            cursor.execute("SELECT discount_percent, expires_at, active FROM promotions WHERE token=?", (discount_token,))
             promo = cursor.fetchone()
-            if promo and promo[3] == 1:  # active
-                expires_at = promo[2]
+            conn.close()
+
+            if promo and promo[2] == 1:  # active
+                expires_at = promo[1]
                 today = datetime.date.today().isoformat()
                 if not expires_at or today <= expires_at:
-                    discount = promo[1]
+                    discount = promo[0]
+                    valid_token = True
                     flash(f"{discount}% discount applied!", "success")
                 else:
                     flash("This discount token has expired.", "danger")
             else:
                 flash("Invalid discount token.", "danger")
-            conn.close()
 
+        # 💰 Calculate final price
         final_price = service[1] * (1 - discount / 100)
 
+        # Generate token for Zelle payments
         token = None
         if payment == "zelle":
             token = str(random.randint(100000, 999999))
 
+        # Save request
         conn = sqlite3.connect(DB_NAME)
         cursor = conn.cursor()
         cursor.execute("""
@@ -264,10 +275,17 @@ def request_service():
         conn.commit()
         conn.close()
 
-        return render_template("confirmation.html", token=token, payment=payment, service=service,
-                               discount=discount, final_price=final_price)
+        # Show confirmation page with breakdown
+        return render_template("confirmation.html",
+                               service=service,
+                               discount=discount,
+                               final_price=final_price,
+                               discount_token=discount_token if valid_token else None,
+                               token=token,
+                               payment=payment)
 
     return render_template("request_form.html", services=services)
+
 
 
 # -----------------------------
