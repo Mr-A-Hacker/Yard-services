@@ -162,7 +162,7 @@
       </tbody>
     </table>
 
-    <!-- Promotions Management -->
+     <!-- Promotions Management -->
     <h4 class="mt-5">🎁 Promotions & Seasonal Offers</h4>
     <form method="POST" action="{{ url_for('add_promotion') }}" class="card p-4 shadow-sm mb-4" style="max-width: 500px;">
       <div class="mb-3">
@@ -177,6 +177,10 @@
         <label for="promo_discount" class="form-label">Discount (%)</label>
         <input type="number" id="promo_discount" name="discount" placeholder="30" class="form-control" required>
       </div>
+      <div class="mb-3">
+        <label for="promo_expiry" class="form-label">Expiry Date</label>
+        <input type="date" id="promo_expiry" name="expires_at" class="form-control" required>
+      </div>
       <button type="submit" class="btn btn-success w-100">➕ Add Promotion</button>
     </form>
 
@@ -188,7 +192,9 @@
           <th>Token</th>
           <th>Discount</th>
           <th>Active</th>
+          <th>Expiry</th>
           <th>Created</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -200,14 +206,19 @@
           <td>{{ p[3] }}%</td>
           <td>{{ 'Yes' if p[4] else 'No' }}</td>
           <td>{{ p[5] }}</td>
+          <td>{{ p[6] }}</td>
+          <td>
+            <form method="POST" action="{{ url_for('delete_promotion', promo_id=p[0]) }}"
+                  onsubmit="return confirm('Delete this promotion?');">
+              <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+            </form>
+          </td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
+  </div> <!-- end .container -->
 
-  </div>
-
-  <!-- Footer -->
   <!-- Footer -->
   <footer class="bg-dark text-white text-center py-3 mt-5">
     <small>© 2025 Yard Services. Admin Panel</small>
