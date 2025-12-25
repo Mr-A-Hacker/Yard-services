@@ -20,6 +20,14 @@
     <h2 class="fw-bold mb-4">📊 Dashboard</h2>
     <p class="lead">Welcome, <strong>{{ current_user.email }}</strong>!</p>
 
+    <!-- Promotions Popup -->
+    {% if promo %}
+    <div class="alert alert-warning shadow-lg fw-bold fs-5 mt-4">
+      🎁 You’ve earned a <span class="text-danger">{{ promo[1] }}%</span> discount!<br>
+      Use token: <span class="token-badge">{{ promo[0] }}</span> at checkout.
+    </div>
+    {% endif %}
+
     <!-- Action Buttons -->
     <div class="d-flex justify-content-center gap-3 mt-4">
       <a href="{{ url_for('request_service') }}" class="btn btn-primary btn-lg shadow">
