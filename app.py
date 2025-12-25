@@ -191,6 +191,23 @@ def dashboard():
     conn.close()
     return render_template("dashboard.html", ratings=ratings, promo=promo)
 
+
+@app.route("/admin/services/add", methods=["POST"])
+def add_service():
+    name = request.form["name"]
+    price = request.form["price"]
+
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO services (name, price) VALUES (?, ?)", (name, price))
+    conn.commit()
+    conn.close()
+
+    flash("Service added!", "success")
+    return redirect(url_for("admin_dashboard"))
+
+
+
 # --- Request Service ---
 @app.route("/request_service", methods=["GET", "POST"])
 @login_required
