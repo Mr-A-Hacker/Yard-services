@@ -2,57 +2,66 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Service Confirmed - Yard Services</title>
+  <title>Confirmation - Yard Services</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    .token-box {
-      font-size: 1.5rem;
-      font-weight: bold;
-      background-color: #f8f9fa;
-      border: 2px dashed #198754;
-      padding: 10px 20px;
-      border-radius: 8px;
-      display: inline-block;
-      margin-top: 10px;
-    }
-  </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 
   <!-- Navbar -->
-  <nav class="navbar navbar-dark bg-success">
+  <nav class="navbar navbar-dark bg-primary">
     <div class="container-fluid">
-      <a class="navbar-brand fw-bold" href="{{ url_for('home') }}">✅ Yard Services</a>
+      <a class="navbar-brand fw-bold" href="{{ url_for('dashboard') }}">🚂 Yard Services</a>
     </div>
   </nav>
 
-  <!-- Confirmation -->
-  <div class="container mt-5 text-center">
-    <h2 class="fw-bold text-success mb-4">🎉 Request Confirmed!</h2>
-    <p class="lead">Thank you for submitting your service request.</p>
+  <div class="container mt-5">
+    <div class="card shadow p-4 mx-auto" style="max-width: 600px;">
+      <h2 class="text-center fw-bold mb-4">✅ Request Confirmed</h2>
 
-    {% if service %}
+      <p class="text-center text-muted">Thank you for choosing Yard Services!</p>
+
+      <hr>
+
+      <!-- Service Summary -->
+      <h5 class="fw-bold">📦 Service Summary</h5>
       <p><strong>Service:</strong> {{ service[0] }}</p>
-      <p><strong>Cost:</strong> ${{ "%.2f"|format(service[1]) }}</p>
-    {% endif %}
+      <p><strong>Base Price:</strong> ${{ "%.2f"|format(service[1]) }}</p>
 
-    {% if payment == "zelle" %}
-      <div class="mt-4">
-        <h5 class="text-primary">💸 Payment via Zelle</h5>
-        <p>We will come to give you payment info <strong> Thank you!</strong></p>
-        <p>This will be your token for th zelle payment when we arrive:</p>
-        <div class="token-box">{{ token }}</div>
+      {% if discount > 0 %}
+      <p><strong>Discount Applied:</strong> {{ discount }}%</p>
+      <p><strong>Discount Token:</strong> {{ discount_token }}</p>
+      {% else %}
+      <p><strong>Discount:</strong> None</p>
+      {% endif %}
+
+      <h4 class="fw-bold text-success mt-3">Final Price: ${{ "%.2f"|format(final_price) }}</h4>
+
+      <hr>
+
+      <!-- Payment Info -->
+      <h5 class="fw-bold">💵 Payment Method</h5>
+      <p>{{ payment|capitalize }}</p>
+
+      {% if token %}
+      <div class="alert alert-info">
+        <strong>Zelle Payment Token:</strong> {{ token }}  
+        <br>
+        Use this code in the memo when sending your Zelle payment.
       </div>
-    {% else %}
-      <p class="mt-4 text-muted">You selected <strong>Cash</strong> payment. Please have it ready at the time of service.</p>
-    {% endif %}
+      {% endif %}
 
-    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-success mt-5">← Back to Dashboard</a>
+      <hr>
+
+      <div class="text-center mt-4">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-primary w-100">Return to Dashboard</a>
+      </div>
+    </div>
   </div>
 
   <!-- Footer -->
   <footer class="bg-dark text-white text-center py-3 mt-5">
-    <small>© 2025 Yard Services. Confirmation Page</small>
+    <small>© 2025 Yard Services. All rights reserved.</small>
   </footer>
 
 </body>
