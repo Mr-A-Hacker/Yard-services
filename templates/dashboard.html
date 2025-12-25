@@ -33,7 +33,7 @@
       </a>
     </div>
 
-    <!-- Optional Card Section -->
+    <!-- Service Requests Card -->
     <div class="row mt-5">
       <div class="col-md-6 mx-auto">
         <div class="card shadow-sm">
@@ -47,6 +47,31 @@
         </div>
       </div>
     </div>
+
+    <!-- Ratings Section -->
+    <div class="row mt-5">
+      <div class="col-md-8 mx-auto">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title fw-bold">⭐ Recent Feedback</h5>
+            {% if ratings %}
+              <ul class="list-group list-group-flush">
+                {% for r in ratings %}
+                  <li class="list-group-item text-start">
+                    <strong>{{ r[3] }}</strong> rated <span class="text-warning">{{ r[0] }}⭐</span><br>
+                    <em>{{ r[1] }}</em><br>
+                    <small class="text-muted">{{ r[2] }}</small>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <p class="text-muted">No feedback yet. Be the first to rate us!</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <!-- Footer -->
