@@ -130,6 +130,25 @@ def signup():
 
     return render_template("signup.html")
 
+@app.route("/admin/promotions/add", methods=["POST"])
+def add_promotion():
+    name = request.form["name"]
+    token = request.form["token"].upper()
+    discount = int(request.form["discount"])
+
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO promotions (name, token, discount_percent) VALUES (?, ?, ?)",
+                   (name, token, discount))
+    conn.commit()
+    conn.close()
+
+    flash("Promotion added!", "success")
+    return redirect(url_for("admin_dashboard"))
+
+
+
+
 @app.route("/admin/services/add", methods=["POST"])
 def add_service():
     name = request.form["name"]
