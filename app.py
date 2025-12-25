@@ -152,6 +152,24 @@ def login():
 
     return render_template("login.html")
 
+@app.route("/dashboard")
+@login_required
+def dashboard():
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT ratings.rating, ratings.comment, ratings.submitted_at, users.email
+        FROM ratings
+        LEFT JOIN users ON ratings.user_id = users.id
+        ORDER BY ratings.submitted_at DESC
+        LIMIT 5
+    """)
+    ratings = cursor.fetchall()
+    conn.close()
+
+    return render_template("dashboard.html", ratings=ratings)
+
+
 @app.route("/logout")
 @login_required
 def logout():
