@@ -301,4 +301,14 @@ def update_service(service_id):
 def delete_service(service_id):
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
-    cursor
+    cursor.execute("DELETE FROM services WHERE id=?", (service_id,))
+    conn.commit()
+    conn.close()
+    flash("Service deleted!", "info")
+    return redirect(url_for("admin_dashboard"))
+# -----------------------------
+# Run the app
+# -----------------------------
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=True)
+
