@@ -130,6 +130,22 @@ def signup():
 
     return render_template("signup.html")
 
+@app.route("/admin/services/add", methods=["POST"])
+def add_service():
+    name = request.form["name"]
+    price = request.form["price"]
+
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO services (name, price) VALUES (?, ?)", (name, price))
+    conn.commit()
+    conn.close()
+
+    flash("Service added!", "success")
+    return redirect(url_for("admin_dashboard"))
+
+
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
