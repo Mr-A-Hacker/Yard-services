@@ -136,6 +136,31 @@
         {% endfor %}
       </tbody>
     </table>
+
+    <!-- Ratings Table -->
+    <h4 class="mt-5">⭐ User Ratings & Feedback</h4>
+    <table class="table table-striped table-bordered shadow-sm">
+      <thead class="table-dark">
+        <tr>
+          <th>ID</th>
+          <th>User</th>
+          <th>Rating</th>
+          <th>Comment</th>
+          <th>Submitted</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in ratings %}
+        <tr>
+          <td>{{ r[0] }}</td>
+          <td>{{ r[1] }}</td>
+          <td>{{ r[2] }}⭐</td>
+          <td>{{ r[3] }}</td>
+          <td>{{ r[4] }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
 
   <!-- Footer -->
