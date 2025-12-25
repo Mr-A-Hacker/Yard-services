@@ -191,6 +191,38 @@ def request_service():
 
     return render_template("request_form.html", services=services)
 
+
+
+
+@app.route("/rate_us", methods=["GET", "POST"])
+@login_required
+def rate_us():
+    if request.method == "POST":
+        rating = request.form.get("rating")
+        comment = request.form.get("comment")
+
+        conn = sqlite3.connect(DB_NAME)
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS ratings (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER,
+                rating INTEGER NOT NULL,
+                comment TEXT,
+                submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(user_id) REFERENCES users(id)
+            )
+        """)
+        cursor.execute("INSERT INTO ratings (user_id, rating, comment) VALUES (?, ?, ?)",
+                       (current_user.id, rating, comment))
+        conn.commit()
+        conn.close()
+
+        flash("Thanks for your feedback!", "success")
+        return redirect(url_for("dashboard"))
+
+    return render_template("rate_us.html")
+
 # --- Unified Admin Dashboard ---
 @app.route("/admin", methods=["GET", "POST"])
 def admin_dashboard():
