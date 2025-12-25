@@ -74,6 +74,18 @@ def init_db():
     )
     """)
 
+    # Promotions
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS promotions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        token TEXT UNIQUE NOT NULL,
+        discount_percent INTEGER NOT NULL,
+        active BOOLEAN DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
     conn.commit()
     conn.close()
 
@@ -130,52 +142,6 @@ def signup():
 
     return render_template("signup.html")
 
-@app.route("/admin/promotions/add", methods=["POST"])
-def add_promotion():
-    name = request.form["name"]
-    token = request.form["token"].upper()
-    discount = int(request.form["discount"])
-
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute("INSERT INTO promotions (name, token, discount_percent) VALUES (?, ?, ?)",
-                   (name, token, discount))
-    conn.commit()
-    conn.close()
-
-    flash("Promotion added!", "success")
-    return redirect(url_for("admin_dashboard"))
-
-
-
-
-@app.route("/admin/services/add", methods=["POST"])
-def add_service():
-    name = request.form["name"]
-    price = request.form["price"]
-
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute("INSERT INTO services (name, price) VALUES (?, ?)", (name, price))
-    conn.commit()
-    conn.close()
-
-    flash("Service added!", "success")
-    return redirect(url_for("admin_dashboard"))
-
-
-@app.route("/admin/services/delete/<int:service_id>", methods=["POST"])
-def delete_service(service_id):
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM services WHERE id=?", (service_id,))
-    conn.commit()
-    conn.close()
-    flash("Service deleted!", "info")
-    return redirect(url_for("admin_dashboard"))
-
-
-
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -218,9 +184,12 @@ def dashboard():
         LIMIT 5
     """)
     ratings = cursor.fetchall()
-    conn.close()
 
-    return render_template("dashboard.html", ratings=ratings)
+    cursor.execute("SELECT token, discount_percent FROM promotions WHERE active=1 ORDER BY created_at DESC LIMIT 1")
+    promo = cursor.fetchone()
+
+    conn.close()
+    return render_template("dashboard.html", ratings=ratings, promo=promo)
 
 # --- Request Service ---
 @app.route("/request_service", methods=["GET", "POST"])
@@ -247,6 +216,22 @@ def request_service():
         note = request.form["note"]
         date = request.form["date"]
         time = request.form["time"]
+        discount_token = request.form.get("discount_token", "").upper()
+
+        discount = 0
+        if discount_token:
+            conn = sqlite3.connect(DB_NAME)
+            cursor = conn.cursor()
+            cursor.execute("SELECT discount_percent FROM promotions WHERE token=? AND active=1", (discount_token,))
+            promo = cursor.fetchone()
+            conn.close()
+            if promo:
+                discount = promo[0]
+                flash(f"{discount}% discount applied!", "success")
+            else:
+                flash("Invalid or expired discount token.", "danger")
+
+        final_price = service[1] * (1 - discount / 100)
 
         token = None
         if payment == "zelle":
@@ -261,7 +246,8 @@ def request_service():
         conn.commit()
         conn.close()
 
-        return render_template("confirmation.html", token=token, payment=payment, service=service)
+        return render_template("confirmation.html", token=token, payment=payment, service=service,
+                               discount=discount, final_price=final_price)
 
     return render_template("request_form.html", services=services)
 
@@ -294,9 +280,11 @@ def admin_dashboard():
             conn = sqlite3.connect(DB_NAME)
             cursor = conn.cursor()
 
+            # Users
             cursor.execute("SELECT id, email, phone, created_at FROM users")
             users = cursor.fetchall()
 
+            # Requests
             cursor.execute("""
                 SELECT requests.id, requests.user_id, services.name, services.price,
                        requests.address, requests.phone, requests.email, requests.payment,
@@ -306,9 +294,11 @@ def admin_dashboard():
             """)
             requests = cursor.fetchall()
 
+            # Services
             cursor.execute("SELECT id, name, price FROM services")
             services = cursor.fetchall()
 
+            # Ratings
             cursor.execute("""
                 SELECT ratings.id, users.email, ratings.rating, ratings.comment, ratings.submitted_at
                 FROM ratings
@@ -316,16 +306,22 @@ def admin_dashboard():
             """)
             ratings = cursor.fetchall()
 
+            # Promotions
+            cursor.execute("SELECT id, name, token, discount_percent, active, created_at FROM promotions")
+            promotions = cursor.fetchall()
+
             conn.close()
 
             return render_template("admin_dashboard.html",
-                                   users=users, requests=requests,
-                                   services=services, ratings=ratings)
+                                   users=users,
+                                   requests=requests,
+                                   services=services,
+                                   ratings=ratings,
+                                   promotions=promotions)
 
         flash("Invalid admin password!", "danger")
 
     return render_template("admin_login.html")
-
 @app.route("/delete_request/<int:request_id>", methods=["POST"])
 def delete_request(request_id):
     password = request.form.get("password")
@@ -342,6 +338,7 @@ def delete_request(request_id):
     flash(f"Request {request_id} deleted successfully!", "success")
     return redirect(url_for("admin_dashboard"))
 
+
 @app.route("/admin/services/update/<int:service_id>", methods=["POST"])
 def update_service(service_id):
     name = request.form["name"]
@@ -352,9 +349,11 @@ def update_service(service_id):
     cursor.execute("UPDATE services SET name=?, price=? WHERE id=?", (name, price, service_id))
     conn.commit()
     conn.close()
+
     flash("Service updated!", "success")
     return redirect(url_for("admin_dashboard"))
+
+
 # Run the app
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
-
