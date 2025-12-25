@@ -62,6 +62,16 @@ def init_db():
         FOREIGN KEY(service_id) REFERENCES services(id)
     )
     """)
+    # Settings (for things like active theme)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS settings (
+        key TEXT PRIMARY KEY,
+        value TEXT
+    )
+    """)
+
+    # Ensure default theme row exists
+    cursor.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('theme', 'none')")
 
     # Ratings
     cursor.execute("""
@@ -138,6 +148,31 @@ def signup():
             conn.close()
 
     return render_template("signup.html")
+
+
+
+@app.context_processor
+def inject_theme():
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute("SELECT value FROM settings WHERE key='theme'")
+    row = cursor.fetchone()
+    conn.close()
+
+    theme = row[0] if row else "none"
+    return dict(active_theme=theme)
+@app.route("/admin/set_theme", methods=["POST"])
+def set_theme():
+    theme = request.form["theme"]
+
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute("UPDATE settings SET value=? WHERE key='theme'", (theme,))
+    conn.commit()
+    conn.close()
+
+    flash("Theme updated!", "success")
+    return redirect(url_for("admin_dashboard"))
 
 
 @app.route("/login", methods=["GET", "POST"])
