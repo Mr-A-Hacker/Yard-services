@@ -161,8 +161,53 @@
         {% endfor %}
       </tbody>
     </table>
+
+    <!-- Promotions Management -->
+    <h4 class="mt-5">🎁 Promotions & Seasonal Offers</h4>
+    <form method="POST" action="{{ url_for('add_promotion') }}" class="card p-4 shadow-sm mb-4" style="max-width: 500px;">
+      <div class="mb-3">
+        <label for="promo_name" class="form-label">Promotion Name</label>
+        <input type="text" id="promo_name" name="name" placeholder="Winter Cleanup" class="form-control" required>
+      </div>
+      <div class="mb-3">
+        <label for="promo_token" class="form-label">Token Code</label>
+        <input type="text" id="promo_token" name="token" placeholder="WINTER30" class="form-control" required>
+      </div>
+      <div class="mb-3">
+        <label for="promo_discount" class="form-label">Discount (%)</label>
+        <input type="number" id="promo_discount" name="discount" placeholder="30" class="form-control" required>
+      </div>
+      <button type="submit" class="btn btn-success w-100">➕ Add Promotion</button>
+    </form>
+
+    <table class="table table-striped table-bordered shadow-sm">
+      <thead class="table-dark">
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Token</th>
+          <th>Discount</th>
+          <th>Active</th>
+          <th>Created</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in promotions %}
+        <tr>
+          <td>{{ p[0] }}</td>
+          <td>{{ p[1] }}</td>
+          <td>{{ p[2] }}</td>
+          <td>{{ p[3] }}%</td>
+          <td>{{ 'Yes' if p[4] else 'No' }}</td>
+          <td>{{ p[5] }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
   </div>
 
+  <!-- Footer -->
   <!-- Footer -->
   <footer class="bg-dark text-white text-center py-3 mt-5">
     <small>© 2025 Yard Services. Admin Panel</small>
