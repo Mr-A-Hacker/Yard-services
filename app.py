@@ -196,6 +196,12 @@ def dashboard():
     return render_template("dashboard.html", ratings=ratings, promo=promo)
 
 
+@app.route("/")
+def home():
+    return render_template("home.html")
+
+
+
 # -----------------------------
 # Request Service
 # -----------------------------
