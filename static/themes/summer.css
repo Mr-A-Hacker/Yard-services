@@ -1,0 +1,97 @@
+/* ==========================================================
+   SUMMER THEME — Yard Services
+   Activated when admin selects "summer"
+   ========================================================== */
+
+/* === SUMMER BACKGROUND === */
+body {
+  background: linear-gradient(135deg, #fff7b3, #ffec80, #ffe066) !important;
+  background-attachment: fixed;
+  color: #5a4500 !important;
+}
+
+/* === SUN GLOW PULSE EFFECT === */
+.navbar {
+  background: linear-gradient(180deg, #ffcc00, #ffb300) !important;
+  box-shadow: 0 6px 12px rgba(255, 204, 0, 0.4) !important;
+  animation: sunGlow 3s infinite ease-in-out;
+}
+
+@keyframes sunGlow {
+  0% { box-shadow: 0 0 10px #ffcc00; }
+  50% { box-shadow: 0 0 30px #ff9900; }
+  100% { box-shadow: 0 0 10px #ffcc00; }
+}
+
+.navbar-brand {
+  color: #5a4500 !important;
+  text-shadow: 0 0 6px rgba(255, 255, 0, 0.5);
+}
+
+/* === CARDS === */
+.card {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 2px solid #ffe066 !important;
+  box-shadow: 0 4px 12px rgba(255, 204, 0, 0.3) !important;
+  backdrop-filter: blur(3px);
+  color: #5a4500 !important;
+}
+
+/* === TABLES === */
+.table th {
+  background-color: #ffcc00 !important;
+  color: #5a4500 !important;
+}
+
+.table td {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  color: #5a4500 !important;
+}
+
+/* === FORMS === */
+form {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border: 2px solid #ffe066 !important;
+  box-shadow: 0 4px 12px rgba(255, 204, 0, 0.3) !important;
+}
+
+input, textarea, select {
+  background-color: #fff8d6 !important;
+  color: #5a4500 !important;
+  border: 1px solid #ffcc00 !important;
+}
+
+/* === BUTTONS === */
+.btn-primary {
+  background: linear-gradient(180deg, #ffcc00, #ffb300) !important;
+  border: none !important;
+  color: #5a4500 !important;
+}
+
+.btn-success {
+  background: linear-gradient(180deg, #ffe066, #ffcc33) !important;
+  border: none !important;
+  color: #5a4500 !important;
+}
+
+.btn-danger {
+  background: linear-gradient(180deg, #ff9966, #ff704d) !important;
+  border: none !important;
+  color: #5a4500 !important;
+}
+
+/* === FOOTER === */
+footer {
+  background-color: #ffcc00 !important;
+  color: #5a4500 !important;
+  box-shadow: 0 -4px 12px rgba(255, 204, 0, 0.4) !important;
+}
+
+/* === LINKS === */
+a {
+  color: #cc8a00 !important;
+}
+a:hover {
+  color: #ff9900 !important;
+  text-shadow: 0 0 6px #ffcc00;
+}
