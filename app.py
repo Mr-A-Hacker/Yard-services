@@ -2,12 +2,20 @@ import os
 import random
 import sqlite3
 import datetime
-from flask import send_from_directory
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from flask_bcrypt import Bcrypt
 from werkzeug.utils import secure_filename
 
+app = Flask(__name__)
+app.secret_key = os.getenv("SECRET_KEY", "fallbacksecret")
+bcrypt = Bcrypt(app)
+
+login_manager = LoginManager(app)
+login_manager.login_view = "login"
+
+DB_NAME = "yard.db"
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin1")
 
 # -----------------------------
 # File upload config for backgrounds
