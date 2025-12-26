@@ -1,0 +1,96 @@
+/* ==========================================================
+   WINTER THEME — Yard Services
+   Activated when admin selects "winter"
+   ========================================================== */
+
+/* === WINTER BACKGROUND === */
+body {
+  background: linear-gradient(135deg, #dff6ff, #ffffff) !important;
+  background-attachment: fixed;
+  color: #0a3d62 !important;
+}
+
+/* === SNOWFALL EFFECT === */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+
+  /* Snowflake pattern */
+  background-image: url("data:image/svg+xml,\
+  <svg xmlns='http://www.w3.org/2000/svg' width='12' height='12'>\
+  <circle cx='6' cy='6' r='2' fill='white'/>\
+  </svg>");
+
+  animation: snowfall 12s linear infinite;
+  opacity: 0.8;
+  z-index: 9999;
+}
+
+@keyframes snowfall {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 1000px; }
+}
+
+/* === NAVBAR === */
+.navbar {
+  background: linear-gradient(180deg, #74b9ff, #0984e3) !important;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.25);
+}
+
+.navbar-brand {
+  color: #ffffff !important;
+  text-shadow: 1px 1px 4px rgba(0,0,0,0.4);
+}
+
+/* === CARDS === */
+.card {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border: 2px solid #b3e5ff !important;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+/* === TABLES === */
+.table th {
+  background-color: #0984e3 !important;
+  color: white !important;
+}
+
+.table td {
+  background-color: rgba(255,255,255,0.9) !important;
+}
+
+/* === BUTTONS === */
+.btn-primary {
+  background: linear-gradient(180deg, #74b9ff, #0984e3) !important;
+  border: none !important;
+}
+
+.btn-success {
+  background: linear-gradient(180deg, #55efc4, #00b894) !important;
+  border: none !important;
+}
+
+.btn-danger {
+  background: linear-gradient(180deg, #ff7675, #d63031) !important;
+  border: none !important;
+}
+
+/* === FORMS === */
+form {
+  background: rgba(255,255,255,0.9) !important;
+  border: 2px solid #b3e5ff !important;
+  backdrop-filter: blur(3px);
+}
+
+/* === FOOTER === */
+footer {
+  background-color: #0a3d62 !important;
+  color: white !important;
+  box-shadow: 0 -4px 10px rgba(0,0,0,0.3);
+}
