@@ -175,6 +175,7 @@ def set_theme():
     return redirect(url_for("admin_dashboard"))
 
 
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
