@@ -5,6 +5,7 @@ import datetime
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from flask_bcrypt import Bcrypt
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "fallbacksecret")
@@ -15,6 +16,20 @@ login_manager.login_view = "login"
 
 DB_NAME = "yard.db"
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin1")
+
+# -----------------------------
+# File upload config for backgrounds
+# -----------------------------
+UPLOAD_FOLDER = os.path.join("static", "backgrounds")
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
+
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+
+
+def allowed_file(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 # -----------------------------
 # Database Setup
@@ -62,7 +77,8 @@ def init_db():
         FOREIGN KEY(service_id) REFERENCES services(id)
     )
     """)
-    # Settings (for things like active theme)
+
+    # Settings (for theme, background, etc.)
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS settings (
         key TEXT PRIMARY KEY,
@@ -70,8 +86,13 @@ def init_db():
     )
     """)
 
-    # Ensure default theme row exists
+    # Ensure default settings rows exist
     cursor.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('theme', 'none')")
+    cursor.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('background_image', '')")
+    cursor.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('background_position', 'center center')")
+    cursor.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('background_size', 'cover')")
+    cursor.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('background_repeat', 'no-repeat')")
+    cursor.execute("INSERT OR IGNORE INTO settings (key, value) VALUES ('background_attachment', 'fixed')")
 
     # Ratings
     cursor.execute("""
@@ -101,7 +122,10 @@ def init_db():
     conn.commit()
     conn.close()
 
+
 init_db()
+
+
 # -----------------------------
 # User Model
 # -----------------------------
@@ -110,6 +134,7 @@ class User(UserMixin):
         self.id = id
         self.email = email
         self.password_hash = password_hash
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -121,6 +146,37 @@ def load_user(user_id):
     if row:
         return User(*row)
     return None
+
+
+# -----------------------------
+# Global template context (theme + background)
+# -----------------------------
+@app.context_processor
+def inject_globals():
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute("SELECT key, value FROM settings")
+    rows = cursor.fetchall()
+    conn.close()
+
+    settings = {key: value for key, value in rows}
+
+    theme = settings.get("theme", "none")
+    bg_image = settings.get("background_image") or ""
+    bg_position = settings.get("background_position", "center center")
+    bg_size = settings.get("background_size", "cover")
+    bg_repeat = settings.get("background_repeat", "no-repeat")
+    bg_attachment = settings.get("background_attachment", "fixed")
+
+    return dict(
+        active_theme=theme,
+        bg_image=bg_image if bg_image.strip() else None,
+        bg_position=bg_position,
+        bg_size=bg_size,
+        bg_repeat=bg_repeat,
+        bg_attachment=bg_attachment,
+    )
+
 
 # -----------------------------
 # Routes: Signup / Login / Logout
@@ -150,17 +206,9 @@ def signup():
     return render_template("signup.html")
 
 
-
-@app.context_processor
-def inject_theme():
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
-    cursor.execute("SELECT value FROM settings WHERE key='theme'")
-    row = cursor.fetchone()
-    conn.close()
-
-    theme = row[0] if row else "none"
-    return dict(active_theme=theme)
+# -----------------------------
+# Theme controls
+# -----------------------------
 @app.route("/admin/set_theme", methods=["POST"])
 def set_theme():
     theme = request.form["theme"]
@@ -175,7 +223,62 @@ def set_theme():
     return redirect(url_for("admin_dashboard"))
 
 
+# -----------------------------
+# Background upload + controls
+# -----------------------------
+@app.route("/admin/upload_background", methods=["POST"])
+def upload_background():
+    if "file" not in request.files:
+        flash("No file uploaded.", "danger")
+        return redirect(url_for("admin_dashboard"))
 
+    file = request.files["file"]
+
+    if file.filename == "":
+        flash("No file selected.", "danger")
+        return redirect(url_for("admin_dashboard"))
+
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+        file.save(filepath)
+
+        conn = sqlite3.connect(DB_NAME)
+        cursor = conn.cursor()
+        cursor.execute("UPDATE settings SET value=? WHERE key='background_image'", (filename,))
+        conn.commit()
+        conn.close()
+
+        flash("Background image updated!", "success")
+        return redirect(url_for("admin_dashboard"))
+
+    flash("Invalid file type.", "danger")
+    return redirect(url_for("admin_dashboard"))
+
+
+@app.route("/admin/update_background_settings", methods=["POST"])
+def update_background_settings():
+    position = request.form.get("position", "center center")
+    size = request.form.get("size", "cover")
+    repeat = request.form.get("repeat", "no-repeat")
+    attachment = request.form.get("attachment", "fixed")
+
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute("UPDATE settings SET value=? WHERE key='background_position'", (position,))
+    cursor.execute("UPDATE settings SET value=? WHERE key='background_size'", (size,))
+    cursor.execute("UPDATE settings SET value=? WHERE key='background_repeat'", (repeat,))
+    cursor.execute("UPDATE settings SET value=? WHERE key='background_attachment'", (attachment,))
+    conn.commit()
+    conn.close()
+
+    flash("Background settings updated!", "success")
+    return redirect(url_for("admin_dashboard"))
+
+
+# -----------------------------
+# Login / Logout
+# -----------------------------
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -205,6 +308,8 @@ def logout():
     logout_user()
     flash("You have been logged out.", "info")
     return redirect(url_for("login"))
+
+
 # -----------------------------
 # Dashboard
 # -----------------------------
@@ -225,7 +330,13 @@ def dashboard():
     ratings = cursor.fetchall()
 
     # Latest active promotion
-    cursor.execute("SELECT token, discount_percent, expires_at FROM promotions WHERE active=1 ORDER BY created_at DESC LIMIT 1")
+    cursor.execute("""
+        SELECT token, discount_percent, expires_at
+        FROM promotions
+        WHERE active=1
+        ORDER BY created_at DESC
+        LIMIT 1
+    """)
     promo = cursor.fetchone()
 
     conn.close()
@@ -235,7 +346,6 @@ def dashboard():
 @app.route("/")
 def home():
     return render_template("home.html")
-
 
 
 # -----------------------------
@@ -273,7 +383,7 @@ def request_service():
         discount = 0
         valid_token = False
 
-        # 🔎 Check token validity
+        # Check token validity
         if discount_token:
             conn = sqlite3.connect(DB_NAME)
             cursor = conn.cursor()
@@ -293,7 +403,7 @@ def request_service():
             else:
                 flash("Invalid discount token.", "danger")
 
-        # 💰 Calculate final price
+        # Calculate final price
         final_price = service[1] * (1 - discount / 100)
 
         # Generate token for Zelle payments
@@ -312,16 +422,17 @@ def request_service():
         conn.close()
 
         # Show confirmation page with breakdown
-        return render_template("confirmation.html",
-                               service=service,
-                               discount=discount,
-                               final_price=final_price,
-                               discount_token=discount_token if valid_token else None,
-                               token=token,
-                               payment=payment)
+        return render_template(
+            "confirmation.html",
+            service=service,
+            discount=discount,
+            final_price=final_price,
+            discount_token=discount_token if valid_token else None,
+            token=token,
+            payment=payment
+        )
 
     return render_template("request_form.html", services=services)
-
 
 
 # -----------------------------
@@ -345,6 +456,8 @@ def rate_us():
         return redirect(url_for("dashboard"))
 
     return render_template("rate_us.html")
+
+
 # -----------------------------
 # Admin Dashboard
 # -----------------------------
@@ -368,7 +481,7 @@ def admin_dashboard():
                 FROM requests
                 LEFT JOIN services ON requests.service_id = services.id
             """)
-            requests = cursor.fetchall()
+            requests_data = cursor.fetchall()
 
             # Services
             cursor.execute("SELECT id, name, price FROM services")
@@ -388,12 +501,14 @@ def admin_dashboard():
 
             conn.close()
 
-            return render_template("admin_dashboard.html",
-                                   users=users,
-                                   requests=requests,
-                                   services=services,
-                                   ratings=ratings,
-                                   promotions=promotions)
+            return render_template(
+                "admin_dashboard.html",
+                users=users,
+                requests=requests_data,
+                services=services,
+                ratings=ratings,
+                promotions=promotions
+            )
 
         flash("Invalid admin password!", "danger")
 
@@ -471,8 +586,10 @@ def add_promotion():
 
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO promotions (name, token, discount_percent, expires_at) VALUES (?, ?, ?, ?)",
-                   (name, token, discount, expires_at))
+    cursor.execute(
+        "INSERT INTO promotions (name, token, discount_percent, expires_at) VALUES (?, ?, ?, ?)",
+        (name, token, discount, expires_at)
+    )
     conn.commit()
     conn.close()
 
@@ -490,6 +607,8 @@ def delete_promotion(promo_id):
 
     flash("Promotion deleted!", "info")
     return redirect(url_for("admin_dashboard"))
+
+
 # -----------------------------
 # Run the app
 # -----------------------------
