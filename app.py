@@ -148,6 +148,25 @@ def load_user(user_id):
     return None
 
 
+
+@app.route("/admin/clear_background", methods=["POST"])
+def clear_background():
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+
+    cursor.execute("UPDATE settings SET value='' WHERE key='background_image'")
+    cursor.execute("UPDATE settings SET value='center center' WHERE key='background_position'")
+    cursor.execute("UPDATE settings SET value='cover' WHERE key='background_size'")
+    cursor.execute("UPDATE settings SET value='no-repeat' WHERE key='background_repeat'")
+    cursor.execute("UPDATE settings SET value='fixed' WHERE key='background_attachment'")
+
+    conn.commit()
+    conn.close()
+
+    flash("Background removed successfully!", "info")
+    return redirect(url_for("admin_dashboard"))
+
+
 # -----------------------------
 # Global template context (theme + background)
 # -----------------------------
