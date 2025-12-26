@@ -44,6 +44,12 @@
       <button class="btn btn-primary w-100">Upload Background</button>
     </form>
 
+    <!-- Remove Background -->
+    <form method="POST" action="{{ url_for('clear_background') }}"
+          class="card p-3 shadow-sm mb-4" style="max-width: 500px;">
+      <button class="btn btn-danger w-100">❌ Remove Background</button>
+    </form>
+
     <!-- Background Settings -->
     <form method="POST" action="{{ url_for('update_background_settings') }}"
           class="card p-4 shadow-sm mb-4" style="max-width: 500px;">
