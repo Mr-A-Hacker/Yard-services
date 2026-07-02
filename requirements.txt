@@ -1,0 +1,6 @@
+Flask
+Flask-Login
+Flask-Bcrypt
+gunicorn
+Flask-Mail
+b2sdk

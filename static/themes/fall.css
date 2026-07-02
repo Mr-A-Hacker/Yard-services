@@ -1,0 +1,116 @@
+/* ==========================================================
+   FALL THEME — Yard Services
+   Activated when admin selects "fall"
+   ========================================================== */
+
+/* === AUTUMN BACKGROUND === */
+body {
+  background: linear-gradient(135deg, #ffe8cc, #ffd8a8, #ffc078) !important;
+  background-attachment: fixed;
+  color: #5a3d1e !important;
+}
+
+/* === FALLING LEAVES EFFECT === */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+
+  /* Leaf pattern */
+  background-image: url("data:image/svg+xml,\
+  <svg xmlns='http://www.w3.org/2000/svg' width='18' height='18'>\
+  <text x='0' y='14' font-size='16' fill='orange'>🍁</text>\
+  </svg>");
+
+  animation: fallingLeaves 14s linear infinite;
+  opacity: 0.8;
+  z-index: 9999;
+}
+
+@keyframes fallingLeaves {
+  0% { background-position: 0 0; }
+  100% { background-position: -300px 1200px; }
+}
+
+/* === NAVBAR === */
+.navbar {
+  background: linear-gradient(180deg, #b3541e, #8c3f14) !important;
+  box-shadow: 0 6px 12px rgba(140, 63, 20, 0.4) !important;
+}
+
+.navbar-brand {
+  color: #ffe8cc !important;
+  text-shadow: 0 0 6px rgba(255, 200, 150, 0.5);
+}
+
+/* === CARDS === */
+.card {
+  background: rgba(255, 245, 230, 0.9) !important;
+  border: 2px solid #d98c4a !important;
+  box-shadow: 0 4px 12px rgba(140, 63, 20, 0.25) !important;
+  backdrop-filter: blur(3px);
+  color: #5a3d1e !important;
+}
+
+/* === TABLES === */
+.table th {
+  background-color: #d98c4a !important;
+  color: #5a3d1e !important;
+}
+
+.table td {
+  background-color: rgba(255, 245, 230, 0.95) !important;
+  color: #5a3d1e !important;
+}
+
+/* === FORMS === */
+form {
+  background: rgba(255, 245, 230, 0.95) !important;
+  border: 2px solid #d98c4a !important;
+  box-shadow: 0 4px 12px rgba(140, 63, 20, 0.25) !important;
+}
+
+input, textarea, select {
+  background-color: #fff1db !important;
+  color: #5a3d1e !important;
+  border: 1px solid #d98c4a !important;
+}
+
+/* === BUTTONS === */
+.btn-primary {
+  background: linear-gradient(180deg, #d98c4a, #b36a2e) !important;
+  border: none !important;
+  color: #fff7e6 !important;
+}
+
+.btn-success {
+  background: linear-gradient(180deg, #ffb878, #e69a55) !important;
+  border: none !important;
+  color: #5a3d1e !important;
+}
+
+.btn-danger {
+  background: linear-gradient(180deg, #e66a4e, #cc583f) !important;
+  border: none !important;
+  color: #fff7e6 !important;
+}
+
+/* === FOOTER === */
+footer {
+  background-color: #8c3f14 !important;
+  color: #ffe8cc !important;
+  box-shadow: 0 -4px 12px rgba(140, 63, 20, 0.4) !important;
+}
+
+/* === LINKS === */
+a {
+  color: #b3541e !important;
+}
+a:hover {
+  color: #8c3f14 !important;
+  text-shadow: 0 0 6px #ffb878;
+}

@@ -1,0 +1,109 @@
+/* ==========================================================
+   HALLOWEEN THEME — Yard Services
+   Activated when admin selects "halloween"
+   ========================================================== */
+
+/* === SPOOKY BACKGROUND === */
+body {
+  background: linear-gradient(135deg, #0a0a0a, #1a1a1a) !important;
+  color: #ffa500 !important;
+  background-attachment: fixed;
+}
+
+/* === FLICKERING NEON ORANGE GLOW === */
+h1, h2, h3, h4, h5,
+.navbar-brand,
+.card,
+footer,
+label,
+.table th {
+  animation: halloweenGlow 2.5s infinite;
+}
+
+@keyframes halloweenGlow {
+  0%, 100% {
+    text-shadow: 0 0 8px #ff6600, 0 0 20px #ff4500;
+    opacity: 1;
+  }
+  50% {
+    text-shadow: none;
+    opacity: 0.6;
+  }
+}
+
+/* === NAVBAR === */
+.navbar {
+  background: linear-gradient(180deg, #000000, #2b0000) !important;
+  box-shadow: 0 6px 12px rgba(255, 69, 0, 0.4) !important;
+}
+
+.navbar-brand {
+  color: #ffa500 !important;
+}
+
+/* === CARDS === */
+.card {
+  background: rgba(20, 20, 20, 0.9) !important;
+  border: 2px solid #ff6600 !important;
+  box-shadow: 0 4px 12px rgba(255, 69, 0, 0.3) !important;
+  color: #ffa500 !important;
+}
+
+/* === TABLES === */
+.table th {
+  background-color: #ff6600 !important;
+  color: black !important;
+}
+
+.table td {
+  background-color: rgba(30, 30, 30, 0.9) !important;
+  color: #ffa500 !important;
+}
+
+/* === FORMS === */
+form {
+  background: rgba(25, 25, 25, 0.95) !important;
+  border: 2px solid #ff6600 !important;
+  box-shadow: 0 4px 12px rgba(255, 69, 0, 0.3) !important;
+}
+
+input, textarea, select {
+  background-color: #111 !important;
+  color: #ffa500 !important;
+  border: 1px solid #ff6600 !important;
+}
+
+/* === BUTTONS === */
+.btn-primary {
+  background: linear-gradient(180deg, #ff6600, #cc5200) !important;
+  border: none !important;
+  color: black !important;
+}
+
+.btn-success {
+  background: linear-gradient(180deg, #ff8c00, #cc7000) !important;
+  border: none !important;
+  color: black !important;
+}
+
+.btn-danger {
+  background: linear-gradient(180deg, #ff3300, #cc2900) !important;
+  border: none !important;
+  color: black !important;
+}
+
+/* === FOOTER === */
+footer {
+  background-color: #000 !important;
+  color: #ffa500 !important;
+  box-shadow: 0 -4px 12px rgba(255, 69, 0, 0.4) !important;
+}
+
+/* === LINKS === */
+a {
+  color: #ffa500 !important;
+}
+a:hover {
+  color: #ff4500 !important;
+  text-shadow: 0 0 6px #ff4500;
+}

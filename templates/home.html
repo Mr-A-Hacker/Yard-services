@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+  <title>Yard Services</title>
+
+  <script>
+    atOptions = { key: 'd0fd3067ca9fd49b0435270473b5aef6', format: 'iframe', height: 60, width: 468, params: {} };
+  </script>
+  <script src="https://www.highperformanceformat.com/d0fd3067ca9fd49b0435270473b5aef6/invoke.js"></script>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5186647140863001" crossorigin="anonymous"></script>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Bitter:wght@700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='themes/' + active_theme + '.css') }}">
+
+  <style>
+    body {
+      {% if bg_image %}
+        background-image: url('{{ bg_image }}');
+        background-position: {{ bg_position }};
+        background-size: {{ bg_size }};
+        background-repeat: {{ bg_repeat }};
+        background-attachment: {{ bg_attachment }};
+      {% endif %}
+    }
+  </style>
+
+  <style>
+    :root {
+      --g-dark:   #1a5c2a;
+      --g-mid:    #2d8a3e;
+      --g-bright: #4caf50;
+      --g-light:  #c8e6c9;
+      --g-pale:   #f1f8f2;
+      --gold:     #f5a623;
+      --gold-soft:#fff8e1;
+      --gold-dark:#c47f00;
+      --white:    #ffffff;
+      --ink:      #1a2e1c;
+      --muted:    #6a8f70;
+      --shadow-sm:0 2px 12px rgba(26,92,42,0.10);
+      --shadow:   0 6px 28px rgba(26,92,42,0.15);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background-color: var(--g-pale);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        170deg,
+        rgba(76,175,80,0.05) 0px, rgba(76,175,80,0.05) 20px,
+        transparent 20px, transparent 40px
+      );
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Navbar ── */
+    .top-nav {
+      background: linear-gradient(90deg, var(--g-dark), var(--g-mid));
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 3px 16px rgba(0,0,0,0.2);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .top-nav .brand {
+      font-family: 'Bitter', serif;
+      font-size: 1.2rem;
+      font-weight: 900;
+      color: white;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .top-nav .brand .icon-badge {
+      background: var(--gold);
+      color: var(--g-dark);
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+    }
+
+    .nav-links { display: flex; gap: 10px; }
+
+    .nav-pill {
+      color: var(--g-light);
+      font-size: 0.85rem;
+      font-weight: 800;
+      text-decoration: none;
+      padding: 7px 18px;
+      border-radius: 999px;
+      border: 1.5px solid rgba(255,255,255,0.25);
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .nav-pill:hover { background: rgba(255,255,255,0.15); color: white; }
+    .nav-pill.pill-solid {
+      background: var(--gold);
+      border-color: var(--gold);
+      color: var(--g-dark);
+    }
+    .nav-pill.pill-solid:hover { background: #ffc53d; }
+
+    /* ── Ad wrap ── */
+    .ad-wrap {
+      display: flex;
+      justify-content: center;
+      padding: 14px 0 0;
+      position: relative;
+      z-index: 1;
+      opacity: 0.85;
+    }
+
+    /* ── Page wrap ── */
+    .page-wrap {
+      position: relative;
+      z-index: 1;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 36px 16px 60px;
+      flex: 1;
+      width: 100%;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      background: linear-gradient(135deg, var(--g-dark) 0%, var(--g-mid) 60%, var(--g-bright) 100%);
+      border-radius: 24px;
+      padding: 52px 40px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      margin-bottom: 32px;
+      animation: fadeUp 0.4s ease both;
+    }
+
+    .hero::before {
+      content: '🌿';
+      font-size: 200px;
+      position: absolute;
+      right: -30px;
+      top: -40px;
+      opacity: 0.09;
+      transform: rotate(-12deg);
+    }
+
+    .hero::after {
+      content: '✂️';
+      font-size: 120px;
+      position: absolute;
+      left: -20px;
+      bottom: -30px;
+      opacity: 0.08;
+      transform: rotate(10deg);
+    }
+
+    .hero h1 {
+      font-family: 'Bitter', serif;
+      font-size: 2.6rem;
+      font-weight: 900;
+      color: white;
+      margin-bottom: 12px;
+      line-height: 1.2;
+    }
+
+    .hero p {
+      color: var(--g-light);
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 32px;
+    }
+
+    .hero-images {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+
+    .hero-images img {
+      height: 100px;
+      width: auto;
+      border-radius: 14px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.25);
+      border: 3px solid rgba(255,255,255,0.25);
+    }
+
+    .hero-btns {
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .btn-hero {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 32px;
+      border-radius: 14px;
+      font-family: 'Bitter', serif;
+      font-size: 1rem;
+      font-weight: 700;
+      text-decoration: none;
+      transition: transform 0.15s, box-shadow 0.15s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-hero::before {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+      transition: left 0.4s;
+    }
+
+    .btn-hero:hover { transform: translateY(-3px); }
+    .btn-hero:hover::before { left: 100%; }
+
+    .btn-signup {
+      background: var(--gold);
+      color: var(--g-dark);
+      box-shadow: 0 4px 18px rgba(245,166,35,0.4);
+    }
+
+    .btn-login {
+      background: rgba(255,255,255,0.15);
+      color: white;
+      border: 2px solid rgba(255,255,255,0.4);
+      box-shadow: 0 4px 18px rgba(0,0,0,0.15);
+    }
+
+    .btn-pricing {
+      background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+      color: #3b1f00;
+      box-shadow: 0 4px 18px rgba(245,166,35,0.45);
+      font-weight: 900;
+    }
+    .btn-pricing:hover { color: #3b1f00; }
+
+    .signup-promo-wrap {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: stretch;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 4px 18px rgba(245,166,35,0.4);
+    }
+
+    .signup-promo-wrap .btn-hero.btn-signup {
+      border-radius: 0;
+      box-shadow: none;
+      margin: 0;
+    }
+
+    .signup-promo-badge {
+      display: block;
+      background: linear-gradient(90deg, #7b4f00, #f5a623, #ffe082, #f5a623, #7b4f00);
+      background-size: 200% auto;
+      color: #3b1f00;
+      font-size: 0.8rem;
+      font-weight: 900;
+      padding: 6px 14px;
+      text-align: center;
+      white-space: nowrap;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.4);
+      animation: shimmer 2.5s linear infinite;
+      border-top: 1px solid rgba(255,255,255,0.2);
+    }
+
+    @keyframes shimmer {
+      0%   { background-position: 200% center; }
+      100% { background-position: -200% center; }
+    }
+
+    /* ── Ratings section ── */
+    .section-card {
+      background: var(--white);
+      border-radius: 18px;
+      border: 1.5px solid var(--g-light);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      margin-bottom: 24px;
+      animation: fadeUp 0.4s ease 0.15s both;
+    }
+
+    .section-card-head {
+      background: linear-gradient(90deg, var(--g-dark), var(--g-mid));
+      padding: 14px 22px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-card-head .head-icon {
+      width: 30px;
+      height: 30px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+    }
+
+    .section-card-head h5 {
+      font-family: 'Bitter', serif;
+      font-size: 1rem;
+      font-weight: 900;
+      color: white;
+      margin: 0;
+    }
+
+    .section-card-body { padding: 22px; }
+
+    .ratings-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 14px;
+    }
+
+    .rating-tile {
+      background: var(--g-pale);
+      border: 1.5px solid var(--g-light);
+      border-radius: 14px;
+      padding: 16px 18px;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .rating-tile:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(26,92,42,0.12);
+    }
+
+    .rating-email {
+      font-weight: 800;
+      font-size: 0.88rem;
+      color: var(--g-dark);
+      margin-bottom: 4px;
+    }
+
+    .rating-stars { color: var(--gold); font-size: 0.95rem; font-weight: 800; margin-bottom: 6px; }
+
+    .rating-comment {
+      font-size: 0.88rem;
+      color: #444;
+      font-style: italic;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .rating-date { font-size: 0.78rem; color: var(--muted); font-weight: 700; }
+
+    /* ── Footer ── */
+    footer {
+      position: relative;
+      z-index: 1;
+      background: var(--g-dark);
+      color: var(--g-light);
+      text-align: center;
+      padding: 16px;
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    /* ── Popup ── */
+    .popup-modal .modal-header {
+      background: linear-gradient(135deg, var(--g-dark), var(--g-mid));
+      border: none;
+    }
+    .popup-modal .modal-title { font-family: 'Bitter', serif; font-weight: 900; color: white; }
+    .popup-modal .modal-content {
+      border-radius: 18px;
+      border: 2px solid var(--g-bright);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+    .popup-modal .modal-footer { border-top: 1.5px solid var(--g-light); }
+    .popup-ok-btn {
+      background: linear-gradient(135deg, var(--g-mid), var(--g-dark));
+      color: white;
+      border: none;
+      padding: 9px 28px;
+      border-radius: 10px;
+      font-weight: 800;
+      font-size: 0.92rem;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 600px) {
+      .hero h1 { font-size: 1.8rem; }
+      .hero { padding: 36px 20px; }
+      .hero-images img { height: 70px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="top-nav">
+    <a class="brand" href="{{ url_for('home') }}">
+      <span class="icon-badge">🌿</span>
+      Yard Services
+    </a>
+    <div class="nav-links">
+      <a href="{{ url_for('signup') }}" class="nav-pill">Sign Up</a>
+      <a href="{{ url_for('login') }}" class="nav-pill pill-solid">🔑 Login</a>
+    </div>
+  </nav>
+
+  <div class="ad-wrap"></div>
+
+  <div class="page-wrap">
+
+    <!-- Hero -->
+    <div class="hero">
+      <div class="hero-images">
+        <img src="{{ url_for('static', filename='left.png') }}" alt="">
+        <img src="{{ url_for('static', filename='right.png') }}" alt="">
+      </div>
+      <h1>Welcome to Yard Services</h1>
+      <p>Fast, reliable yard service requests at your fingertips 🌱</p>
+      <div class="hero-btns">
+        <div class="signup-promo-wrap">
+          <a href="{{ url_for('signup') }}" class="btn-hero btn-signup">🚀 Sign Up</a>
+          <span class="signup-promo-badge">🏷️ Become a member for 15% discount</span>
+        </div>
+        <a href="{{ url_for('login') }}" class="btn-hero btn-login">🔑 Login</a>
+        <a href="{{ url_for('pricing') }}" class="btn-hero btn-pricing">💵 See Pricing</a>
+      </div>
+    </div>
+
+    <!-- Featured Ratings -->
+    {% if featured_ratings %}
+    <div class="section-card">
+      <div class="section-card-head">
+        <div class="head-icon">⭐</div>
+        <h5>What Our Customers Say</h5>
+      </div>
+      <div class="section-card-body">
+        <div class="ratings-grid">
+          {% for r in featured_ratings %}
+          <div class="rating-tile">
+            <div class="rating-email">{{ r.email or 'Anonymous' }}</div>
+            <div class="rating-stars">{{ '⭐' * r.rating }} {{ r.rating }}/5</div>
+            {% if r.comment %}<div class="rating-comment">"{{ r.comment }}"</div>{% endif %}
+            <div class="rating-date">{{ r.timestamp.strftime('%Y-%m-%d') if r.timestamp else '' }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+
+  <footer>© 2025 Yard Services. All rights reserved. 🌿</footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+  {% if popup %}
+  <div class="modal fade popup-modal" id="popupModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">{{ popup.title }}</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" style="padding:24px;">
+          {% if popup.message %}<p style="font-size:1rem;font-weight:700;line-height:1.6;">{{ popup.message }}</p>{% endif %}
+          {% if popup.media_type == 'image' %}
+            <img src="{{ popup.media_url }}" class="img-fluid rounded mt-3">
+          {% elif popup.media_type == 'video' %}
+            <video controls class="w-100 rounded mt-3"><source src="{{ popup.media_url }}" type="video/mp4"></video>
+          {% endif %}
+        </div>
+        <div class="modal-footer">
+          <button class="popup-ok-btn" data-bs-dismiss="modal">✅ Got it!</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      new bootstrap.Modal(document.getElementById("popupModal")).show();
+    });
+  </script>
+  {% endif %}
+
+</body>
+</html>

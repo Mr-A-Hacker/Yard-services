@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+  <title>Edit Service — Yard Services Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Bitter:wght@700;900&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    :root {
+      --g-dark:    #1a5c2a;
+      --g-mid:     #2d8a3e;
+      --g-bright:  #4caf50;
+      --g-light:   #c8e6c9;
+      --g-pale:    #f1f8f2;
+      --gold:      #f5a623;
+      --gold-dark: #c47f00;
+      --white:     #ffffff;
+      --ink:       #1a2e1c;
+      --muted:     #6a8f70;
+      --shadow:    0 8px 32px rgba(26,92,42,0.16);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--g-pale);
+      min-height: 100vh;
+      padding: 40px 16px 60px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Grass stripe texture */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        175deg,
+        rgba(76,175,80,0.06) 0px, rgba(76,175,80,0.06) 20px,
+        transparent 20px, transparent 40px
+      );
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Decorative leaf */
+    body::after {
+      content: '✂️';
+      font-size: 110px;
+      position: fixed;
+      bottom: -10px;
+      right: -10px;
+      opacity: 0.08;
+      pointer-events: none;
+      z-index: 0;
+      transform: rotate(15deg);
+    }
+
+    .page-wrapper {
+      position: relative;
+      z-index: 1;
+      max-width: 640px;
+      margin: 0 auto;
+      animation: slideUp 0.4s ease both;
+    }
+
+    /* ── Header ── */
+    .page-header {
+      background: linear-gradient(135deg, var(--g-dark) 0%, var(--g-mid) 60%, var(--g-bright) 100%);
+      border-radius: 20px 20px 0 0;
+      padding: 30px 36px 26px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .page-header::before {
+      content: '🌿';
+      font-size: 90px;
+      position: absolute;
+      right: 20px;
+      top: -10px;
+      opacity: 0.15;
+      transform: rotate(-10deg);
+    }
+
+    .badge-pill {
+      display: inline-block;
+      background: var(--gold);
+      color: var(--g-dark);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 4px 14px;
+      border-radius: 999px;
+      margin-bottom: 10px;
+    }
+
+    .page-header h2 {
+      font-family: 'Bitter', serif;
+      font-size: 1.9rem;
+      font-weight: 900;
+      color: var(--white);
+      line-height: 1.2;
+      margin: 0;
+    }
+
+    .page-header p {
+      color: var(--g-light);
+      font-size: 0.9rem;
+      margin-top: 6px;
+      font-weight: 600;
+    }
+
+    /* Gold strip */
+    .gold-strip {
+      height: 5px;
+      background: linear-gradient(90deg, var(--gold), #ffe082, var(--gold));
+    }
+
+    /* ── Card ── */
+    .form-card {
+      background: var(--white);
+      border-radius: 0 0 20px 20px;
+      padding: 36px;
+      box-shadow: var(--shadow);
+      border: 2.5px solid var(--g-bright);
+      border-top: none;
+    }
+
+    /* ── Service name badge at top ── */
+    .service-identity {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--g-pale);
+      border: 1.5px solid var(--g-light);
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 28px;
+    }
+
+    .service-identity .svc-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--g-bright), var(--g-mid));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .service-identity .svc-label {
+      font-size: 0.78rem;
+      font-weight: 800;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .service-identity .svc-name {
+      font-family: 'Bitter', serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--g-dark);
+    }
+
+    /* ── Field groups ── */
+    .field-group { margin-bottom: 20px; }
+
+    .field-group label {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-weight: 800;
+      font-size: 0.82rem;
+      color: var(--g-dark);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 7px;
+    }
+
+    .field-group label .icon {
+      width: 22px;
+      height: 22px;
+      background: linear-gradient(135deg, var(--g-bright), var(--g-mid));
+      border-radius: 5px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+
+    .field-group .optional {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #888;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 11px 15px;
+      border: 2px solid var(--g-light);
+      border-radius: 10px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.96rem;
+      font-weight: 600;
+      color: var(--ink);
+      background: var(--g-pale);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    }
+
+    .form-control:focus {
+      border-color: var(--g-bright);
+      background: var(--white);
+      box-shadow: 0 0 0 4px rgba(76,175,80,0.15);
+    }
+
+    textarea.form-control { resize: vertical; min-height: 110px; }
+
+    .price-hint {
+      font-size: 0.8rem;
+      color: var(--gold-dark);
+      font-weight: 700;
+      margin-top: 5px;
+    }
+
+    /* ── Divider ── */
+    .section-divider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 24px 0 20px;
+      color: var(--g-mid);
+      font-size: 0.75rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .section-divider::before,
+    .section-divider::after {
+      content: '';
+      flex: 1;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--g-light), transparent);
+    }
+
+    /* ── Buttons ── */
+    .btn-save {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, var(--g-mid), var(--g-dark));
+      color: white;
+      font-family: 'Bitter', serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 4px 18px rgba(26,92,42,0.35);
+    }
+
+    .btn-save::before {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+      transition: left 0.4s;
+    }
+
+    .btn-save:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(26,92,42,0.45); }
+    .btn-save:hover::before { left: 100%; }
+    .btn-save:active { transform: translateY(0); }
+
+    .btn-back {
+      display: block;
+      width: 100%;
+      margin-top: 12px;
+      padding: 12px;
+      background: transparent;
+      color: var(--g-dark);
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 800;
+      border: 2.5px solid var(--g-bright);
+      border-radius: 12px;
+      text-align: center;
+      text-decoration: none;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .btn-back:hover { background: var(--g-bright); color: white; }
+
+    /* ── Change indicator dot ── */
+    .form-control:not([value=""]):focus { border-color: var(--gold); box-shadow: 0 0 0 4px rgba(245,166,35,0.15); }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(22px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+<div class="page-wrapper">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div class="badge-pill">✏️ Edit Mode</div>
+    <h2>Edit Service</h2>
+    <p>Update the details below — changes save immediately</p>
+  </div>
+
+  <div class="gold-strip"></div>
+
+  <div class="form-card">
+
+    <!-- Service identity chip -->
+    <div class="service-identity">
+      <div class="svc-icon">🌿</div>
+      <div>
+        <div class="svc-label">Editing service</div>
+        <div class="svc-name">{{ service.name }}</div>
+      </div>
+    </div>
+
+    <!-- FIX: action points to correct route; no password field needed -->
+    <form method="POST" action="{{ url_for('admin_edit_service', service_id=service.id) }}">
+
+      <div class="field-group">
+        <label><span class="icon">🌿</span> Service Name</label>
+        <input type="text" name="name" class="form-control"
+               value="{{ service.name }}" required>
+      </div>
+
+      <div class="field-group">
+        <label><span class="icon">💵</span> Price</label>
+        <input type="number" name="price" class="form-control"
+               value="{{ service.price }}" min="0" step="0.01" required>
+        <div class="price-hint">⚡ Current: ${{ "%.2f"|format(service.price|float) }}</div>
+      </div>
+
+      <div class="section-divider">Details</div>
+
+      <div class="field-group">
+        <!-- FIX: description is optional, not required -->
+        <label><span class="icon">📋</span> Description <span class="optional">(optional)</span></label>
+        <textarea name="description" class="form-control" rows="4">{{ service.description or '' }}</textarea>
+      </div>
+
+      <div class="field-group">
+        <label><span class="icon">🖼️</span> Image URL <span class="optional">(optional)</span></label>
+        <!-- FIX: type="url" for validation; handle None gracefully -->
+        <input type="url" name="image_url" class="form-control"
+               value="{{ service.image_url or '' }}"
+               placeholder="https://example.com/image.jpg">
+      </div>
+
+      <button type="submit" class="btn-save">💾 Save Changes</button>
+
+    </form>
+
+    <a href="{{ url_for('admin_dashboard') }}" class="btn-back">⬅ Back to Dashboard</a>
+
+  </div>
+</div>
+</body>
+</html>
