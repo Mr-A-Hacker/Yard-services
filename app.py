@@ -112,6 +112,14 @@ _db_dirty = False
 def mark_db_dirty():
     global _db_dirty
     _db_dirty = True
+    if _app_has_b2:
+        upload_db_to_b2()
+        _db_dirty = False
+
+
+def sync_db_to_b2():
+    if _app_has_b2:
+        upload_db_to_b2()
 
 
 def get_client_ip():
@@ -586,6 +594,7 @@ def signup():
             )
             conn.commit()
             mark_db_dirty()
+            sync_db_to_b2()
             cursor.execute("SELECT id FROM users WHERE email = ?", (email,))
             new_user = cursor.fetchone()
             if new_user:
@@ -1107,6 +1116,7 @@ def admin_add_service():
     )
     conn.commit()
     mark_db_dirty()
+    sync_db_to_b2()
     flash("Service added!", "success")
     return redirect(url_for("admin_dashboard"))
 
