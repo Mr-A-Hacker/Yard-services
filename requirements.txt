@@ -5,3 +5,4 @@ gunicorn
 Flask-Mail
 python-dotenv
 b2sdk
+requests

@@ -11,6 +11,11 @@ from functools import wraps
 from urllib import request as urllib_request
 
 try:
+    import requests
+except ImportError:
+    requests = None
+
+try:
     from dotenv import load_dotenv
 except ImportError:
     def load_dotenv(dotenv_path=".env"):
@@ -110,7 +115,11 @@ ADMIN_NOTIFICATION_RECIPIENTS = [
 
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin1")
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "mp4", "webm"}
-TEAMS_WEBHOOK_URL = os.getenv("TEAMS_WEBHOOK_URL", "").strip()
+NOTIFICATION_WEBHOOK_URL = os.getenv("NOTIFICATION_WEBHOOK_URL", "").strip()
+TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID", "").strip()
+TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN", "").strip()
+TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER", "").strip()
+SMS_TO_PHONE = os.getenv("SMS_TO_PHONE", "").strip()
 
 
 # ============================================================
@@ -532,10 +541,10 @@ def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-def send_teams_message(message):
-    webhook_url = os.getenv("TEAMS_WEBHOOK_URL", "").strip() or TEAMS_WEBHOOK_URL
+def send_webhook_notification(message):
+    webhook_url = os.getenv("NOTIFICATION_WEBHOOK_URL", "").strip() or NOTIFICATION_WEBHOOK_URL
     if not webhook_url:
-        print("TEAMS_WEBHOOK_URL not configured, skipping Teams notification.")
+        print("NOTIFICATION_WEBHOOK_URL not configured, skipping webhook notification.")
         return
 
     payload = {"text": message}
@@ -548,9 +557,38 @@ def send_teams_message(message):
         )
         with urllib_request.urlopen(req, timeout=10) as response:
             if getattr(response, "status", 200) >= 400:
-                raise RuntimeError(f"Teams webhook returned HTTP {response.status}")
+                raise RuntimeError(f"Webhook returned HTTP {response.status}")
     except Exception as exc:
-        print(f"Failed to send Teams notification: {exc}")
+        print(f"Failed to send webhook notification: {exc}")
+
+
+def send_sms_notification(message):
+    account_sid = os.getenv("TWILIO_ACCOUNT_SID", "").strip() or TWILIO_ACCOUNT_SID
+    auth_token = os.getenv("TWILIO_AUTH_TOKEN", "").strip() or TWILIO_AUTH_TOKEN
+    from_number = os.getenv("TWILIO_PHONE_NUMBER", "").strip() or TWILIO_PHONE_NUMBER
+    to_number = os.getenv("SMS_TO_PHONE", "").strip() or SMS_TO_PHONE
+
+    if not all([account_sid, auth_token, from_number, to_number]):
+        print("Twilio SMS settings not configured, skipping SMS notification.")
+        return
+    if requests is None:
+        print("Requests library not available, skipping SMS notification.")
+        return
+
+    try:
+        response = requests.post(
+            f"https://api.twilio.com/2010-04-01/Accounts/{account_sid}/Messages.json",
+            data={
+                "To": to_number,
+                "From": from_number,
+                "Body": message,
+            },
+            auth=(account_sid, auth_token),
+            timeout=10,
+        )
+        response.raise_for_status()
+    except Exception as exc:
+        print(f"Failed to send SMS notification: {exc}")
 
 
 def send_admin_notification(subject, body, html=None):
@@ -570,7 +608,8 @@ def send_admin_notification(subject, body, html=None):
     else:
         print("MAIL_SERVER not configured, skipping admin email.")
 
-    send_teams_message(teams_message)
+    send_webhook_notification(teams_message)
+    send_sms_notification(f"{subject}\n\n{body}")
 
 
 def get_settings():
