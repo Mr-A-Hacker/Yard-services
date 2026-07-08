@@ -299,6 +299,9 @@ def init_db():
         INSERT OR IGNORE INTO settings (key, value) VALUES ('background_size', 'cover');
         INSERT OR IGNORE INTO settings (key, value) VALUES ('background_repeat', 'no-repeat');
         INSERT OR IGNORE INTO settings (key, value) VALUES ('background_attachment', 'fixed');
+        INSERT OR IGNORE INTO settings (key, value) VALUES ('homepage_popup_active', '1');
+        INSERT OR IGNORE INTO settings (key, value) VALUES ('homepage_popup_title', 'Important account notice');
+        INSERT OR IGNORE INTO settings (key, value) VALUES ('homepage_popup_message', 'An error occurred and some accounts were deleted. We are sorry for that issue. Please sign up again to restore access.');
 
         CREATE TABLE IF NOT EXISTS ratings (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -481,8 +484,10 @@ def allowed_file(filename):
 
 def send_admin_notification(subject, body, html=None):
     if not app.config.get("MAIL_SERVER"):
+        print("MAIL_SERVER not configured, skipping admin email.")
         return
     if not ADMIN_NOTIFICATION_RECIPIENTS:
+        print("No admin recipients configured, skipping admin email.")
         return
     try:
         msg = Message(
@@ -507,6 +512,9 @@ def get_settings():
         "background_size": "cover",
         "background_repeat": "no-repeat",
         "background_attachment": "fixed",
+        "homepage_popup_active": "1",
+        "homepage_popup_title": "Important account notice",
+        "homepage_popup_message": "An error occurred and some accounts were deleted. We are sorry for that issue. Please sign up again to restore access.",
     }
     try:
         conn = get_db()
@@ -662,7 +670,18 @@ def home():
          "timestamp": row["submitted_at"], "email": row["email"]}
         for row in rows
     ]
-    return render_template("home.html", featured_ratings=featured_ratings)
+    popup = None
+    settings = get_settings()
+    if not session.get("homepage_popup_shown") and settings.get("homepage_popup_active") == "1":
+        popup = {
+            "title": settings.get("homepage_popup_title"),
+            "message": settings.get("homepage_popup_message"),
+            "media_url": None,
+            "media_type": None,
+        }
+        session["homepage_popup_shown"] = True
+
+    return render_template("home.html", featured_ratings=featured_ratings, popup=popup)
 
 
 @app.route("/google9b6f02740691266a.html")
@@ -1623,6 +1642,18 @@ def delete_popups():
     conn.commit()
     mark_db_dirty()
     flash("All popups deleted.", "info")
+    return redirect(url_for("admin_dashboard"))
+
+
+@app.route("/admin/send_test_email", methods=["POST"])
+@admin_login_required
+def send_test_email():
+    send_admin_notification(
+        subject="Test email from Yard Services",
+        body="This is a test email to confirm the notification system is working.",
+        html="<p>This is a <strong>test</strong> email to confirm the notification system is working.</p>",
+    )
+    flash("Test email sent (or attempted). Check logs if delivery failed.", "success")
     return redirect(url_for("admin_dashboard"))
 
 
