@@ -1,5 +1,22 @@
 # Yard-services
 
+## Render + Backblaze B2 setup
+
+This app now supports Backblaze B2 persistence and file uploads in Render. Add these environment variables in Render:
+
+```bash
+SECRET_KEY=your-long-random-secret
+B2_KEY_ID=your_backblaze_key_id
+B2_APP_KEY=your_backblaze_application_key
+B2_BUCKET=Yard-for-st
+B2_BUCKET_NAME=Yard-for-st
+B2_ENDPOINT=s3.us-east-005.backblazeb2.com
+B2_DB_PATH=yard.db
+DB_LOCAL_PATH=yard.db
+```
+
+The app also accepts the aliases BACKBLAZE_KEY_ID, BACKBLAZE_APP_KEY, and BACKBLAZE_BUCKET if you prefer those names.
+
 ## Notifications
 
 To send service-request alerts to a chat bot or webhook-compatible endpoint, configure a webhook URL:
