@@ -2,9 +2,30 @@ import os
 import csv
 import random
 import datetime
+import calendar
 import sqlite3
 from io import StringIO
 from functools import wraps
+
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    def load_dotenv(dotenv_path=".env"):
+        if not os.path.exists(dotenv_path):
+            return False
+        with open(dotenv_path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                if "=" not in line:
+                    continue
+                key, value = line.split("=", 1)
+                key = key.strip()
+                value = value.strip().strip('"').strip("'")
+                if key and key not in os.environ:
+                    os.environ[key] = value
+        return True
 
 from flask import (
     Flask,
@@ -26,6 +47,7 @@ from flask_login import (
     login_required,
 )
 from flask_bcrypt import Bcrypt
+from flask_mail import Mail, Message
 from werkzeug.utils import secure_filename
 from b2sdk.v2 import InMemoryAccountInfo, B2Api
 
@@ -57,14 +79,34 @@ sqlite3.register_converter("TIMESTAMP", _convert_timestamp)
 # APP SETUP
 # ============================================================
 
+load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "change-me-in-production")
 app.config["UPLOAD_FOLDER"] = "static/backgrounds"
+app.config.update(
+    MAIL_SERVER=os.getenv("MAIL_SERVER", ""),
+    MAIL_PORT=int(os.getenv("MAIL_PORT", 587)),
+    MAIL_USE_TLS=os.getenv("MAIL_USE_TLS", "true").lower() in ("1", "true", "yes"),
+    MAIL_USE_SSL=os.getenv("MAIL_USE_SSL", "false").lower() in ("1", "true", "yes"),
+    MAIL_USERNAME=os.getenv("MAIL_USERNAME", ""),
+    MAIL_PASSWORD=os.getenv("MAIL_PASSWORD", ""),
+    MAIL_DEFAULT_SENDER=os.getenv("MAIL_DEFAULT_SENDER", os.getenv("MAIL_USERNAME", "noreply@example.com")),
+)
 
 bcrypt = Bcrypt(app)
+mail = Mail(app)
+
+ADMIN_NOTIFICATION_RECIPIENTS = [
+    email.strip()
+    for email in os.getenv(
+        "ADMIN_NOTIFICATION_RECIPIENTS",
+        "yahyalababidi@gmail.com,abdullahlababidi70@gmail.com",
+    ).split(",")
+    if email.strip()
+]
 
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin1")
-ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "mp4", "webm"}
 
 
 # ============================================================
@@ -140,6 +182,36 @@ def is_ip_blocked(ip):
         return False
 
 
+def is_day_blocked(date_str):
+    if not date_str:
+        return False
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT 1 FROM blocked_days WHERE date = ?", (date_str,))
+        return cursor.fetchone() is not None
+    except Exception:
+        return False
+
+
+def is_time_blocked(date_str, time_str):
+    if not date_str or not time_str:
+        return False
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute(
+            """
+            SELECT 1 FROM blocked_time_slots
+            WHERE date = ? AND start_time <= ? AND end_time > ?
+            """,
+            (date_str, time_str, time_str),
+        )
+        return cursor.fetchone() is not None
+    except Exception:
+        return False
+
+
 def log_user_ip(user_id, ip):
     if not ip:
         return
@@ -205,6 +277,23 @@ def init_db():
         );
 
         INSERT OR IGNORE INTO settings (key, value) VALUES ('theme', 'none');
+
+        CREATE TABLE IF NOT EXISTS blocked_days (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            date TEXT UNIQUE NOT NULL,
+            reason TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS blocked_time_slots (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            date TEXT NOT NULL,
+            start_time TEXT NOT NULL,
+            end_time TEXT NOT NULL,
+            reason TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(date, start_time, end_time)
+        );
         INSERT OR IGNORE INTO settings (key, value) VALUES ('background_image', '');
         INSERT OR IGNORE INTO settings (key, value) VALUES ('background_position', 'center center');
         INSERT OR IGNORE INTO settings (key, value) VALUES ('background_size', 'cover');
@@ -316,6 +405,8 @@ def init_db():
         CREATE INDEX IF NOT EXISTS idx_ratings_featured    ON ratings(featured);
         CREATE INDEX IF NOT EXISTS idx_promotions_active   ON promotions(active);
         CREATE INDEX IF NOT EXISTS idx_promotions_token    ON promotions(token);
+        CREATE INDEX IF NOT EXISTS idx_blocked_days_date   ON blocked_days(date);
+        CREATE INDEX IF NOT EXISTS idx_blocked_time_slots_date ON blocked_time_slots(date);
     """)
 
     conn.commit()
@@ -386,6 +477,23 @@ with app.app_context():
 
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def send_admin_notification(subject, body, html=None):
+    if not app.config.get("MAIL_SERVER"):
+        return
+    if not ADMIN_NOTIFICATION_RECIPIENTS:
+        return
+    try:
+        msg = Message(
+            subject,
+            recipients=ADMIN_NOTIFICATION_RECIPIENTS,
+            body=body,
+            html=html,
+        )
+        mail.send(msg)
+    except Exception as e:
+        print(f"Failed to send notification email: {e}")
 
 
 def get_settings():
@@ -811,6 +919,12 @@ def request_service():
     cursor.execute("SELECT id, name, price FROM services ORDER BY name")
     services = cursor.fetchall()
 
+    cursor.execute("SELECT date, reason FROM blocked_days ORDER BY date")
+    blocked_days = [dict(row) for row in cursor.fetchall()]
+
+    cursor.execute("SELECT date, start_time, end_time, reason FROM blocked_time_slots ORDER BY date, start_time")
+    blocked_time_slots = [dict(row) for row in cursor.fetchall()]
+
     is_non_member = session.get("non_member_fee", False)
 
     if request.method == "POST":
@@ -829,6 +943,14 @@ def request_service():
         service_data = cursor.fetchone()
         if not service_data:
             flash("Selected service not found.", "danger")
+            return redirect(url_for("request_service"))
+
+        if is_day_blocked(date):
+            flash("That day is blocked for service requests. Please choose another day.", "danger")
+            return redirect(url_for("request_service"))
+
+        if is_time_blocked(date, time_value):
+            flash("The selected time is blocked. Please choose another time.", "danger")
             return redirect(url_for("request_service"))
 
         service_name, base_price = service_data["name"], service_data["price"]
@@ -870,6 +992,42 @@ def request_service():
         conn.commit()
         mark_db_dirty()
 
+        send_admin_notification(
+            subject=f"New service request from {current_user.email}",
+            body=(
+                f"A new service request was submitted:\n\n"
+                f"User: {current_user.email}\n"
+                f"Service: {service_name}\n"
+                f"Address: {address}\n"
+                f"Phone: {phone}\n"
+                f"Email: {email}\n"
+                f"Payment method: {payment}\n"
+                f"Date: {date}\n"
+                f"Time: {time_value}\n"
+                f"Discount token: {token or 'N/A'}\n"
+                f"Discount: {discount}%\n"
+                f"Final price: ${final_price:.2f}\n"
+                f"Note: {note or 'None'}\n"
+            ),
+            html=(
+                f"<p>A new service request was submitted.</p>"
+                f"<ul>"
+                f"<li><strong>User:</strong> {current_user.email}</li>"
+                f"<li><strong>Service:</strong> {service_name}</li>"
+                f"<li><strong>Address:</strong> {address}</li>"
+                f"<li><strong>Phone:</strong> {phone}</li>"
+                f"<li><strong>Email:</strong> {email}</li>"
+                f"<li><strong>Payment method:</strong> {payment}</li>"
+                f"<li><strong>Date:</strong> {date}</li>"
+                f"<li><strong>Time:</strong> {time_value}</li>"
+                f"<li><strong>Discount token:</strong> {token or 'N/A'}</li>"
+                f"<li><strong>Discount:</strong> {discount}%</li>"
+                f"<li><strong>Final price:</strong> ${final_price:.2f}</li>"
+                f"<li><strong>Note:</strong> {note or 'None'}</li>"
+                f"</ul>"
+            ),
+        )
+
         return render_template(
             "confirmation.html",
             verification_code=verification_code,
@@ -880,7 +1038,14 @@ def request_service():
             non_member_fee=apply_non_member_fee,
         )
 
-    return render_template("request_service.html", services=services, is_non_member=is_non_member, non_member_fee=NON_MEMBER_FEE)
+    return render_template(
+        "request_service.html",
+        services=services,
+        is_non_member=is_non_member,
+        non_member_fee=NON_MEMBER_FEE,
+        blocked_days=blocked_days,
+        blocked_time_slots=blocked_time_slots,
+    )
 
 
 # ============================================================
@@ -1053,10 +1218,16 @@ def admin_dashboard():
     promotions = cursor.fetchall()
 
     cursor.execute("SELECT id, title, message, media_url, media_type, active, created_at FROM popups ORDER BY created_at DESC")
-    popups = cursor.fetchall()
+    popups = [dict(row) for row in cursor.fetchall()]
+
+    cursor.execute("SELECT id, date, reason, created_at FROM blocked_days ORDER BY date DESC")
+    blocked_days = [dict(row) for row in cursor.fetchall()]
+
+    cursor.execute("SELECT id, date, start_time, end_time, reason, created_at FROM blocked_time_slots ORDER BY date DESC, start_time")
+    blocked_time_slots = [dict(row) for row in cursor.fetchall()]
 
     cursor.execute("SELECT id, ip_address, reason, blocked_at FROM blocked_ips ORDER BY blocked_at DESC")
-    blocked_ips = cursor.fetchall()
+    blocked_ips = [dict(row) for row in cursor.fetchall()]
 
     cursor.execute("""
         SELECT ui.ip_address, u.email, u.id as user_id, MAX(ui.seen_at) as last_seen
@@ -1065,7 +1236,17 @@ def admin_dashboard():
         GROUP BY ui.ip_address, u.email, u.id
         ORDER BY last_seen DESC
     """)
-    user_ips = cursor.fetchall()
+    user_ips = [dict(row) for row in cursor.fetchall()]
+
+    calendar_requests = [
+        {
+            "date": row[9],
+            "time": row[10],
+            "service": row[2] or "Unknown",
+            "note": row[8] or "",
+        }
+        for row in requests_data
+    ]
 
     return render_template(
         "admin_dashboard.html",
@@ -1077,8 +1258,11 @@ def admin_dashboard():
         promotions=promotions,
         featured_ratings=featured_ratings,
         popups=popups,
+        blocked_days=blocked_days,
+        blocked_time_slots=blocked_time_slots,
         blocked_ips=blocked_ips,
         user_ips=user_ips,
+        calendar_requests=calendar_requests,
     )
 
 
@@ -1260,6 +1444,93 @@ def add_promotion():
     return redirect(url_for("admin_dashboard"))
 
 
+@app.route("/admin/add_blocked_day", methods=["POST"])
+@admin_login_required
+def add_blocked_day():
+    date_value = request.form.get("date", "").strip()
+    reason = request.form.get("reason", "").strip()
+    if not date_value:
+        flash("A date is required to block the day.", "danger")
+        return redirect(url_for("admin_dashboard"))
+
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "INSERT INTO blocked_days (date, reason) VALUES (?, ?)",
+            (date_value, reason or None),
+        )
+        conn.commit()
+        mark_db_dirty()
+        flash("Blocked day added.", "success")
+    except sqlite3.IntegrityError:
+        flash("That day is already blocked.", "warning")
+    except Exception:
+        conn.rollback()
+        flash("Failed to block the day.", "danger")
+
+    return redirect(url_for("admin_dashboard"))
+
+
+@app.route("/admin/delete_blocked_day/<int:block_id>", methods=["POST"])
+@admin_login_required
+def delete_blocked_day(block_id):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM blocked_days WHERE id = ?", (block_id,))
+    conn.commit()
+    mark_db_dirty()
+    flash("Blocked day removed.", "info")
+    return redirect(url_for("admin_dashboard"))
+
+
+@app.route("/admin/add_blocked_time", methods=["POST"])
+@admin_login_required
+def add_blocked_time():
+    date_value = request.form.get("date", "").strip()
+    start_time = request.form.get("start_time", "").strip()
+    end_time = request.form.get("end_time", "").strip()
+    reason = request.form.get("reason", "").strip()
+
+    if not date_value or not start_time or not end_time:
+        flash("Date and time range are required.", "danger")
+        return redirect(url_for("admin_dashboard"))
+
+    if start_time >= end_time:
+        flash("Start time must be before end time.", "danger")
+        return redirect(url_for("admin_dashboard"))
+
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "INSERT INTO blocked_time_slots (date, start_time, end_time, reason) VALUES (?, ?, ?, ?)",
+            (date_value, start_time, end_time, reason or None),
+        )
+        conn.commit()
+        mark_db_dirty()
+        flash("Blocked time slot added.", "success")
+    except sqlite3.IntegrityError:
+        flash("That time slot is already blocked.", "warning")
+    except Exception:
+        conn.rollback()
+        flash("Failed to block the time slot.", "danger")
+
+    return redirect(url_for("admin_dashboard"))
+
+
+@app.route("/admin/delete_blocked_time/<int:block_id>", methods=["POST"])
+@admin_login_required
+def delete_blocked_time(block_id):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM blocked_time_slots WHERE id = ?", (block_id,))
+    conn.commit()
+    mark_db_dirty()
+    flash("Blocked time slot removed.", "info")
+    return redirect(url_for("admin_dashboard"))
+
+
 # ============================================================
 # ADMIN — Requests
 # ============================================================
@@ -1309,10 +1580,18 @@ def add_popup():
     message = request.form.get("message", "").strip()
     file = request.files.get("file")
 
+    if not title or not message:
+        flash("Popup title and message are required.", "danger")
+        return redirect(url_for("admin_dashboard"))
+
     media_url = None
     media_type = None
 
-    if file and file.filename and allowed_file(file.filename):
+    if file and file.filename:
+        if not allowed_file(file.filename):
+            flash("Invalid file type. Allowed: png, jpg, jpeg, gif, mp4, webm", "danger")
+            return redirect(url_for("admin_dashboard"))
+
         filename = secure_filename(file.filename)
         os.makedirs("static/uploads", exist_ok=True)
         upload_path = os.path.join("static/uploads", filename)

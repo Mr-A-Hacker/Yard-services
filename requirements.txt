@@ -3,4 +3,5 @@ Flask-Login
 Flask-Bcrypt
 gunicorn
 Flask-Mail
+python-dotenv
 b2sdk
