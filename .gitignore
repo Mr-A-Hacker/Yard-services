@@ -1,0 +1,16 @@
+# Local SQLite database
+yard.db
+
+# Environment variables
+.env
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Flask instance folder
+instance/
+
+# VS Code settings
+.vscode/
