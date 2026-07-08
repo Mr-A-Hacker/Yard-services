@@ -98,6 +98,20 @@ class ServiceImageUploadTests(unittest.TestCase):
 
         requests_mock.post.assert_called_once()
 
+    def test_b2_config_supports_render_style_environment_names(self):
+        with patch.dict(os.environ, {
+            "B2_KEY_ID": "render-key-id",
+            "B2_APP_KEY": "render-app-key",
+            "B2_BUCKET_NAME": "Yard-for-st",
+            "B2_ENDPOINT": "s3.us-east-005.backblazeb2.com",
+        }, clear=True):
+            config = app_module.get_b2_config()
+
+        self.assertEqual(config["key_id"], "render-key-id")
+        self.assertEqual(config["app_key"], "render-app-key")
+        self.assertEqual(config["bucket_name"], "Yard-for-st")
+        self.assertEqual(config["endpoint"], "s3.us-east-005.backblazeb2.com")
+
     def test_upload_db_to_b2_includes_latest_wal_data(self):
         class DummyBucket:
             def __init__(self):

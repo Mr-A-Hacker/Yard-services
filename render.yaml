@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: yard-services
+    env: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn app:app"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.1
+      - key: SECRET_KEY
+        generateValue: true
+      - key: B2_KEY_ID
+        sync: false
+      - key: B2_APP_KEY
+        sync: false
+      - key: B2_BUCKET
+        value: Yard-for-st
+      - key: B2_BUCKET_NAME
+        value: Yard-for-st
+      - key: B2_ENDPOINT
+        value: s3.us-east-005.backblazeb2.com
+      - key: B2_DB_PATH
+        value: yard.db
+      - key: DB_LOCAL_PATH
+        value: yard.db

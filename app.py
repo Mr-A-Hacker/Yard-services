@@ -132,12 +132,41 @@ B2_DB_PATH = os.getenv("B2_DB_PATH", "yard.db")
 _app_has_b2 = False
 
 
+def get_b2_config():
+    return {
+        "key_id": (
+            os.getenv("B2_KEY_ID")
+            or os.getenv("BACKBLAZE_KEY_ID")
+            or os.getenv("B2_APPLICATION_KEY_ID")
+            or ""
+        ).strip(),
+        "app_key": (
+            os.getenv("B2_APP_KEY")
+            or os.getenv("BACKBLAZE_APP_KEY")
+            or os.getenv("B2_APPLICATION_KEY")
+            or ""
+        ).strip(),
+        "bucket_name": (
+            os.getenv("B2_BUCKET")
+            or os.getenv("B2_BUCKET_NAME")
+            or os.getenv("BACKBLAZE_BUCKET")
+            or ""
+        ).strip(),
+        "endpoint": (
+            os.getenv("B2_ENDPOINT")
+            or os.getenv("BACKBLAZE_ENDPOINT")
+            or ""
+        ).strip(),
+    }
+
+
 def check_b2_config():
     global _app_has_b2
+    b2_config = get_b2_config()
     _app_has_b2 = all([
-        os.getenv("B2_KEY_ID"),
-        os.getenv("B2_APP_KEY"),
-        os.getenv("B2_BUCKET"),
+        b2_config["key_id"],
+        b2_config["app_key"],
+        b2_config["bucket_name"],
     ])
 
 
@@ -434,11 +463,12 @@ def init_db():
 # ============================================================
 
 def get_b2_bucket():
-    b2_key_id = os.getenv("B2_KEY_ID")
-    b2_app_key = os.getenv("B2_APP_KEY")
-    b2_bucket_name = os.getenv("B2_BUCKET")
+    b2_config = get_b2_config()
+    b2_key_id = b2_config["key_id"]
+    b2_app_key = b2_config["app_key"]
+    b2_bucket_name = b2_config["bucket_name"]
     if not all([b2_key_id, b2_app_key, b2_bucket_name]):
-        raise RuntimeError("B2_KEY_ID, B2_APP_KEY, and B2_BUCKET environment variables must be set.")
+        raise RuntimeError("Backblaze B2 is not fully configured. Set B2_KEY_ID, B2_APP_KEY, and B2_BUCKET (or B2_BUCKET_NAME).")
     info = InMemoryAccountInfo()
     b2_api = B2Api(info)
     b2_api.authorize_account("production", b2_key_id, b2_app_key)
@@ -491,9 +521,12 @@ def upload_db_to_b2():
 def upload_file_to_b2(local_path, b2_path):
     bucket = get_b2_bucket()
     bucket.upload_local_file(local_file=local_path, file_name=b2_path)
-    endpoint = os.getenv("B2_ENDPOINT")
-    bucket_name = os.getenv("B2_BUCKET")
-    return f"https://{endpoint}/file/{bucket_name}/{b2_path}"
+    b2_config = get_b2_config()
+    endpoint = b2_config["endpoint"] or os.getenv("B2_ENDPOINT", "")
+    bucket_name = b2_config["bucket_name"]
+    if endpoint:
+        return f"https://{endpoint}/file/{bucket_name}/{b2_path}"
+    return f"https://{bucket_name}/{b2_path}"
 
 
 def save_upload_to_b2(upload_file, b2_folder):
