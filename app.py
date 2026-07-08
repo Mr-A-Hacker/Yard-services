@@ -3,10 +3,12 @@ import csv
 import random
 import datetime
 import calendar
+import json
 import sqlite3
 import tempfile
 from io import StringIO
 from functools import wraps
+from urllib import request as urllib_request
 
 try:
     from dotenv import load_dotenv
@@ -108,6 +110,7 @@ ADMIN_NOTIFICATION_RECIPIENTS = [
 
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin1")
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "mp4", "webm"}
+TEAMS_WEBHOOK_URL = os.getenv("TEAMS_WEBHOOK_URL", "").strip()
 
 
 # ============================================================
@@ -444,10 +447,31 @@ def download_db_from_b2():
         print(f"Could not download DB from B2 (first run?): {e}")
 
 
+def _flush_db_for_backup():
+    db_path = DB_LOCAL_PATH
+    if not db_path:
+        return
+    os.makedirs(os.path.dirname(db_path) or ".", exist_ok=True)
+
+    try:
+        conn = sqlite3.connect(db_path)
+        try:
+            conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+            conn.commit()
+        finally:
+            conn.close()
+    except Exception as exc:
+        print(f"WARNING: Failed to flush SQLite DB before B2 upload: {exc}")
+
+
 def upload_db_to_b2():
     if not _app_has_b2:
         return
     try:
+        _flush_db_for_backup()
+        if not os.path.exists(DB_LOCAL_PATH):
+            print(f"WARNING: DB file {DB_LOCAL_PATH} does not exist; skipping B2 upload.")
+            return
         bucket = get_b2_bucket()
         bucket.upload_local_file(local_file=DB_LOCAL_PATH, file_name=B2_DB_PATH)
         print(f"Uploaded {DB_LOCAL_PATH} to B2 as {B2_DB_PATH}")
@@ -508,23 +532,45 @@ def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-def send_admin_notification(subject, body, html=None):
-    if not app.config.get("MAIL_SERVER"):
-        print("MAIL_SERVER not configured, skipping admin email.")
+def send_teams_message(message):
+    webhook_url = os.getenv("TEAMS_WEBHOOK_URL", "").strip() or TEAMS_WEBHOOK_URL
+    if not webhook_url:
+        print("TEAMS_WEBHOOK_URL not configured, skipping Teams notification.")
         return
-    if not ADMIN_NOTIFICATION_RECIPIENTS:
-        print("No admin recipients configured, skipping admin email.")
-        return
+
+    payload = {"text": message}
     try:
-        msg = Message(
-            subject,
-            recipients=ADMIN_NOTIFICATION_RECIPIENTS,
-            body=body,
-            html=html,
+        req = urllib_request.Request(
+            webhook_url,
+            data=json.dumps(payload).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="POST",
         )
-        mail.send(msg)
-    except Exception as e:
-        print(f"Failed to send notification email: {e}")
+        with urllib_request.urlopen(req, timeout=10) as response:
+            if getattr(response, "status", 200) >= 400:
+                raise RuntimeError(f"Teams webhook returned HTTP {response.status}")
+    except Exception as exc:
+        print(f"Failed to send Teams notification: {exc}")
+
+
+def send_admin_notification(subject, body, html=None):
+    teams_message = f"{subject}\n\n{body}"
+
+    if app.config.get("MAIL_SERVER") and ADMIN_NOTIFICATION_RECIPIENTS:
+        try:
+            msg = Message(
+                subject,
+                recipients=ADMIN_NOTIFICATION_RECIPIENTS,
+                body=body,
+                html=html,
+            )
+            mail.send(msg)
+        except Exception as e:
+            print(f"Failed to send notification email: {e}")
+    else:
+        print("MAIL_SERVER not configured, skipping admin email.")
+
+    send_teams_message(teams_message)
 
 
 def get_settings():
@@ -973,16 +1019,20 @@ def request_service():
     is_non_member = session.get("non_member_fee", False)
 
     if request.method == "POST":
-        service_id = request.form["service"]
-        address = request.form["address"]
-        phone = request.form["phone"]
-        email = request.form["email"]
-        payment = request.form["payment"]
-        note = request.form.get("note", "")
-        date = request.form["date"]
-        time_value = request.form["time"]
+        service_id = request.form.get("service", "").strip()
+        address = request.form.get("address", "").strip()
+        phone = request.form.get("phone", "").strip()
+        email = request.form.get("email", "").strip()
+        payment = request.form.get("payment", "").strip()
+        note = request.form.get("note", "").strip()
+        date = request.form.get("date", "").strip()
+        time_value = request.form.get("time", "").strip()
         token = request.form.get("discount_token", "").strip().upper()
         apply_non_member_fee = request.form.get("non_member_fee") == "1"
+
+        if not all([service_id, address, phone, email, payment, date, time_value]):
+            flash("Please fill in all required request fields.", "danger")
+            return redirect(url_for("request_service"))
 
         cursor.execute("SELECT name, price FROM services WHERE id = ?", (service_id,))
         service_data = cursor.fetchone()
@@ -1374,6 +1424,19 @@ def admin_edit_service(service_id):
         price = request.form["price"].strip()
         description = request.form.get("description", "").strip()
         image_url = request.form.get("image_url", "").strip()
+        image_file = request.files.get("image_file")
+
+        if image_file and image_file.filename:
+            if not allowed_file(image_file.filename):
+                flash("Invalid file type. Allowed: png, jpg, jpeg, gif, mp4, webm", "danger")
+                return redirect(url_for("admin_edit_service", service_id=service_id))
+            try:
+                uploaded = save_upload_to_b2(image_file, "services")
+                if uploaded:
+                    image_url, _ = uploaded
+            except Exception as exc:
+                flash(f"Unable to upload service image to Blackblaze B2: {exc}", "danger")
+                return redirect(url_for("admin_edit_service", service_id=service_id))
 
         cursor.execute(
             "UPDATE services SET name=?, price=?, description=?, image_url=? WHERE id=?",
@@ -1381,6 +1444,7 @@ def admin_edit_service(service_id):
         )
         conn.commit()
         mark_db_dirty()
+        sync_db_to_b2()
         flash("Service updated!", "success")
         return redirect(url_for("admin_dashboard"))
 

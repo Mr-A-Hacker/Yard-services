@@ -341,7 +341,7 @@
     </div>
 
     <!-- FIX: action points to correct route; no password field needed -->
-    <form method="POST" action="{{ url_for('admin_edit_service', service_id=service.id) }}">
+    <form method="POST" action="{{ url_for('admin_edit_service', service_id=service.id) }}" enctype="multipart/form-data">
 
       <div class="field-group">
         <label><span class="icon">🌿</span> Service Name</label>
@@ -370,6 +370,11 @@
         <input type="url" name="image_url" class="form-control"
                value="{{ service.image_url or '' }}"
                placeholder="https://example.com/image.jpg">
+      </div>
+
+      <div class="field-group">
+        <label><span class="icon">📤</span> Upload Image <span class="optional">(optional)</span></label>
+        <input type="file" name="image_file" class="form-control">
       </div>
 
       <button type="submit" class="btn-save">💾 Save Changes</button>
