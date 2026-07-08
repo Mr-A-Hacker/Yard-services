@@ -81,8 +81,8 @@ class ServiceImageUploadTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 302)
 
-    def test_send_admin_notification_uses_teams_webhook_when_configured(self):
-        with patch.object(app_module, "TEAMS_WEBHOOK_URL", "https://example.com/webhook"), patch.object(app_module, "urllib_request") as urllib_mock:
+    def test_send_admin_notification_uses_webhook_when_configured(self):
+        with patch.object(app_module, "NOTIFICATION_WEBHOOK_URL", "https://example.com/webhook"), patch.object(app_module, "urllib_request") as urllib_mock:
             class DummyResponse:
                 status = 200
 
@@ -90,6 +90,13 @@ class ServiceImageUploadTests(unittest.TestCase):
             app_module.send_admin_notification("Test subject", "Test body")
 
         urllib_mock.urlopen.assert_called_once()
+
+    def test_send_sms_notification_uses_twilio_when_configured(self):
+        with patch.object(app_module, "TWILIO_ACCOUNT_SID", "AC123"), patch.object(app_module, "TWILIO_AUTH_TOKEN", "token"), patch.object(app_module, "TWILIO_PHONE_NUMBER", "+15550000000"), patch.object(app_module, "SMS_TO_PHONE", "+15550000001"), patch.object(app_module, "requests") as requests_mock:
+            requests_mock.post.return_value.raise_for_status.return_value = None
+            app_module.send_sms_notification("Test SMS")
+
+        requests_mock.post.assert_called_once()
 
     def test_upload_db_to_b2_includes_latest_wal_data(self):
         class DummyBucket:
