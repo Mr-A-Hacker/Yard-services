@@ -369,7 +369,7 @@
       {% endif %}
     {% endwith %}
 
-    <form method="POST" action="{{ url_for('admin_add_service') }}">
+    <form method="POST" action="{{ url_for('admin_add_service') }}" enctype="multipart/form-data">
 
       <div class="field-group">
         <label><span class="icon">🌿</span> Service Name</label>
@@ -400,6 +400,11 @@
         <label><span class="icon">🖼️</span> Image URL <span class="optional">(optional)</span></label>
         <input type="url" name="image_url" class="form-control"
                placeholder="https://example.com/lawn-service.jpg">
+      </div>
+
+      <div class="field-group">
+        <label><span class="icon">📤</span> Upload Image <span class="optional">(optional)</span></label>
+        <input type="file" name="image_file" class="form-control">
       </div>
 
       <button type="submit" class="btn-submit">🌾 Add Service to Catalog</button>

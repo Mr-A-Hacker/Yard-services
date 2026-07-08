@@ -4,6 +4,7 @@ import random
 import datetime
 import calendar
 import sqlite3
+import tempfile
 from io import StringIO
 from functools import wraps
 
@@ -460,6 +461,31 @@ def upload_file_to_b2(local_path, b2_path):
     endpoint = os.getenv("B2_ENDPOINT")
     bucket_name = os.getenv("B2_BUCKET")
     return f"https://{endpoint}/file/{bucket_name}/{b2_path}"
+
+
+def save_upload_to_b2(upload_file, b2_folder):
+    if not upload_file or not getattr(upload_file, "filename", None):
+        return None
+
+    if not _app_has_b2:
+        raise RuntimeError("Blackblaze B2 is not configured.")
+
+    filename = secure_filename(upload_file.filename)
+    if not filename:
+        raise ValueError("Invalid filename.")
+
+    ext = filename.rsplit(".", 1)[1].lower() if "." in filename else ""
+    with tempfile.NamedTemporaryFile(delete=False, suffix=f".{ext}" if ext else "") as tmp:
+        upload_file.save(tmp.name)
+        tmp_path = tmp.name
+
+    try:
+        b2_path = f"{b2_folder}/{filename}"
+        file_url = upload_file_to_b2(tmp_path, b2_path)
+        return file_url, ext
+    finally:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
 
 
 # ============================================================
@@ -1306,10 +1332,23 @@ def admin_add_service():
     price = request.form.get("price", "").strip()
     description = request.form.get("description", "").strip()
     image_url = request.form.get("image_url", "").strip()
+    image_file = request.files.get("image_file")
 
     if not name or not price:
         flash("Service name and price are required.", "danger")
         return render_template("admin_add_service.html")
+
+    if image_file and image_file.filename:
+        if not allowed_file(image_file.filename):
+            flash("Invalid file type. Allowed: png, jpg, jpeg, gif, mp4, webm", "danger")
+            return render_template("admin_add_service.html")
+        try:
+            uploaded = save_upload_to_b2(image_file, "services")
+            if uploaded:
+                image_url, _ = uploaded
+        except Exception as exc:
+            flash(f"Unable to upload service image to Blackblaze B2: {exc}", "danger")
+            return render_template("admin_add_service.html")
 
     conn = get_db()
     cursor = conn.cursor()
@@ -1611,13 +1650,14 @@ def add_popup():
             flash("Invalid file type. Allowed: png, jpg, jpeg, gif, mp4, webm", "danger")
             return redirect(url_for("admin_dashboard"))
 
-        filename = secure_filename(file.filename)
-        os.makedirs("static/uploads", exist_ok=True)
-        upload_path = os.path.join("static/uploads", filename)
-        file.save(upload_path)
-        media_url = f"/static/uploads/{filename}"
-        ext = filename.rsplit(".", 1)[1].lower()
-        media_type = "video" if ext in {"mp4", "webm"} else "image"
+        try:
+            uploaded = save_upload_to_b2(file, "popups")
+            if uploaded:
+                media_url, ext = uploaded
+                media_type = "video" if ext in {"mp4", "webm"} else "image"
+        except Exception as exc:
+            flash(f"Unable to upload popup media to Blackblaze B2: {exc}", "danger")
+            return redirect(url_for("admin_dashboard"))
 
     conn = get_db()
     cursor = conn.cursor()
@@ -1686,14 +1726,14 @@ def upload_background():
         flash("Invalid file type. Allowed: png, jpg, jpeg, gif", "danger")
         return redirect(url_for("admin_dashboard"))
 
-    filename = secure_filename(file.filename)
-    os.makedirs("temp_uploads", exist_ok=True)
-    local_path = os.path.join("temp_uploads", filename)
-    file.save(local_path)
-
-    b2_path = f"backgrounds/{filename}"
-    file_url = upload_file_to_b2(local_path, b2_path)
-    os.remove(local_path)
+    try:
+        upload_result = save_upload_to_b2(file, "backgrounds")
+        if not upload_result:
+            raise RuntimeError("Background upload did not produce a file URL.")
+        file_url, _ = upload_result
+    except Exception as exc:
+        flash(f"Unable to upload background to Blackblaze B2: {exc}", "danger")
+        return redirect(url_for("admin_dashboard"))
 
     conn = get_db()
     cursor = conn.cursor()
