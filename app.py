@@ -523,36 +523,47 @@ def download_db_from_b2():
         print(f"Could not download DB from B2 (first run?): {e}")
 
 
-def _flush_db_for_backup():
-    db_path = DB_LOCAL_PATH
-    if not db_path:
-        return
-    os.makedirs(os.path.dirname(db_path) or ".", exist_ok=True)
+def _create_db_backup_copy():
+    if not DB_LOCAL_PATH or not os.path.exists(DB_LOCAL_PATH):
+        return None
 
+    backup_path = None
     try:
-        conn = sqlite3.connect(db_path)
-        try:
-            conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
-            conn.commit()
-        finally:
-            conn.close()
+        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.basename(DB_LOCAL_PATH)) as tmp:
+            backup_path = tmp.name
+
+        with sqlite3.connect(DB_LOCAL_PATH) as source_conn:
+            source_conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+            source_conn.commit()
+            with sqlite3.connect(backup_path) as dest_conn:
+                source_conn.backup(dest_conn)
+
+        return backup_path
     except Exception as exc:
-        print(f"WARNING: Failed to flush SQLite DB before B2 upload: {exc}")
+        if backup_path and os.path.exists(backup_path):
+            os.remove(backup_path)
+        print(f"WARNING: Failed to create DB backup for B2 upload: {exc}")
+        return None
 
 
 def upload_db_to_b2():
     if not _app_has_b2:
         return
+
+    backup_path = None
     try:
-        _flush_db_for_backup()
-        if not os.path.exists(DB_LOCAL_PATH):
-            print(f"WARNING: DB file {DB_LOCAL_PATH} does not exist; skipping B2 upload.")
+        backup_path = _create_db_backup_copy()
+        if not backup_path:
+            print(f"WARNING: Could not create DB backup; skipping B2 upload.")
             return
         bucket = get_b2_bucket()
-        bucket.upload_local_file(local_file=DB_LOCAL_PATH, file_name=B2_DB_PATH)
+        bucket.upload_local_file(local_file=backup_path, file_name=B2_DB_PATH)
         print(f"Uploaded {DB_LOCAL_PATH} to B2 as {B2_DB_PATH}")
     except Exception as e:
         print(f"WARNING: Failed to upload DB to B2: {e}")
+    finally:
+        if backup_path and os.path.exists(backup_path):
+            os.remove(backup_path)
 
 
 def upload_file_to_b2(local_path, b2_path):
