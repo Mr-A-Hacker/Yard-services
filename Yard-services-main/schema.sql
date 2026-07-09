@@ -38,6 +38,16 @@ CREATE TABLE IF NOT EXISTS requests (
     FOREIGN KEY(service_id) REFERENCES services(id)
 );
 
+-- REQUEST SERVICES TABLE (supports selecting multiple services per request)
+CREATE TABLE IF NOT EXISTS request_services (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    request_id INTEGER NOT NULL REFERENCES requests(id) ON DELETE CASCADE,
+    service_id INTEGER REFERENCES services(id),
+    service_name TEXT NOT NULL,
+    price REAL NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_request_services_request_id ON request_services(request_id);
+
 -- SETTINGS TABLE
 CREATE TABLE IF NOT EXISTS settings (
     key TEXT PRIMARY KEY,

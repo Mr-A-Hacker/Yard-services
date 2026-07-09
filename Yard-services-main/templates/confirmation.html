@@ -475,15 +475,28 @@
           <span class="s-icon icon-green">📦</span> Service Summary
         </div>
 
-        <div class="info-row">
-          <span class="label">Service</span>
-          <span class="value">{{ service_name }}</span>
-        </div>
+        {% if services and services|length > 1 %}
+          {% for svc in services %}
+            <div class="info-row">
+              <span class="label">{{ svc.name }}</span>
+              <span class="value">${{ "%.2f"|format(svc.price|float) }}</span>
+            </div>
+          {% endfor %}
+          <div class="info-row">
+            <span class="label">Services Subtotal</span>
+            <span class="value">${{ "%.2f"|format(base_price|float) }}</span>
+          </div>
+        {% else %}
+          <div class="info-row">
+            <span class="label">Service</span>
+            <span class="value">{{ service_name }}</span>
+          </div>
 
-        <div class="info-row">
-          <span class="label">Base Price</span>
-          <span class="value">${{ "%.2f"|format(base_price|float) }}</span>
-        </div>
+          <div class="info-row">
+            <span class="label">Base Price</span>
+            <span class="value">${{ "%.2f"|format(base_price|float) }}</span>
+          </div>
+        {% endif %}
 
         {% if discount > 0 %}
         <div class="info-row">

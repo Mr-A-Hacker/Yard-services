@@ -346,6 +346,14 @@ def init_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
 
+        CREATE TABLE IF NOT EXISTS request_services (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            request_id INTEGER NOT NULL REFERENCES requests(id) ON DELETE CASCADE,
+            service_id INTEGER REFERENCES services(id),
+            service_name TEXT NOT NULL,
+            price REAL NOT NULL
+        );
+
         CREATE TABLE IF NOT EXISTS settings (
             key TEXT PRIMARY KEY,
             value TEXT
@@ -475,10 +483,27 @@ def init_db():
                 print(f"Migrated: added column {table}.{col_name}")
     conn.commit()
 
+    # ------------------------------------------------------------
+    # MIGRATION — backfill request_services for older requests that
+    # were created before multi-service requests existed (they only
+    # have a single requests.service_id). Safe to re-run: skips any
+    # request that already has rows in request_services.
+    # ------------------------------------------------------------
+    cursor.execute("""
+        INSERT INTO request_services (request_id, service_id, service_name, price)
+        SELECT r.id, r.service_id, s.name, s.price
+        FROM requests r
+        JOIN services s ON r.service_id = s.id
+        WHERE r.service_id IS NOT NULL
+          AND NOT EXISTS (SELECT 1 FROM request_services rs WHERE rs.request_id = r.id)
+    """)
+    conn.commit()
+
     cursor.executescript("""
         CREATE INDEX IF NOT EXISTS idx_requests_user_id    ON requests(user_id);
         CREATE INDEX IF NOT EXISTS idx_requests_service_id ON requests(service_id);
         CREATE INDEX IF NOT EXISTS idx_requests_created_at ON requests(created_at);
+        CREATE INDEX IF NOT EXISTS idx_request_services_request_id ON request_services(request_id);
         CREATE INDEX IF NOT EXISTS idx_ratings_user_id     ON ratings(user_id);
         CREATE INDEX IF NOT EXISTS idx_ratings_featured    ON ratings(featured);
         CREATE INDEX IF NOT EXISTS idx_promotions_active   ON promotions(active);
@@ -1057,7 +1082,7 @@ def request_service():
     is_non_member = session.get("non_member_fee", False)
 
     if request.method == "POST":
-        service_id = request.form.get("service", "").strip()
+        service_ids = [s.strip() for s in request.form.getlist("services") if s.strip()]
         address = request.form.get("address", "").strip()
         phone = request.form.get("phone", "").strip()
         email = request.form.get("email", "").strip()
@@ -1068,14 +1093,18 @@ def request_service():
         token = request.form.get("discount_token", "").strip().upper()
         apply_non_member_fee = request.form.get("non_member_fee") == "1"
 
-        if not all([service_id, address, phone, email, payment, date, time_value]):
-            flash("Please fill in all required request fields.", "danger")
+        if not all([service_ids, address, phone, email, payment, date, time_value]):
+            flash("Please select at least one service and fill in all required fields.", "danger")
             return redirect(url_for("request_service"))
 
-        cursor.execute("SELECT name, price FROM services WHERE id = ?", (service_id,))
-        service_data = cursor.fetchone()
-        if not service_data:
-            flash("Selected service not found.", "danger")
+        placeholders = ",".join("?" for _ in service_ids)
+        cursor.execute(
+            f"SELECT id, name, price FROM services WHERE id IN ({placeholders})",
+            service_ids,
+        )
+        selected_services = cursor.fetchall()
+        if not selected_services or len(selected_services) != len(set(service_ids)):
+            flash("One or more selected services could not be found.", "danger")
             return redirect(url_for("request_service"))
 
         if is_day_blocked(date):
@@ -1086,7 +1115,8 @@ def request_service():
             flash("The selected time is blocked. Please choose another time.", "danger")
             return redirect(url_for("request_service"))
 
-        service_name, base_price = service_data["name"], service_data["price"]
+        service_name = ", ".join(s["name"] for s in selected_services)
+        base_price = sum(float(s["price"]) for s in selected_services)
         discount = 0
 
         if token:
@@ -1119,18 +1149,37 @@ def request_service():
                  note, date, time, token, discount, final_price, verification_code)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
-            current_user.id, service_id, address, phone, email, payment,
+            current_user.id, selected_services[0]["id"], address, phone, email, payment,
             note, date, time_value, token or None, discount, final_price, verification_code,
         ))
+        new_request_id = cursor.lastrowid
+
+        cursor.executemany(
+            """
+            INSERT INTO request_services (request_id, service_id, service_name, price)
+            VALUES (?, ?, ?, ?)
+            """,
+            [
+                (new_request_id, s["id"], s["name"], float(s["price"]))
+                for s in selected_services
+            ],
+        )
         conn.commit()
         mark_db_dirty()
+
+        services_list_text = "\n".join(
+            f"  - {s['name']} (${float(s['price']):.2f})" for s in selected_services
+        )
+        services_list_html = "".join(
+            f"<li>{s['name']} — ${float(s['price']):.2f}</li>" for s in selected_services
+        )
 
         send_admin_notification(
             subject=f"New service request from {current_user.email}",
             body=(
                 f"A new service request was submitted:\n\n"
                 f"User: {current_user.email}\n"
-                f"Service: {service_name}\n"
+                f"Services:\n{services_list_text}\n"
                 f"Address: {address}\n"
                 f"Phone: {phone}\n"
                 f"Email: {email}\n"
@@ -1146,7 +1195,7 @@ def request_service():
                 f"<p>A new service request was submitted.</p>"
                 f"<ul>"
                 f"<li><strong>User:</strong> {current_user.email}</li>"
-                f"<li><strong>Service:</strong> {service_name}</li>"
+                f"<li><strong>Services:</strong><ul>{services_list_html}</ul></li>"
                 f"<li><strong>Address:</strong> {address}</li>"
                 f"<li><strong>Phone:</strong> {phone}</li>"
                 f"<li><strong>Email:</strong> {email}</li>"
@@ -1165,6 +1214,7 @@ def request_service():
             "confirmation.html",
             verification_code=verification_code,
             service_name=service_name,
+            services=[{"name": s["name"], "price": float(s["price"])} for s in selected_services],
             base_price=base_price,
             discount=discount,
             final_price=final_price,
@@ -1191,11 +1241,12 @@ def history():
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT req.id, s.name, req.date, req.time,
+        SELECT req.id, GROUP_CONCAT(rs.service_name, ', ') AS name, req.date, req.time,
                req.final_price, req.verification_code, req.created_at
         FROM requests req
-        LEFT JOIN services s ON req.service_id = s.id
+        LEFT JOIN request_services rs ON rs.request_id = req.id
         WHERE req.user_id = ?
+        GROUP BY req.id
         ORDER BY req.created_at DESC
     """, (current_user.id,))
     history_rows = cursor.fetchall()
@@ -1316,12 +1367,14 @@ def admin_dashboard():
     users = cursor.fetchall()
 
     cursor.execute("""
-        SELECT req.id, req.user_id, s.name, s.price,
+        SELECT req.id, req.user_id, GROUP_CONCAT(rs.service_name, ', ') AS service_names,
+               SUM(rs.price) AS services_total,
                req.address, req.phone, req.email, req.payment,
                req.note, req.date, req.time, req.token,
                req.discount, req.final_price, req.verification_code, req.created_at
         FROM requests req
-        LEFT JOIN services s ON req.service_id = s.id
+        LEFT JOIN request_services rs ON rs.request_id = req.id
+        GROUP BY req.id
         ORDER BY req.created_at DESC
     """)
     requests_data = cursor.fetchall()
