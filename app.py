@@ -201,6 +201,34 @@ def mark_db_dirty():
         _db_dirty = False
 
 
+# In-memory startup cache for quick access to users/services/requests
+_startup_cache = {
+    "users": [],
+    "services": [],
+    "requests": [],
+}
+
+
+def load_db_cache():
+    """Load key tables into an in-memory cache (called at startup)."""
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT id, email, phone, created_at FROM users ORDER BY id")
+        _startup_cache["users"] = [dict(row) for row in cursor.fetchall()]
+
+        cursor.execute("SELECT id, name, price, description, image_url FROM services ORDER BY id")
+        _startup_cache["services"] = [dict(row) for row in cursor.fetchall()]
+
+        cursor.execute(
+            "SELECT id, user_id, service_id, address, phone, email, date, time, created_at FROM requests ORDER BY id"
+        )
+        _startup_cache["requests"] = [dict(row) for row in cursor.fetchall()]
+    except Exception as exc:
+        print(f"Warning: failed to load DB cache: {exc}")
+
+
 def sync_db_to_b2():
     if _app_has_b2:
         upload_db_to_b2()
@@ -562,6 +590,8 @@ check_b2_config()
 download_db_from_b2()
 with app.app_context():
     init_db()
+    # load a lightweight cache of users/services/requests for quick access
+    load_db_cache()
     if _app_has_b2:
         upload_db_to_b2()
 
