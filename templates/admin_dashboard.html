@@ -627,25 +627,6 @@
       {% endif %}
     {% endwith %}
 
-    <div class="section-head fade-in">
-      <span class="icon-chip chip-blue">🔗</span>
-      <h3>Backblaze B2</h3>
-    </div>
-    <div class="section-divider"></div>
-    <div class="row g-3 fade-in">
-      <div class="col-md-6">
-        <div class="admin-card">
-          <div class="card-head">B2 Connection Test</div>
-          <div class="card-body-inner">
-            <p>Verify that your current Backblaze B2 credentials and bucket are reachable.</p>
-            <form method="POST" action="{{ url_for('admin_test_b2') }}">
-              <button type="submit" class="btn-blue-custom btn-w-full">🔍 Test B2 Connection</button>
-            </form>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- ════════════════════════════
          BACKGROUND CONTROLS
     ════════════════════════════ -->

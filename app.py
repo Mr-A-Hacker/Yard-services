@@ -57,7 +57,6 @@ from flask_login import (
 from flask_bcrypt import Bcrypt
 from flask_mail import Mail, Message
 from werkzeug.utils import secure_filename
-from b2sdk.v2 import InMemoryAccountInfo, B2Api
 
 
 # ============================================================
@@ -90,7 +89,8 @@ sqlite3.register_converter("TIMESTAMP", _convert_timestamp)
 load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY") or "change-me-in-production"
-app.config["UPLOAD_FOLDER"] = "static/backgrounds"
+app.config["UPLOAD_FOLDER"] = os.path.join("static", "uploads")
+os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 app.config.update(
     MAIL_SERVER=os.getenv("MAIL_SERVER", ""),
     MAIL_PORT=int(os.getenv("MAIL_PORT", 587)),
@@ -127,47 +127,8 @@ SMS_TO_PHONE = os.getenv("SMS_TO_PHONE", "").strip()
 # ============================================================
 
 DB_LOCAL_PATH = os.getenv("DB_LOCAL_PATH", "yard.db")
-B2_DB_PATH = os.getenv("B2_DB_PATH", "yard.db")
-
-_app_has_b2 = False
-
-
-def get_b2_config():
-    return {
-        "key_id": (
-            os.getenv("B2_KEY_ID")
-            or os.getenv("BACKBLAZE_KEY_ID")
-            or os.getenv("B2_APPLICATION_KEY_ID")
-            or ""
-        ).strip(),
-        "app_key": (
-            os.getenv("B2_APP_KEY")
-            or os.getenv("BACKBLAZE_APP_KEY")
-            or os.getenv("B2_APPLICATION_KEY")
-            or ""
-        ).strip(),
-        "bucket_name": (
-            os.getenv("B2_BUCKET")
-            or os.getenv("B2_BUCKET_NAME")
-            or os.getenv("BACKBLAZE_BUCKET")
-            or ""
-        ).strip(),
-        "endpoint": (
-            os.getenv("B2_ENDPOINT")
-            or os.getenv("BACKBLAZE_ENDPOINT")
-            or ""
-        ).strip(),
-    }
-
-
-def check_b2_config():
-    global _app_has_b2
-    b2_config = get_b2_config()
-    _app_has_b2 = all([
-        b2_config["key_id"],
-        b2_config["app_key"],
-        b2_config["bucket_name"],
-    ])
+app.config["UPLOAD_FOLDER"] = os.path.join("static", "uploads")
+os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
 
 def get_db():
@@ -196,9 +157,6 @@ _db_dirty = False
 def mark_db_dirty():
     global _db_dirty
     _db_dirty = True
-    if _app_has_b2:
-        upload_db_to_b2()
-        _db_dirty = False
 
 
 # In-memory startup cache for quick access to users/services/requests
@@ -230,8 +188,7 @@ def load_db_cache():
 
 
 def sync_db_to_b2():
-    if _app_has_b2:
-        upload_db_to_b2()
+    return
 
 
 def get_client_ip():
@@ -322,6 +279,10 @@ def init_db():
             description TEXT,
             image_url TEXT
         );
+
+        INSERT OR IGNORE INTO services (name, price, description, image_url) VALUES
+            ('Lawn Mowing', 30.00, 'Professional lawn mowing services for small to medium yards.', '/static/uploads/services/lawn-mowing.svg'),
+            ('Snow Shoveling', 30.00, 'Reliable snow removal and pathway clearing for winter weather.', '/static/uploads/services/snow-shoveling.svg');
 
         CREATE TABLE IF NOT EXISTS requests (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -487,132 +448,41 @@ def init_db():
 
 
 # ============================================================
-# BACKBLAZE B2
+# LOCAL FILE UPLOADS
 # ============================================================
 
-def get_b2_bucket():
-    b2_config = get_b2_config()
-    b2_key_id = b2_config["key_id"]
-    b2_app_key = b2_config["app_key"]
-    b2_bucket_name = b2_config["bucket_name"]
-    if not all([b2_key_id, b2_app_key, b2_bucket_name]):
-        raise RuntimeError("Backblaze B2 is not fully configured. Set B2_KEY_ID, B2_APP_KEY, and B2_BUCKET (or B2_BUCKET_NAME).")
-    info = InMemoryAccountInfo()
-    b2_api = B2Api(info)
-    b2_api.authorize_account("production", b2_key_id, b2_app_key)
-    return b2_api.get_bucket_by_name(b2_bucket_name)
+def _ensure_upload_folder(folder):
+    upload_dir = os.path.join("static", "uploads", folder)
+    os.makedirs(upload_dir, exist_ok=True)
+    return upload_dir
 
 
-def test_b2_connection():
-    if not _app_has_b2:
-        raise RuntimeError("Backblaze B2 is not configured. Set B2_KEY_ID, B2_APP_KEY, and B2_BUCKET.")
-    bucket = get_b2_bucket()
-    if not bucket:
-        raise RuntimeError("Unable to connect to Backblaze B2 bucket.")
-    return True
-
-
-def download_db_from_b2():
-    if not _app_has_b2:
-        return
-    try:
-        bucket = get_b2_bucket()
-        if os.path.exists(DB_LOCAL_PATH):
-            try:
-                os.remove(DB_LOCAL_PATH)
-            except OSError:
-                pass
-        bucket.download_file_by_name(B2_DB_PATH, DB_LOCAL_PATH)
-        print(f"Downloaded {B2_DB_PATH} from B2 to {DB_LOCAL_PATH}")
-    except Exception as e:
-        print(f"Could not download DB from B2 (first run?): {e}")
-
-
-def _create_db_backup_copy():
-    if not DB_LOCAL_PATH or not os.path.exists(DB_LOCAL_PATH):
-        return None
-
-    backup_path = None
-    try:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.basename(DB_LOCAL_PATH)) as tmp:
-            backup_path = tmp.name
-
-        with sqlite3.connect(DB_LOCAL_PATH) as source_conn:
-            source_conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
-            source_conn.commit()
-            with sqlite3.connect(backup_path) as dest_conn:
-                source_conn.backup(dest_conn)
-
-        return backup_path
-    except Exception as exc:
-        if backup_path and os.path.exists(backup_path):
-            os.remove(backup_path)
-        print(f"WARNING: Failed to create DB backup for B2 upload: {exc}")
-        return None
-
-
-def upload_db_to_b2():
-    if not _app_has_b2:
-        return
-
-    backup_path = None
-    try:
-        backup_path = _create_db_backup_copy()
-        if not backup_path:
-            print(f"WARNING: Could not create DB backup; skipping B2 upload.")
-            return
-        bucket = get_b2_bucket()
-        bucket.upload_local_file(local_file=backup_path, file_name=B2_DB_PATH)
-        print(f"Uploaded {DB_LOCAL_PATH} to B2 as {B2_DB_PATH}")
-    except Exception as e:
-        print(f"WARNING: Failed to upload DB to B2: {e}")
-    finally:
-        if backup_path and os.path.exists(backup_path):
-            os.remove(backup_path)
-
-
-def upload_file_to_b2(local_path, b2_path):
-    bucket = get_b2_bucket()
-    bucket.upload_local_file(local_file=local_path, file_name=b2_path)
-    b2_config = get_b2_config()
-    endpoint = b2_config["endpoint"] or os.getenv("B2_ENDPOINT", "")
-    bucket_name = b2_config["bucket_name"]
-    if endpoint:
-        return f"https://{endpoint}/file/{bucket_name}/{b2_path}"
-    return f"https://{bucket_name}/{b2_path}"
-
-
-def save_upload_to_b2(upload_file, b2_folder):
+def save_upload_to_b2(upload_file, upload_folder):
     if not upload_file or not getattr(upload_file, "filename", None):
         return None
-
-    if not _app_has_b2:
-        raise RuntimeError("Blackblaze B2 is not configured.")
 
     filename = secure_filename(upload_file.filename)
     if not filename:
         raise ValueError("Invalid filename.")
 
-    ext = filename.rsplit(".", 1)[1].lower() if "." in filename else ""
-    with tempfile.NamedTemporaryFile(delete=False, suffix=f".{ext}" if ext else "") as tmp:
-        upload_file.save(tmp.name)
-        tmp_path = tmp.name
+    upload_dir = _ensure_upload_folder(upload_folder)
+    base, ext = os.path.splitext(filename)
+    ext = ext.lower()
+    destination = os.path.join(upload_dir, filename)
+    counter = 1
+    while os.path.exists(destination):
+        destination = os.path.join(upload_dir, f"{base}_{counter}{ext}")
+        counter += 1
 
-    try:
-        b2_path = f"{b2_folder}/{filename}"
-        file_url = upload_file_to_b2(tmp_path, b2_path)
-        return file_url, ext
-    finally:
-        if os.path.exists(tmp_path):
-            os.remove(tmp_path)
+    upload_file.save(destination)
+    file_url = f"/static/uploads/{upload_folder}/{os.path.basename(destination)}"
+    return file_url, ext.lstrip('.')
 
 
 # ============================================================
-# BOOTSTRAP — download DB from B2, then init local schema
+# BOOTSTRAP — init local database and cache
 # ============================================================
 
-check_b2_config()
-download_db_from_b2()
 with app.app_context():
     init_db()
     # load a lightweight cache of users/services/requests for quick access
@@ -840,7 +710,6 @@ def inject_globals():
 def sync_db_after_request(response):
     global _db_dirty
     if _db_dirty:
-        upload_db_to_b2()
         _db_dirty = False
     return response
 
@@ -1486,17 +1355,6 @@ def admin_dashboard():
     )
 
 
-@app.route("/admin/test_b2", methods=["POST"])
-@admin_login_required
-def admin_test_b2():
-    try:
-        test_b2_connection()
-        flash("Backblaze B2 connection test succeeded.", "success")
-    except Exception as exc:
-        flash(f"Backblaze B2 test failed: {exc}", "danger")
-    return redirect(url_for("admin_dashboard"))
-
-
 @app.route("/admin/logout")
 def admin_logout():
     session.pop("admin_authenticated", None)
@@ -1533,12 +1391,7 @@ def admin_add_service():
             if uploaded:
                 image_url, _ = uploaded
         except Exception as exc:
-            flash(f"Unable to upload service image to Blackblaze B2: {exc}", "danger")
-            return render_template("admin_add_service.html")
-
-    conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute(
+                flash(f"Unable to upload service image: {exc}", "danger")
         "INSERT INTO services (name, price, description, image_url) VALUES (?, ?, ?, ?)",
         (name, price, description, image_url),
     )
@@ -1571,7 +1424,7 @@ def admin_edit_service(service_id):
                 if uploaded:
                     image_url, _ = uploaded
             except Exception as exc:
-                flash(f"Unable to upload service image to Blackblaze B2: {exc}", "danger")
+                flash(f"Unable to upload service image: {exc}", "danger")
                 return redirect(url_for("admin_edit_service", service_id=service_id))
 
         cursor.execute(
@@ -1856,7 +1709,7 @@ def add_popup():
                 media_url, ext = uploaded
                 media_type = "video" if ext in {"mp4", "webm"} else "image"
         except Exception as exc:
-            flash(f"Unable to upload popup media to Blackblaze B2: {exc}", "danger")
+            flash(f"Unable to upload popup media: {exc}", "danger")
             return redirect(url_for("admin_dashboard"))
 
     conn = get_db()
@@ -1932,7 +1785,7 @@ def upload_background():
             raise RuntimeError("Background upload did not produce a file URL.")
         file_url, _ = upload_result
     except Exception as exc:
-        flash(f"Unable to upload background to Blackblaze B2: {exc}", "danger")
+        flash(f"Unable to upload background: {exc}", "danger")
         return redirect(url_for("admin_dashboard"))
 
     conn = get_db()

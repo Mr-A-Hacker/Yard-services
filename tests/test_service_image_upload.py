@@ -98,51 +98,22 @@ class ServiceImageUploadTests(unittest.TestCase):
 
         requests_mock.post.assert_called_once()
 
-    def test_b2_config_supports_render_style_environment_names(self):
-        with patch.dict(os.environ, {
-            "B2_KEY_ID": "render-key-id",
-            "B2_APP_KEY": "render-app-key",
-            "B2_BUCKET_NAME": "Yard-for-st",
-            "B2_ENDPOINT": "s3.us-east-005.backblazeb2.com",
-        }, clear=True):
-            config = app_module.get_b2_config()
+    def test_send_admin_notification_uses_webhook_when_configured(self):
+        with patch.object(app_module, "NOTIFICATION_WEBHOOK_URL", "https://example.com/webhook"), patch.object(app_module, "urllib_request") as urllib_mock:
+            class DummyResponse:
+                status = 200
 
-        self.assertEqual(config["key_id"], "render-key-id")
-        self.assertEqual(config["app_key"], "render-app-key")
-        self.assertEqual(config["bucket_name"], "Yard-for-st")
-        self.assertEqual(config["endpoint"], "s3.us-east-005.backblazeb2.com")
+            urllib_mock.urlopen.return_value.__enter__.return_value = DummyResponse()
+            app_module.send_admin_notification("Test subject", "Test body")
 
-    def test_upload_db_to_b2_includes_latest_wal_data(self):
-        class DummyBucket:
-            def __init__(self):
-                self.uploaded_files = []
+        urllib_mock.urlopen.assert_called_once()
 
-            def upload_local_file(self, local_file, file_name):
-                self.uploaded_files.append((local_file, file_name))
-                shutil.copyfile(local_file, os.path.join(self.temp_dir, "uploaded.db"))
+    def test_send_sms_notification_uses_twilio_when_configured(self):
+        with patch.object(app_module, "TWILIO_ACCOUNT_SID", "AC123"), patch.object(app_module, "TWILIO_AUTH_TOKEN", "token"), patch.object(app_module, "TWILIO_PHONE_NUMBER", "+15550000000"), patch.object(app_module, "SMS_TO_PHONE", "+15550000001"), patch.object(app_module, "requests") as requests_mock:
+            requests_mock.post.return_value.raise_for_status.return_value = None
+            app_module.send_sms_notification("Test SMS")
 
-        with tempfile.TemporaryDirectory() as temp_dir:
-            dummy_bucket = DummyBucket()
-            dummy_bucket.temp_dir = temp_dir
-            db_path = os.path.join(temp_dir, "yard.db")
-
-            with patch.object(app_module, "DB_LOCAL_PATH", db_path), patch.object(app_module, "B2_DB_PATH", "yard.db"), patch.object(app_module, "_app_has_b2", True), patch.object(app_module, "get_b2_bucket", return_value=dummy_bucket):
-                with app.app_context():
-                    conn = get_db()
-                    conn.execute("PRAGMA journal_mode=WAL")
-                    conn.execute("CREATE TABLE IF NOT EXISTS backup_test (value TEXT)")
-                    conn.execute("INSERT INTO backup_test (value) VALUES (?)", ("persisted",))
-                    conn.commit()
-                    app_module.upload_db_to_b2()
-
-            uploaded_db = os.path.join(temp_dir, "uploaded.db")
-            self.assertTrue(os.path.exists(uploaded_db))
-            uploaded_conn = sqlite3.connect(uploaded_db)
-            try:
-                row = uploaded_conn.execute("SELECT value FROM backup_test").fetchone()
-                self.assertEqual(row[0], "persisted")
-            finally:
-                uploaded_conn.close()
+        requests_mock.post.assert_called_once()
 
 
 if __name__ == "__main__":
