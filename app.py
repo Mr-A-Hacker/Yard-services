@@ -517,6 +517,11 @@ def download_db_from_b2():
         return
     try:
         bucket = get_b2_bucket()
+        if os.path.exists(DB_LOCAL_PATH):
+            try:
+                os.remove(DB_LOCAL_PATH)
+            except OSError:
+                pass
         bucket.download_file_by_name(B2_DB_PATH, DB_LOCAL_PATH)
         print(f"Downloaded {B2_DB_PATH} from B2 to {DB_LOCAL_PATH}")
     except Exception as e:
@@ -612,8 +617,6 @@ with app.app_context():
     init_db()
     # load a lightweight cache of users/services/requests for quick access
     load_db_cache()
-    if _app_has_b2:
-        upload_db_to_b2()
 
 
 # ============================================================
