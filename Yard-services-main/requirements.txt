@@ -1,7 +1,0 @@
-Flask
-Flask-Login
-Flask-Bcrypt
-gunicorn
-Flask-Mail
-python-dotenv
-requests
