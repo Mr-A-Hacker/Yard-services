@@ -89,7 +89,7 @@ sqlite3.register_converter("TIMESTAMP", _convert_timestamp)
 
 load_dotenv()
 app = Flask(__name__)
-app.secret_key = os.getenv("SECRET_KEY", "change-me-in-production")
+app.secret_key = os.getenv("SECRET_KEY") or "change-me-in-production"
 app.config["UPLOAD_FOLDER"] = "static/backgrounds"
 app.config.update(
     MAIL_SERVER=os.getenv("MAIL_SERVER", ""),
