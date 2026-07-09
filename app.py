@@ -280,9 +280,33 @@ def init_db():
             image_url TEXT
         );
 
-        INSERT OR IGNORE INTO services (name, price, description, image_url) VALUES
-            ('Lawn Mowing', 30.00, 'Professional lawn mowing services for small to medium yards.', '/static/uploads/services/lawn-mowing.svg'),
-            ('Snow Shoveling', 30.00, 'Reliable snow removal and pathway clearing for winter weather.', '/static/uploads/services/snow-shoveling.svg');
+        INSERT INTO services (name, price, description, image_url)
+        SELECT 'Lawn Mowing', 30.00, 'Friendly teen crew trims, mows, and edges your lawn with care. Great for weekly maintenance and tidy curb appeal.', 'https://source.unsplash.com/featured/?lawn+mowing'
+        WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Lawn Mowing');
+
+        INSERT INTO services (name, price, description, image_url)
+        SELECT 'Snow Shoveling', 30.00, 'Reliable teen teams will clear snow from driveways, walkways, and steps so your family can move safely after any storm.', 'https://source.unsplash.com/featured/?snow+shoveling'
+        WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Snow Shoveling');
+
+        INSERT INTO services (name, price, description, image_url)
+        SELECT 'Leaf Raking', 35.00, 'Seasonal leaf and debris cleanup by local teens who will pile, bag, and remove leaves for a neat yard.', 'https://source.unsplash.com/featured/?leaf+raking'
+        WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Leaf Raking');
+
+        INSERT INTO services (name, price, description, image_url)
+        SELECT 'Hedge Trimming', 40.00, 'Attention to detail hedge trimming and shrub shaping performed by a careful teen landscaping crew.', 'https://source.unsplash.com/featured/?hedge+trimming'
+        WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Hedge Trimming');
+
+        INSERT INTO services (name, price, description, image_url)
+        SELECT 'Yard Cleanup', 45.00, 'Quick yard cleaning including debris pickup, trash removal, and light hauling by local teens.', 'https://source.unsplash.com/featured/?yard+cleanup'
+        WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Yard Cleanup');
+
+        INSERT INTO services (name, price, description, image_url)
+        SELECT 'Garden Weeding', 35.00, 'Weeding and garden bed maintenance by friendly students who care about healthy plants.', 'https://source.unsplash.com/featured/?garden+weeding'
+        WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Garden Weeding');
+
+        INSERT INTO services (name, price, description, image_url)
+        SELECT 'Driveway Sweeping', 25.00, 'Professional driveway and sidewalk sweeping to keep your property looking its best.', 'https://source.unsplash.com/featured/?driveway+sweeping'
+        WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Driveway Sweeping');
 
         CREATE TABLE IF NOT EXISTS requests (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
