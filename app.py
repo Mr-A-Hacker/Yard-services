@@ -503,6 +503,15 @@ def get_b2_bucket():
     return b2_api.get_bucket_by_name(b2_bucket_name)
 
 
+def test_b2_connection():
+    if not _app_has_b2:
+        raise RuntimeError("Backblaze B2 is not configured. Set B2_KEY_ID, B2_APP_KEY, and B2_BUCKET.")
+    bucket = get_b2_bucket()
+    if not bucket:
+        raise RuntimeError("Unable to connect to Backblaze B2 bucket.")
+    return True
+
+
 def download_db_from_b2():
     if not _app_has_b2:
         return
@@ -1461,6 +1470,17 @@ def admin_dashboard():
         user_ips=user_ips,
         calendar_requests=calendar_requests,
     )
+
+
+@app.route("/admin/test_b2", methods=["POST"])
+@admin_login_required
+def admin_test_b2():
+    try:
+        test_b2_connection()
+        flash("Backblaze B2 connection test succeeded.", "success")
+    except Exception as exc:
+        flash(f"Backblaze B2 test failed: {exc}", "danger")
+    return redirect(url_for("admin_dashboard"))
 
 
 @app.route("/admin/logout")
