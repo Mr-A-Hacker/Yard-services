@@ -1391,7 +1391,12 @@ def admin_add_service():
             if uploaded:
                 image_url, _ = uploaded
         except Exception as exc:
-                flash(f"Unable to upload service image: {exc}", "danger")
+            flash(f"Unable to upload service image: {exc}", "danger")
+            return render_template("admin_add_service.html")
+
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(
         "INSERT INTO services (name, price, description, image_url) VALUES (?, ?, ?, ?)",
         (name, price, description, image_url),
     )
