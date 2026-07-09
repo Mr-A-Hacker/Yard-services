@@ -308,6 +308,26 @@ def init_db():
         SELECT 'Driveway Sweeping', 25.00, 'Professional driveway and sidewalk sweeping to keep your property looking its best.', 'https://source.unsplash.com/featured/?driveway+sweeping'
         WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Driveway Sweeping');
 
+        INSERT INTO services (name, price, description, image_url)
+        SELECT 'Mulching', 50.00, 'Spring and fall mulching service to refresh garden beds and retain moisture, handled by our hardworking teen crew.', 'https://source.unsplash.com/featured/?mulching'
+        WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Mulching');
+
+        INSERT INTO services (name, price, description, image_url)
+        SELECT 'Gutter Cleaning', 45.00, 'Safe and thorough gutter clearing to protect your home, completed by reliable local teens.', 'https://source.unsplash.com/featured/?gutter+cleaning'
+        WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Gutter Cleaning');
+
+        INSERT INTO services (name, price, description, image_url)
+        SELECT 'Patio Power Washing', 55.00, 'Brighten patios, decks, and walkways with power washing from a careful teen team.', 'https://source.unsplash.com/featured/?power+washing'
+        WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Patio Power Washing');
+
+        INSERT INTO services (name, price, description, image_url)
+        SELECT 'Garden Planting', 40.00, 'Planting flowers and vegetables by thoughtful students who take pride in a beautiful yard.', 'https://source.unsplash.com/featured/?garden+planting'
+        WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Garden Planting');
+
+        INSERT INTO services (name, price, description, image_url)
+        SELECT 'Fence Staining', 65.00, 'Fence and wood trim staining service to refresh outdoor spaces and protect wood surfaces.', 'https://source.unsplash.com/featured/?fence+staining'
+        WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Fence Staining');
+
         CREATE TABLE IF NOT EXISTS requests (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL REFERENCES users(id),
