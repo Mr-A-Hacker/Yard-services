@@ -98,6 +98,7 @@ app.config["REMEMBER_COOKIE_HTTPONLY"] = True
 app.config["REMEMBER_COOKIE_SAMESITE"] = "Lax"
 # Only send the cookie over HTTPS in production (set FLASK_ENV=production there).
 app.config["REMEMBER_COOKIE_SECURE"] = os.getenv("FLASK_ENV") == "production"
+
 app.config.update(
     MAIL_SERVER=os.getenv("MAIL_SERVER", ""),
     MAIL_PORT=int(os.getenv("MAIL_PORT", 587)),
@@ -794,7 +795,7 @@ def load_user(user_id):
 
 
 # ============================================================
-# GLOBAL TEMPLATE CONTEXT
+# GLOBAL TEMPLATE CONTEXT & BEFORE-REQUEST HOOKS
 # ============================================================
 
 @app.before_request
@@ -809,10 +810,12 @@ def block_banned_ips():
 @app.before_request
 def auto_login_returning_user():
     """
-    If Flask-Login's 'remember me' cookie already signed the visitor in,
-    there's nothing to do. Otherwise (new browser, cleared cookies, etc.)
-    fall back to matching their current IP to a single known account.
+    If the user is not already authenticated and we have no session cookie,
+    try to identify them by their IP address. This enables "automatic login"
+    when they come back from the same IP (e.g. home network, mobile data)
+    without needing to type credentials again.
     """
+    # Skip static assets and admin routes to avoid interfering
     if request.path.startswith("/static") or request.path.startswith("/admin"):
         return
     if current_user.is_authenticated:
@@ -920,21 +923,32 @@ def signup():
             conn.commit()
             mark_db_dirty()
             sync_db_to_b2()
+
+            # Fetch the newly created user and log them in immediately
             cursor.execute(
                 "SELECT id, email, password_hash, phone, popup_seen FROM users WHERE email = ?",
                 (email,),
             )
             new_user = cursor.fetchone()
             if new_user:
+                # Record the IP for this user
                 log_user_ip(new_user["id"], get_client_ip())
+                # Create User object and log in with "remember me"
                 user = User(
-                    new_user["id"], new_user["email"], new_user["password_hash"],
-                    new_user["phone"], new_user["popup_seen"],
+                    new_user["id"],
+                    new_user["email"],
+                    new_user["password_hash"],
+                    new_user["phone"],
+                    new_user["popup_seen"],
                 )
                 login_user(user, remember=True)
-                session["popup_seen"] = new_user["popup_seen"]
-            flash("Account created!", "success")
-            return redirect(url_for("dashboard"))
+                session["popup_seen"] = user.popup_seen
+                flash("Account created! You are now logged in.", "success")
+                return redirect(url_for("dashboard"))
+            else:
+                flash("Account created but could not log you in automatically. Please log in.", "warning")
+                return redirect(url_for("login"))
+
         except sqlite3.IntegrityError:
             conn.rollback()
             flash("An account with that email already exists.", "danger")
@@ -958,6 +972,7 @@ def login():
 
         if row and bcrypt.check_password_hash(row["password_hash"], password):
             user = User(row["id"], row["email"], row["password_hash"], row["phone"], row["popup_seen"])
+            # Use remember=True so the session persists across browser restarts
             login_user(user, remember=True)
             session["popup_seen"] = row["popup_seen"]
             log_user_ip(row["id"], get_client_ip())
