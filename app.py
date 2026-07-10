@@ -91,6 +91,13 @@ app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY") or "change-me-in-production"
 app.config["UPLOAD_FOLDER"] = os.path.join("static", "uploads")
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+
+# "Remember me" cookie so returning users are auto-signed-in on this browser.
+app.config["REMEMBER_COOKIE_DURATION"] = datetime.timedelta(days=30)
+app.config["REMEMBER_COOKIE_HTTPONLY"] = True
+app.config["REMEMBER_COOKIE_SAMESITE"] = "Lax"
+# Only send the cookie over HTTPS in production (set FLASK_ENV=production there).
+app.config["REMEMBER_COOKIE_SECURE"] = os.getenv("FLASK_ENV") == "production"
 app.config.update(
     MAIL_SERVER=os.getenv("MAIL_SERVER", ""),
     MAIL_PORT=int(os.getenv("MAIL_PORT", 587)),
@@ -256,6 +263,43 @@ def log_user_ip(user_id, ip):
         mark_db_dirty()
     except Exception:
         pass
+
+
+def get_user_by_ip(ip):
+    """
+    Look up a single user by their last-seen public IP, for auto-login
+    fallback when there's no 'remember me' cookie (e.g. new browser).
+
+    Only returns a user if that IP is uniquely tied to exactly one
+    account. IPs are frequently shared by many people (home routers,
+    offices, phone carriers via CGNAT, coffee shops), so if more than
+    one account has ever logged in from this IP, we refuse to guess
+    and the visitor just sees the normal login page instead.
+    """
+    if not ip:
+        return None
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT DISTINCT user_id FROM user_ips WHERE ip_address = ?",
+            (ip,),
+        )
+        rows = cursor.fetchall()
+        if len(rows) != 1:
+            return None
+
+        user_id = rows[0]["user_id"]
+        cursor.execute(
+            "SELECT id, email, password_hash, phone, popup_seen FROM users WHERE id = ?",
+            (user_id,),
+        )
+        row = cursor.fetchone()
+        if row:
+            return User(row["id"], row["email"], row["password_hash"], row["phone"], row["popup_seen"])
+    except Exception:
+        return None
+    return None
 
 
 def init_db():
@@ -762,6 +806,25 @@ def block_banned_ips():
         return "403 Forbidden: Your IP has been banned.", 403
 
 
+@app.before_request
+def auto_login_returning_user():
+    """
+    If Flask-Login's 'remember me' cookie already signed the visitor in,
+    there's nothing to do. Otherwise (new browser, cleared cookies, etc.)
+    fall back to matching their current IP to a single known account.
+    """
+    if request.path.startswith("/static") or request.path.startswith("/admin"):
+        return
+    if current_user.is_authenticated:
+        return
+
+    ip = get_client_ip()
+    user = get_user_by_ip(ip)
+    if user:
+        login_user(user, remember=True)
+        session["popup_seen"] = user.popup_seen
+
+
 @app.context_processor
 def inject_globals():
     s = get_settings()
@@ -857,12 +920,21 @@ def signup():
             conn.commit()
             mark_db_dirty()
             sync_db_to_b2()
-            cursor.execute("SELECT id FROM users WHERE email = ?", (email,))
+            cursor.execute(
+                "SELECT id, email, password_hash, phone, popup_seen FROM users WHERE email = ?",
+                (email,),
+            )
             new_user = cursor.fetchone()
             if new_user:
                 log_user_ip(new_user["id"], get_client_ip())
-            flash("Account created! Please log in.", "success")
-            return redirect(url_for("login"))
+                user = User(
+                    new_user["id"], new_user["email"], new_user["password_hash"],
+                    new_user["phone"], new_user["popup_seen"],
+                )
+                login_user(user, remember=True)
+                session["popup_seen"] = new_user["popup_seen"]
+            flash("Account created!", "success")
+            return redirect(url_for("dashboard"))
         except sqlite3.IntegrityError:
             conn.rollback()
             flash("An account with that email already exists.", "danger")
@@ -886,7 +958,7 @@ def login():
 
         if row and bcrypt.check_password_hash(row["password_hash"], password):
             user = User(row["id"], row["email"], row["password_hash"], row["phone"], row["popup_seen"])
-            login_user(user)
+            login_user(user, remember=True)
             session["popup_seen"] = row["popup_seen"]
             log_user_ip(row["id"], get_client_ip())
 
