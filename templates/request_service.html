@@ -137,7 +137,10 @@
 
           <div class="service-grid" id="serviceGrid">
             {% for s in services %}
-              <div class="service-card" id="card-{{ s['id'] }}" data-name="{{ s['name'].lower() }}" data-desc="{{ s.get('description','').lower() }}">
+              <!-- FIX: use |default filter and |lower -->
+              <div class="service-card" id="card-{{ s['id'] }}"
+                   data-name="{{ s['name']|lower }}"
+                   data-desc="{{ s['description']|default('')|lower }}">
                 <label class="service-card-label" for="svc-{{ s['id'] }}">
                   {% if s['image_url'] %}
                     <img class="service-card-img" src="{{ s['image_url'] }}" alt="{{ s['name'] }}" onerror="this.style.display='none'">
