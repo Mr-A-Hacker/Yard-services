@@ -1,0 +1,113 @@
+/* ==========================================================
+   BLACK FRIDAY THEME — Yard Services
+   Activated when admin selects "blackfriday"
+   ========================================================== */
+
+/* === DARK BLACK FRIDAY BACKGROUND === */
+body {
+  background: linear-gradient(135deg, #000000, #1a1a1a) !important;
+  color: #ffffff !important;
+  background-attachment: fixed;
+}
+
+/* === FLASHING SALE BANNER === */
+body::after {
+  content: "🔥 BLACK FRIDAY SALE — HUGE DISCOUNTS 🔥";
+  position: fixed;
+  top: 15px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #ff0000, #b30000);
+  color: #ffffff;
+  padding: 10px 25px;
+  font-weight: bold;
+  font-size: 1.2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(255,0,0,0.5);
+  animation: flashSale 1s infinite;
+  z-index: 9999;
+}
+
+@keyframes flashSale {
+  0% { opacity: 1; }
+  50% { opacity: 0.25; }
+  100% { opacity: 1; }
+}
+
+/* === NAVBAR === */
+.navbar {
+  background: linear-gradient(180deg, #000000, #2b2b2b) !important;
+  box-shadow: 0 6px 12px rgba(255, 0, 0, 0.4) !important;
+}
+
+.navbar-brand {
+  color: #ffcc00 !important;
+  text-shadow: 0 0 8px #ffcc00;
+}
+
+/* === CARDS === */
+.card {
+  background: rgba(20, 20, 20, 0.95) !important;
+  border: 2px solid #ff0000 !important;
+  box-shadow: 0 4px 12px rgba(255, 0, 0, 0.3) !important;
+  color: #ffffff !important;
+}
+
+/* === TABLES === */
+.table th {
+  background-color: #ff0000 !important;
+  color: #ffffff !important;
+}
+
+.table td {
+  background-color: rgba(30, 30, 30, 0.9) !important;
+  color: #ffffff !important;
+}
+
+/* === FORMS === */
+form {
+  background: rgba(25, 25, 25, 0.95) !important;
+  border: 2px solid #ff0000 !important;
+  box-shadow: 0 4px 12px rgba(255, 0, 0, 0.3) !important;
+}
+
+input, textarea, select {
+  background-color: #111 !important;
+  color: #ffcc00 !important;
+  border: 1px solid #ff0000 !important;
+}
+
+/* === BUTTONS === */
+.btn-primary {
+  background: linear-gradient(180deg, #ff0000, #b30000) !important;
+  border: none !important;
+  color: #ffffff !important;
+}
+
+.btn-success {
+  background: linear-gradient(180deg, #ffcc00, #b38f00) !important;
+  border: none !important;
+  color: #000 !important;
+}
+
+.btn-danger {
+  background: linear-gradient(180deg, #ff3300, #b32400) !important;
+  border: none !important;
+  color: #ffffff !important;
+}
+
+/* === FOOTER === */
+footer {
+  background-color: #000 !important;
+  color: #ffcc00 !important;
+  box-shadow: 0 -4px 12px rgba(255, 0, 0, 0.4) !important;
+}
+
+/* === LINKS === */
+a {
+  color: #ffcc00 !important;
+}
+a:hover {
+  color: #ff0000 !important;
+  text-shadow: 0 0 6px #ff0000;
+}

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+  <title>Rate Us — Yard Services</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Bitter:wght@700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='themes/' + active_theme + '.css') }}">
+  <style>body{ {% if bg_image %}background-image:url('{{ bg_image }}');background-position:{{ bg_position }};background-size:{{ bg_size }};background-repeat:{{ bg_repeat }};background-attachment:{{ bg_attachment }};{% endif %} }</style>
+
+  <style>
+    :root{--g-dark:#1a5c2a;--g-mid:#2d8a3e;--g-bright:#4caf50;--g-light:#c8e6c9;--g-pale:#f1f8f2;--gold:#f5a623;--gold-soft:#fff8e1;--gold-dark:#c47f00;--white:#ffffff;--ink:#1a2e1c;--muted:#6a8f70;--shadow-sm:0 2px 12px rgba(26,92,42,0.10);--shadow:0 6px 28px rgba(26,92,42,0.15);}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Nunito',sans-serif;background-color:var(--g-pale);min-height:100vh;display:flex;flex-direction:column;position:relative;}
+    body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(170deg,rgba(76,175,80,0.05) 0px,rgba(76,175,80,0.05) 20px,transparent 20px,transparent 40px);pointer-events:none;z-index:0;}
+
+    .top-nav{background:linear-gradient(90deg,var(--g-dark),var(--g-mid));padding:14px 24px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 3px 16px rgba(0,0,0,0.2);position:sticky;top:0;z-index:100;}
+    .top-nav .brand{font-family:'Bitter',serif;font-size:1.2rem;font-weight:900;color:white;text-decoration:none;display:flex;align-items:center;gap:10px;}
+    .top-nav .brand .icon-badge{background:var(--gold);color:var(--g-dark);width:32px;height:32px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;}
+    .nav-back{color:var(--g-light);font-size:0.85rem;font-weight:700;text-decoration:none;padding:6px 14px;border-radius:999px;border:1.5px solid rgba(255,255,255,0.25);transition:background 0.2s;}
+    .nav-back:hover{background:rgba(255,255,255,0.15);color:white;}
+    .top-nav .user-chip{background:rgba(255,255,255,0.12);border:1.5px solid rgba(255,255,255,0.22);color:var(--g-light);font-size:0.82rem;font-weight:700;padding:5px 13px;border-radius:999px;}
+
+    .dash-wrap{position:relative;z-index:1;max-width:700px;margin:0 auto;padding:32px 16px 60px;flex:1;width:100%;}
+
+    /* page header */
+    .page-head{background:linear-gradient(135deg,var(--g-dark) 0%,var(--g-mid) 60%,var(--g-bright) 100%);border-radius:20px;padding:32px 36px;position:relative;overflow:hidden;box-shadow:var(--shadow);margin-bottom:28px;animation:fadeUp 0.4s ease both;}
+    .page-head::before{content:'⭐';font-size:140px;position:absolute;right:-16px;top:-24px;opacity:0.09;transform:rotate(-8deg);}
+    .page-head h2{font-family:'Bitter',serif;font-size:1.7rem;font-weight:900;color:white;margin-bottom:4px;}
+    .page-head .sub{color:var(--g-light);font-size:0.95rem;font-weight:700;}
+
+    /* section cards */
+    .section-card{background:var(--white);border-radius:18px;border:1.5px solid var(--g-light);box-shadow:var(--shadow-sm);overflow:hidden;margin-bottom:24px;animation:fadeUp 0.4s ease 0.1s both;}
+    .section-card-head{background:linear-gradient(90deg,var(--g-dark),var(--g-mid));padding:14px 22px;display:flex;align-items:center;gap:10px;}
+    .section-card-head .head-icon{width:30px;height:30px;background:rgba(255,255,255,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;}
+    .section-card-head h5{font-family:'Bitter',serif;font-size:1rem;font-weight:900;color:white;margin:0;}
+    .section-card-body{padding:26px 28px;}
+
+    /* star rating */
+    .star-prompt{font-weight:800;color:var(--g-dark);font-size:0.9rem;margin-bottom:10px;display:block;}
+    .rating-stars{display:flex;flex-direction:row-reverse;justify-content:center;gap:8px;margin-bottom:20px;}
+    .rating-stars input{display:none;}
+    .rating-stars label{font-size:2.4rem;cursor:pointer;color:#ddd;transition:color 0.15s,transform 0.15s;}
+    .rating-stars label:hover,.rating-stars label:hover~label{color:var(--gold);transform:scale(1.15);}
+    .rating-stars input:checked~label{color:var(--gold);animation:pop 0.25s ease-out;}
+    @keyframes pop{0%{transform:scale(1);}40%{transform:scale(0.85);}70%{transform:scale(1.25);}100%{transform:scale(1);}}
+
+    .form-label-custom{font-weight:800;font-size:0.88rem;color:var(--g-dark);margin-bottom:6px;display:block;}
+    .form-control-custom{border:2px solid var(--g-light);border-radius:10px;padding:11px 14px;font-family:'Nunito',sans-serif;font-weight:700;font-size:0.95rem;transition:border-color 0.2s,box-shadow 0.2s;width:100%;resize:vertical;}
+    .form-control-custom:focus{outline:none;border-color:var(--g-bright);box-shadow:0 0 0 3px rgba(76,175,80,0.18);}
+
+    .btn-submit{display:block;width:100%;padding:13px;background:linear-gradient(135deg,var(--g-mid),var(--g-dark));color:white;font-family:'Bitter',serif;font-size:1rem;font-weight:700;border:none;border-radius:12px;cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;box-shadow:0 4px 18px rgba(26,92,42,0.35);margin-top:8px;}
+    .btn-submit:hover{transform:translateY(-2px);box-shadow:0 8px 26px rgba(26,92,42,0.45);}
+
+    /* rating items */
+    .rating-item{padding:16px 0;border-bottom:1px dashed var(--g-light);}
+    .rating-item:last-child{border-bottom:none;padding-bottom:0;}
+    .rating-item:first-child{padding-top:0;}
+    .rating-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:4px;}
+    .rating-email{font-weight:800;font-size:0.88rem;color:var(--g-dark);}
+    .rating-stars-display{color:var(--gold);font-size:0.9rem;font-weight:800;}
+    .rating-comment{font-size:0.9rem;color:#444;font-style:italic;font-weight:600;margin-bottom:6px;}
+    .rating-date{font-size:0.78rem;color:var(--muted);font-weight:700;}
+    .like-form{display:inline;}
+    .btn-like{background:var(--g-pale);border:1.5px solid var(--g-light);color:var(--g-dark);font-weight:800;font-size:0.8rem;padding:4px 12px;border-radius:8px;cursor:pointer;transition:background 0.2s;font-family:'Nunito',sans-serif;}
+    .btn-like:hover{background:var(--g-light);}
+
+    .empty-state{text-align:center;padding:32px;color:var(--muted);font-weight:700;}
+    .empty-state .empty-icon{font-size:2.5rem;margin-bottom:8px;}
+
+    footer{position:relative;z-index:1;background:var(--g-dark);color:var(--g-light);text-align:center;padding:16px;font-size:0.82rem;font-weight:700;}
+
+    @keyframes fadeUp{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);}}
+
+    /* back arrow button (page-level, extra visible) */
+    .back-arrow-btn{display:inline-flex;align-items:center;gap:8px;background:var(--white);border:2px solid var(--g-light);color:var(--g-dark);font-weight:800;font-size:0.88rem;padding:9px 18px 9px 14px;border-radius:999px;text-decoration:none;box-shadow:var(--shadow-sm);margin-bottom:18px;transition:transform 0.15s,box-shadow 0.15s,border-color 0.15s;animation:fadeUp 0.4s ease both;}
+    .back-arrow-btn:hover{transform:translateX(-4px);border-color:var(--g-bright);color:var(--g-dark);box-shadow:var(--shadow);}
+    .back-arrow-btn .arrow-circle{width:22px;height:22px;border-radius:50%;background:var(--g-pale);display:inline-flex;align-items:center;justify-content:center;font-size:13px;transition:background 0.15s;}
+    .back-arrow-btn:hover .arrow-circle{background:var(--g-light);}
+
+    /* stats summary */
+    .stats-card{background:linear-gradient(135deg,var(--g-dark) 0%,var(--g-mid) 55%,var(--g-bright) 100%);border-radius:18px;padding:26px 28px;box-shadow:var(--shadow);margin-bottom:24px;display:flex;gap:28px;align-items:center;flex-wrap:wrap;animation:fadeUp 0.4s ease 0.05s both;position:relative;overflow:hidden;}
+    .stats-card::before{content:'🌟';font-size:120px;position:absolute;right:-10px;bottom:-30px;opacity:0.08;transform:rotate(10deg);}
+    .stats-avg{text-align:center;position:relative;z-index:1;}
+    .stats-avg .num{font-family:'Bitter',serif;font-size:2.6rem;font-weight:900;color:white;line-height:1;}
+    .stats-avg .stars-row{color:var(--gold);font-size:1rem;margin:4px 0 2px;}
+    .stats-avg .count{color:var(--g-light);font-size:0.78rem;font-weight:700;}
+    .stats-bars{flex:1;min-width:200px;position:relative;z-index:1;}
+    .stats-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;font-size:0.78rem;color:var(--g-light);font-weight:700;}
+    .stats-bar-row .lbl{width:34px;flex-shrink:0;}
+    .stats-bar-track{flex:1;height:8px;background:rgba(255,255,255,0.18);border-radius:6px;overflow:hidden;}
+    .stats-bar-fill{height:100%;background:var(--gold);border-radius:6px;transition:width 0.6s ease;}
+    .stats-bar-row .pct{width:34px;text-align:right;flex-shrink:0;}
+
+    /* sort tabs */
+    .sort-tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;animation:fadeUp 0.4s ease 0.08s both;}
+    .sort-tab{background:var(--white);border:1.5px solid var(--g-light);color:var(--g-dark);font-weight:800;font-size:0.8rem;padding:7px 15px;border-radius:999px;text-decoration:none;transition:background 0.15s,color 0.15s,border-color 0.15s;}
+    .sort-tab:hover{border-color:var(--g-bright);color:var(--g-dark);}
+    .sort-tab.active{background:linear-gradient(135deg,var(--g-mid),var(--g-dark));border-color:transparent;color:white;box-shadow:0 3px 12px rgba(26,92,42,0.3);}
+
+    .verified-badge{display:inline-flex;align-items:center;gap:3px;background:var(--g-pale);color:var(--g-mid);font-size:0.68rem;font-weight:900;padding:2px 8px;border-radius:999px;text-transform:uppercase;letter-spacing:0.3px;margin-left:6px;}
+  </style>
+</head>
+<body>
+
+  <nav class="top-nav">
+    <a class="brand" href="{{ url_for('home') }}">
+      <span class="icon-badge">🌿</span>
+      Yard Services
+    </a>
+    <a href="{{ url_for('dashboard') }}" class="nav-back">⬅ Dashboard</a>
+  </nav>
+
+  <div class="dash-wrap">
+
+    <a href="{{ url_for('dashboard') }}" class="back-arrow-btn">
+      <span class="arrow-circle">←</span> Back to Dashboard
+    </a>
+
+    <div class="page-head">
+      <h2>⭐ Rate Us</h2>
+      <p class="sub">We'd love to hear about your experience!</p>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}{% for category, message in messages %}
+        <div class="alert alert-{{ category }}" style="border-radius:12px;font-weight:700;margin-bottom:16px;">{{ message }}</div>
+      {% endfor %}{% endif %}
+    {% endwith %}
+
+    <!-- Stats summary -->
+    <div class="stats-card">
+      <div class="stats-avg">
+        <div class="num">{{ avg_rating }}</div>
+        <div class="stars-row">{{ '⭐' * (avg_rating | round | int) }}</div>
+        <div class="count">{{ total_ratings }} rating{{ 's' if total_ratings != 1 else '' }}</div>
+      </div>
+      <div class="stats-bars">
+        {% for n in range(5, 0, -1) %}
+        <div class="stats-bar-row">
+          <span class="lbl">{{ n }}★</span>
+          <div class="stats-bar-track"><div class="stats-bar-fill" style="width:{{ distribution_pct[n] }}%;"></div></div>
+          <span class="pct">{{ distribution_pct[n] }}%</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Sort tabs -->
+    {% if total_ratings > 0 %}
+    <div class="sort-tabs">
+      <a href="{{ url_for('rate_us', sort='recent') }}" class="sort-tab {{ 'active' if current_sort=='recent' }}">🕒 Most Recent</a>
+      <a href="{{ url_for('rate_us', sort='top') }}" class="sort-tab {{ 'active' if current_sort=='top' }}">👍 Most Liked</a>
+      <a href="{{ url_for('rate_us', sort='highest') }}" class="sort-tab {{ 'active' if current_sort=='highest' }}">⭐ Highest Rated</a>
+      <a href="{{ url_for('rate_us', sort='lowest') }}" class="sort-tab {{ 'active' if current_sort=='lowest' }}">📉 Lowest Rated</a>
+    </div>
+    {% endif %}
+
+    <!-- Submit form -->
+    <div class="section-card">
+      <div class="section-card-head">
+        <div class="head-icon">✍️</div>
+        <h5>Leave Your Feedback</h5>
+      </div>
+      <div class="section-card-body">
+        <form method="POST">
+          <span class="star-prompt">Your Rating:</span>
+          <div class="rating-stars">
+            {% for i in range(5, 0, -1) %}
+              <input type="radio" id="star{{ i }}" name="rating" value="{{ i }}" required>
+              <label for="star{{ i }}">⭐</label>
+            {% endfor %}
+          </div>
+          <div style="margin-bottom:16px;">
+            <label class="form-label-custom">💬 Your Comment</label>
+            <textarea name="comment" class="form-control-custom" rows="3" placeholder="Tell us what you loved or what we can improve..."></textarea>
+          </div>
+          <button type="submit" class="btn-submit">⭐ Submit Feedback</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Recent feedback -->
+    <div class="section-card">
+      <div class="section-card-head">
+        <div class="head-icon">💬</div>
+        <h5>Recent Feedback</h5>
+      </div>
+      <div class="section-card-body">
+        {% if ratings %}
+          {% for r in ratings %}
+          <div class="rating-item">
+            <div class="rating-top">
+              <span class="rating-email">{{ r.email or 'Anonymous' }}{% if r.email %}<span class="verified-badge">✓ Verified</span>{% endif %}</span>
+              <span class="rating-stars-display">{{ '⭐' * r.rating }} {{ r.rating }}/5</span>
+            </div>
+            {% if r.comment %}<div class="rating-comment">"{{ r.comment }}"</div>{% endif %}
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:4px;">
+              <div class="rating-date">{{ r.timestamp }}</div>
+              <form action="{{ url_for('like_rating', rating_id=r.id) }}" method="POST" class="like-form">
+                <button type="submit" class="btn-like">👍 {{ r.likes }}</button>
+              </form>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="empty-state">
+            <div class="empty-icon">⭐</div>
+            No ratings yet — be the first to leave feedback!
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+
+  <footer>© 2025 Yard Services. All rights reserved. 🌿</footer>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
