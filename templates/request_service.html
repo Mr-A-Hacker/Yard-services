@@ -28,7 +28,7 @@
     .nav-back{color:var(--g-light);font-size:0.85rem;font-weight:700;text-decoration:none;padding:6px 14px;border-radius:999px;border:1.5px solid rgba(255,255,255,0.25);transition:background 0.2s;}
     .nav-back:hover{background:rgba(255,255,255,0.15);color:white;}
 
-    .page-wrap{position:relative;z-index:1;max-width:600px;margin:0 auto;padding:36px 16px 60px;flex:1;width:100%;}
+    .page-wrap{position:relative;z-index:1;max-width:800px;margin:0 auto;padding:36px 16px 60px;flex:1;width:100%;}
 
     .form-hero{background:linear-gradient(135deg,var(--g-dark) 0%,var(--g-mid) 60%,var(--g-bright) 100%);border-radius:20px 20px 0 0;padding:32px 36px 26px;text-align:center;position:relative;overflow:hidden;box-shadow:var(--shadow);}
     .form-hero::before{content:'🧹';font-size:110px;position:absolute;right:-14px;top:-18px;opacity:0.09;}
@@ -46,26 +46,32 @@
     .form-control:focus,.form-select:focus{outline:none;border-color:var(--g-bright);box-shadow:0 0 0 3px rgba(76,175,80,0.18);}
     .form-group{margin-bottom:16px;}
 
+    .search-wrap{margin-bottom:16px;}
+    .search-wrap input{padding-left:40px;background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="%236a8f70" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>');background-repeat:no-repeat;background-position:12px center;background-size:20px;}
+
     .non-member-notice{background:linear-gradient(135deg,#fff8e1,#ffe082);border:2px solid var(--gold);border-radius:12px;padding:12px 16px;font-size:0.88rem;font-weight:700;color:#5a3a00;margin-bottom:14px;}
     .price-display{background:linear-gradient(135deg,var(--g-pale),#e8f5e9);border:2px solid var(--g-bright);border-radius:12px;padding:12px 16px;font-family:'Bitter',serif;font-size:1rem;font-weight:900;color:var(--g-dark);margin-top:-8px;margin-bottom:16px;display:none;flex-direction:column;gap:6px;}
     .price-row{display:flex;justify-content:space-between;align-items:center;font-size:0.95rem;}
     .fee-row{color:#c0392b;font-size:0.9rem;}
     .total-row{border-top:2px solid var(--g-light);padding-top:8px;margin-top:4px;font-size:1.1rem;color:var(--g-dark);}
-    
 
     .token-hint{font-size:0.8rem;color:var(--muted);font-weight:700;margin-top:5px;}
 
     .service-hint{font-size:0.8rem;color:var(--muted);font-weight:700;margin-bottom:10px;}
-    .service-grid{display:flex;flex-direction:column;gap:12px;}
-    .service-card{position:relative;border:2px solid var(--g-light);border-radius:14px;overflow:hidden;transition:border-color 0.2s,box-shadow 0.2s,background 0.2s;background:var(--white);}
+
+    /* GRID LAYOUT for services */
+    .service-grid{display:grid;grid-template-columns:1fr;gap:12px;}
+    @media (min-width: 576px){.service-grid{grid-template-columns:1fr 1fr;}}
+
+    .service-card{position:relative;border:2px solid var(--g-light);border-radius:14px;overflow:hidden;transition:border-color 0.2s,box-shadow 0.2s,background 0.2s;background:var(--white);height:100%;}
     .service-card:hover{border-color:var(--g-bright);}
-    .service-card input[type="checkbox"]{position:absolute;top:14px;right:14px;width:20px;height:20px;accent-color:var(--g-mid);cursor:pointer;}
+    .service-card input[type="checkbox"]{position:absolute;top:14px;right:14px;width:20px;height:20px;accent-color:var(--g-mid);cursor:pointer;z-index:2;}
     .service-card.checked{border-color:var(--g-bright);background:linear-gradient(135deg,var(--g-pale),#eef8ef);box-shadow:0 0 0 3px rgba(76,175,80,0.16);}
-    .service-card-label{display:flex;gap:14px;padding:14px 46px 14px 14px;cursor:pointer;align-items:flex-start;}
+    .service-card-label{display:flex;gap:14px;padding:14px 46px 14px 14px;cursor:pointer;align-items:flex-start;height:100%;}
     .service-card-img{width:64px;height:64px;border-radius:10px;object-fit:cover;flex-shrink:0;background:var(--g-light);}
     .service-card-body{flex:1;min-width:0;}
     .service-card-name{font-family:'Bitter',serif;font-weight:900;color:var(--g-dark);font-size:1rem;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
-    .service-card-price{background:var(--gold-soft);color:var(--gold-dark);font-weight:900;font-size:0.8rem;padding:2px 9px;border-radius:999px;border:1.5px solid var(--gold);}
+    .service-card-price{background:var(--gold-soft);color:var(--gold-dark);font-weight:900;font-size:0.8rem;padding:2px 9px;border-radius:999px;border:1.5px solid var(--gold);white-space:nowrap;}
     .service-card-desc{font-size:0.83rem;color:var(--muted);font-weight:600;margin-top:4px;line-height:1.4;}
 
     .btn-submit{display:block;width:100%;padding:15px;background:linear-gradient(135deg,var(--g-mid),var(--g-dark));color:white;font-family:'Bitter',serif;font-size:1.05rem;font-weight:700;border:none;border-radius:12px;cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;box-shadow:0 4px 18px rgba(26,92,42,0.35);margin-top:8px;position:relative;overflow:hidden;}
@@ -77,6 +83,9 @@
 
     @keyframes popIn{from{opacity:0;transform:scale(0.5);}to{opacity:1;transform:scale(1);}}
     @keyframes fadeUp{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);}}
+
+    /* hide filtered services */
+    .service-card.hidden{display:none;}
   </style>
 </head>
 <body>
@@ -120,9 +129,15 @@
         <div class="form-group">
           <label class="form-label">🛠 Select Service(s)</label>
           <div class="service-hint">Choose one or more services — pick as many as you need.</div>
+
+          <!-- Search filter -->
+          <div class="search-wrap">
+            <input type="text" id="serviceSearch" class="form-control" placeholder="🔍 Search services…" oninput="filterServices()">
+          </div>
+
           <div class="service-grid" id="serviceGrid">
             {% for s in services %}
-              <div class="service-card" id="card-{{ s['id'] }}">
+              <div class="service-card" id="card-{{ s['id'] }}" data-name="{{ s['name'].lower() }}" data-desc="{{ s.get('description','').lower() }}">
                 <label class="service-card-label" for="svc-{{ s['id'] }}">
                   {% if s['image_url'] %}
                     <img class="service-card-img" src="{{ s['image_url'] }}" alt="{{ s['name'] }}" onerror="this.style.display='none'">
@@ -186,7 +201,7 @@
         </div>
         <div class="form-group">
           <label class="form-label">📝 Additional Note <span style="font-weight:600;color:var(--muted);">(optional)</span></label>
-          <textarea name="note" class="form-control" rows="3" placeholder="Anything we should know..."></textarea>
+          <textarea name="note" class="form-control" rows="3" placeholder="Anything we should know…"></textarea>
         </div>
 
         <button type="submit" class="btn-submit">🚀 Submit Request</button>
@@ -199,6 +214,7 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     const NON_MEMBER_FEE = parseFloat(document.getElementById("priceDisplay").dataset.fee) || 0;
+
     function updatePrice() {
       const checkboxes = document.querySelectorAll('#serviceGrid input[type="checkbox"]:checked');
       const disp = document.getElementById('priceDisplay');
@@ -232,6 +248,19 @@
       }
     }
 
+    // Live search filter
+    function filterServices() {
+      const query = document.getElementById('serviceSearch').value.toLowerCase().trim();
+      const cards = document.querySelectorAll('.service-card');
+      cards.forEach(card => {
+        const name = card.dataset.name || '';
+        const desc = card.dataset.desc || '';
+        const match = name.includes(query) || desc.includes(query);
+        card.classList.toggle('hidden', !match);
+      });
+    }
+
+    // Ensure at least one service is selected before submitting
     document.querySelector('.form-card form').addEventListener('submit', function (e) {
       const checked = document.querySelectorAll('#serviceGrid input[type="checkbox"]:checked');
       if (!checked.length) {
