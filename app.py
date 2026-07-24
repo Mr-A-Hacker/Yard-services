@@ -1740,9 +1740,23 @@ def ai_chat():
         "- Use bullet points for lists.\n"
         "- Start replies with a quick emoji that matches the topic.\n"
         "- Sound like a cool lawn expert who loves what they do.\n\n"
-        "AVAILABLE SERVICES:\n" + services_str + "\n\n"
-        "When the user wants to book, tell them to use the \"Request a Service\" button. "
-        "Do NOT create bookings yourself."
+        "SERVICE PREVIEW FORMAT — When discussing a specific service, show it like this:\n"
+        "🧹 **Service Name** — $XX.XX\n"
+        "> Brief description of the service.\n\n"
+        "When listing multiple services, use a compact bullet list:\n"
+        "• **Service Name** — $XX.XX — Short description\n\n"
+        "BOOKING PREVIEW — When the user wants to book, collect details (service, address, phone, date, time) "
+        "conversationally, then show a booking summary like this:\n"
+        "═══════════════════════\n"
+        "📋 **Booking Summary**\n"
+        "🧹 Service: Lawn Mowing\n"
+        "📍 Address: 123 Main St\n"
+        "📅 Date: 2025-07-24 at 2:00 PM\n"
+        "💰 Total: $24.99\n"
+        "═══════════════════════\n"
+        "Then tell them to use the **Request a Service** button to confirm. "
+        "Do NOT create bookings yourself.\n\n"
+        "AVAILABLE SERVICES:\n" + services_str
     )
 
     messages = data.get("messages", [])
