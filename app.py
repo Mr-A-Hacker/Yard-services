@@ -1743,17 +1743,57 @@ def ai_chat():
         return {"error": "Missing data"}, 400
     if not NVIDIA_API_KEY:
         return {"error": "AI not configured"}, 503
-    messages = data.get("messages")
-    if not messages or not isinstance(messages, list):
-        if "message" not in data:
-            return {"error": "Missing message"}, 400
-        messages = [
-            {
-                "role": "system",
-                "content": "You are Viora AI, a friendly and knowledgeable lawn & yard care assistant for Yard Services. You answer questions about lawn mowing, gardening, landscaping, tree care, weed control, pest control for yards, seasonal yard maintenance, and anything else related to outdoor home services. Keep answers helpful, concise, and practical. If you don't know something, say so honestly.",
-            },
-            {"role": "user", "content": data["message"]},
-        ]
+
+    conn = get_db()
+    services_list = conn.execute(
+        "SELECT id, name, price, description FROM services ORDER BY name"
+    ).fetchall()
+    services_str = "\n".join(
+        f"- \"{s['name']}\" (${s['price']}): {s['description'] or 'No description'}"
+        for s in services_list
+    )
+
+    system_prompt = (
+        "You are Viora AI, a friendly lawn & yard care assistant for Yard Services. "
+        "Answer concisely and helpfully.\n\n"
+        "AVAILABLE SERVICES:\n" + services_str + "\n\n"
+        "When the user wants to book, collect: services (by exact name), address, phone, date (YYYY-MM-DD), time (HH:MM). "
+        "Confirm with them, then call request_service."
+    )
+
+    messages = data.get("messages", [])
+    if not isinstance(messages, list) or len(messages) == 0:
+        return {"error": "Missing messages"}, 400
+
+    if messages[0].get("role") == "system":
+        messages[0]["content"] = system_prompt
+    else:
+        messages.insert(0, {"role": "system", "content": system_prompt})
+
+    tools = [{
+        "type": "function",
+        "function": {
+            "name": "request_service",
+            "description": "Book a yard service after user confirms.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "service_names": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Service names exactly as listed"
+                    },
+                    "address": {"type": "string", "description": "Service address"},
+                    "phone": {"type": "string", "description": "Phone number"},
+                    "date": {"type": "string", "description": "Preferred date YYYY-MM-DD"},
+                    "time": {"type": "string", "description": "Preferred time HH:MM"},
+                    "note": {"type": "string", "description": "Optional notes"}
+                },
+                "required": ["service_names", "address", "phone", "date", "time"]
+            }
+        }
+    }]
+
     try:
         resp = requests.post(
             _NVIDIA_ENDPOINT,
@@ -1764,18 +1804,92 @@ def ai_chat():
             json={
                 "model": "meta/llama-3.1-8b-instruct",
                 "messages": messages,
+                "tools": tools,
+                "tool_choice": "auto",
                 "temperature": 0.5,
-                "max_tokens": 256,
+                "max_tokens": 400,
             },
             timeout=30,
         )
         resp.raise_for_status()
         result = resp.json()
-        reply = result["choices"][0]["message"]["content"]
+        choice = result["choices"][0]
+        msg = choice["message"]
+
+        if choice.get("finish_reason") == "tool_calls" and msg.get("tool_calls"):
+            tc = msg["tool_calls"][0]["function"]
+            if tc["name"] == "request_service":
+                args = json.loads(tc["arguments"])
+                return {"reply": _process_ai_booking(args, current_user.id), "booking": True}
+
+        reply = msg.get("content") or "Got it! How can I help?"
         return {"reply": reply}
     except Exception as exc:
         print(f"AI chat error: {exc}")
         return {"error": "AI service unavailable"}, 502
+
+
+def _process_ai_booking(args, user_id):
+    try:
+        service_names = [s.strip() for s in args.get("service_names", [])]
+        address = args.get("address", "").strip()
+        phone = args.get("phone", "").strip()
+        date = args.get("date", "").strip()
+        time_val = args.get("time", "").strip()
+        note = args.get("note", "").strip()
+
+        if not all([service_names, address, phone, date, time_val]):
+            return "Missing required info. Please provide services, address, phone, date, and time."
+
+        conn = get_db()
+        placeholders = ",".join("?" for _ in service_names)
+        services_data = conn.execute(
+            f"SELECT id, name, price FROM services WHERE LOWER(name) IN ({placeholders})",
+            [s.lower() for s in service_names],
+        ).fetchall()
+
+        if not services_data:
+            return "Sorry, I couldn't find those services. Check the names and try again."
+
+        user = conn.execute("SELECT is_member FROM users WHERE id=?", (user_id,)).fetchone()
+        base_price = sum(float(s["price"]) for s in services_data)
+        final_price = base_price
+        if user and not user["is_member"]:
+            final_price += 7.99
+
+        verification_code = str(random.randint(100000, 999999))
+        service_name = ", ".join(s["name"] for s in services_data)
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO requests
+                (user_id, service_id, address, phone, email, payment,
+                 note, date, time, token, discount, final_price, verification_code)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            user_id, services_data[0]["id"], address, phone, "",
+            "cash", note, date, time_val, None, 0, final_price, verification_code,
+        ))
+        new_id = cursor.lastrowid
+        cursor.executemany(
+            "INSERT INTO request_services (request_id, service_id, service_name, price) VALUES (?, ?, ?, ?)",
+            [(new_id, s["id"], s["name"], float(s["price"])) for s in services_data],
+        )
+        conn.commit()
+        mark_db_dirty()
+
+        fee_note = " (incl. $7.99 non-member fee)" if (user and not user["is_member"]) else ""
+        return (
+            f"✅ **Booking Confirmed!**\n"
+            f"📋 **Services:** {service_name}\n"
+            f"📍 **Address:** {address}\n"
+            f"📅 **When:** {date} at {time_val}\n"
+            f"💵 **Total:** ${final_price:.2f}{fee_note}\n"
+            f"🔑 **Code:** {verification_code}\n\n"
+            f"Thanks for choosing Yard Services! 🌿"
+        )
+    except Exception as e:
+        print(f"AI booking error: {e}")
+        return "❌ Sorry, couldn't process the booking. Try the Request Service page instead."
 
 
 # ============================================================
