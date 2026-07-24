@@ -108,6 +108,12 @@
 
         <button type="submit" class="btn-submit">🚀 Create Account</button>
       </form>
+      <div class="text-center mt-3">
+        <a href="{{ url_for('google_login') }}" class="btn btn-outline-dark w-100 py-2 rounded-pill fw-bold" style="border-width:2px;">
+          <img src="https://ssl.gstatic.com/fb/dd/sb_fb/16/sprite_66/32/btn_google_32dp.png" alt="G" width="20" class="me-2">
+          Sign up with Google
+        </a>
+      </div>
       <div class="form-footer">
         Already have an account? <a href="{{ url_for('login') }}">Login</a>
       </div>

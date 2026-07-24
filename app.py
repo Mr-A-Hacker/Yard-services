@@ -1,4 +1,5 @@
 import os
+import secrets
 import csv
 import random
 import datetime
@@ -106,6 +107,11 @@ app.config.update(
     MAIL_PASSWORD=os.getenv("MAIL_PASSWORD", ""),
     MAIL_DEFAULT_SENDER=os.getenv("MAIL_DEFAULT_SENDER", os.getenv("MAIL_USERNAME", "noreply@example.com")),
 )
+
+# Google OAuth 2.0 — set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in .env
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
+GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI", "https://yard-services.onrender.com/login/google/callback")
 
 bcrypt = Bcrypt(app)
 mail = Mail(app)
@@ -1242,6 +1248,84 @@ def logout():
     logout_user()
     flash("You have been logged out.", "info")
     return redirect(url_for("login"))
+
+
+# ============================================================
+# GOOGLE OAuth LOGIN
+# ============================================================
+
+@app.route("/login/google")
+def google_login():
+    state = secrets.token_urlsafe(24)
+    session["google_oauth_state"] = state
+    params = {
+        "client_id": GOOGLE_CLIENT_ID,
+        "redirect_uri": GOOGLE_REDIRECT_URI,
+        "response_type": "code",
+        "scope": "openid email profile",
+        "state": state,
+        "access_type": "offline",
+    }
+    url = "https://accounts.google.com/o/oauth2/v2/auth?" + "&".join(f"{k}={v}" for k, v in params.items())
+    return redirect(url)
+
+
+@app.route("/login/google/callback")
+def google_callback():
+    code = request.args.get("code")
+    state = request.args.get("state")
+    if not code or state != session.pop("google_oauth_state", None):
+        flash("Invalid authentication response.", "danger")
+        return redirect(url_for("login"))
+
+    token_res = requests.post("https://oauth2.googleapis.com/token", data={
+        "code": code,
+        "client_id": GOOGLE_CLIENT_ID,
+        "client_secret": GOOGLE_CLIENT_SECRET,
+        "redirect_uri": GOOGLE_REDIRECT_URI,
+        "grant_type": "authorization_code",
+    })
+    token_data = token_res.json()
+    access_token = token_data.get("access_token")
+    if not access_token:
+        flash("Failed to get access token from Google.", "danger")
+        return redirect(url_for("login"))
+
+    user_info_res = requests.get("https://www.googleapis.com/oauth2/v2/userinfo", headers={
+        "Authorization": f"Bearer {access_token}",
+    })
+    user_info = user_info_res.json()
+    email = user_info.get("email", "").strip().lower()
+    name = user_info.get("name", "")
+
+    if not email:
+        flash("Could not retrieve email from Google.", "danger")
+        return redirect(url_for("login"))
+
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, email, password_hash, phone, popup_seen FROM users WHERE email = ?", (email,))
+    row = cursor.fetchone()
+
+    if row:
+        user = User(row["id"], row["email"], row["password_hash"], row["phone"], row["popup_seen"])
+        login_user(user)
+        session["popup_seen"] = row["popup_seen"]
+    else:
+        cursor.execute(
+            "INSERT INTO users (email, password_hash, phone) VALUES (?, ?, ?)",
+            (email, bcrypt.generate_password_hash("GOOGLE_OAUTH").decode("utf-8"), ""),
+        )
+        conn.commit()
+        mark_db_dirty()
+        new_id = cursor.lastrowid
+        user = User(new_id, email, bcrypt.generate_password_hash("GOOGLE_OAUTH").decode("utf-8"), "", False)
+        login_user(user)
+        session["popup_seen"] = False
+
+    log_user_ip(user.id, get_client_ip())
+    flash(f"Welcome in with Google, {name or email}!", "info")
+    return redirect(url_for("dashboard"))
 
 
 # ============================================================

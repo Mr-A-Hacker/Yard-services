@@ -22,3 +22,9 @@ services:
         value: 6cb12b4a501892429bfe0716
       - key: NVIDIA_API_KEY
         sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REDIRECT_URI
+        value: https://yard-services.onrender.com/login/google/callback
