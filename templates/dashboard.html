@@ -563,6 +563,179 @@
 
     </div>
 
+    <!-- ── Weather Widget ── -->
+    <div class="section-card">
+      <div class="section-card-head">
+        <div class="head-icon">🌤️</div>
+        <h5>Weather</h5>
+      </div>
+      <div class="section-card-body">
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <input type="text" id="weatherCity" class="form-control-custom" placeholder="Enter your city (e.g. Miami)"
+                 style="flex:1;min-width:180px;padding:10px 14px;border:2px solid var(--g-light);border-radius:10px;font-weight:700;">
+          <button onclick="fetchWeather()" class="btn-primary-custom" style="padding:10px 20px;">🔍 Get Weather</button>
+        </div>
+        <div id="weatherResult" style="margin-top:12px;font-weight:700;color:var(--ink);"></div>
+      </div>
+    </div>
+
+    <script>
+    async function fetchWeather() {
+      const city = document.getElementById('weatherCity').value.trim();
+      const el = document.getElementById('weatherResult');
+      if (!city) { el.innerHTML = '<span style="color:var(--red);">Please enter a city.</span>'; return; }
+      el.innerHTML = '⏳ Loading...';
+      try {
+        const r = await fetch(`https://wttr.in/${encodeURIComponent(city)}?format=j1`);
+        if (!r.ok) throw new Error('City not found');
+        const d = await r.json();
+        const c = d.current_condition[0];
+        el.innerHTML = `
+          <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;background:var(--g-pale);border-radius:12px;padding:14px 18px;">
+            <span style="font-size:2.2rem;">${c.weatherDesc[0].value.includes('Sun')?'☀️':c.weatherDesc[0].value.includes('Cloud')?'☁️':c.weatherDesc[0].value.includes('Rain')?'🌧️':c.weatherDesc[0].value.includes('Snow')?'❄️':'🌤️'}</span>
+            <div>
+              <div style="font-size:1.6rem;font-weight:900;color:var(--g-dark);">${c.temp_F}°F</div>
+              <div style="color:var(--muted);font-size:0.85rem;">${d.nearest_area[0].areaName[0].value}, ${d.nearest_area[0].country[0].value}</div>
+            </div>
+            <div style="color:var(--muted);font-size:0.85rem;border-left:2px solid var(--g-light);padding-left:16px;">
+              <div>💧 ${c.humidity}% humidity</div>
+              <div>💨 ${c.windspeedMiles} mph wind</div>
+              <div>${c.weatherDesc[0].value}</div>
+            </div>
+          </div>`;
+      } catch(e) {
+        el.innerHTML = `<span style="color:var(--red);">Could not fetch weather for "${city}". Try another city.</span>`;
+      }
+    }
+    </script>
+
+    <!-- ── Viora AI Chat ── -->
+    <div class="section-card" id="viora-chat">
+      <div class="section-card-head">
+        <div class="head-icon">🤖</div>
+        <h5>Viora AI — Lawn & Yard Assistant</h5>
+      </div>
+      <div class="section-card-body">
+        <div id="vioraMessages" style="max-height:300px;overflow-y:auto;margin-bottom:12px;padding:4px;display:flex;flex-direction:column;gap:8px;">
+          <div style="background:var(--g-pale);padding:10px 14px;border-radius:12px 12px 12px 4px;font-weight:600;font-size:0.9rem;color:var(--ink);align-self:flex-start;max-width:85%;">
+            🌱 Hi! I'm Viora, your lawn & yard care assistant. Ask me anything about grass, gardening, trees, or yard services!
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <input type="text" id="vioraInput" class="form-control-custom" placeholder="Ask Viora about your lawn..."
+                 style="flex:1;padding:10px 14px;border:2px solid var(--g-light);border-radius:10px;font-weight:700;">
+          <button onclick="sendViora()" class="btn-primary-custom" style="padding:10px 18px;">Send</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+    const vioraMsgs = document.getElementById('vioraMessages');
+    const vioraInput = document.getElementById('vioraInput');
+
+    vioraInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') sendViora(); });
+
+    async function sendViora() {
+      const msg = vioraInput.value.trim();
+      if (!msg) return;
+      addVioraMsg(msg, 'user');
+      vioraInput.value = '';
+      const loadingEl = addVioraMsg('⏳ Thinking...', 'bot');
+      try {
+        const r = await fetch('/api/ai/chat', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({message: msg})
+        });
+        const d = await r.json();
+        loadingEl.remove();
+        if (d.reply) addVioraMsg(d.reply, 'bot');
+        else addVioraMsg('❌ ' + (d.error || 'AI unavailable'), 'bot');
+      } catch(e) {
+        loadingEl.remove();
+        addVioraMsg('❌ Network error', 'bot');
+      }
+    }
+
+    function addVioraMsg(text, sender) {
+      const el = document.createElement('div');
+      el.style.cssText = sender === 'user'
+        ? 'background:var(--g-mid);color:white;padding:10px 14px;border-radius:12px 12px 4px 12px;font-weight:600;font-size:0.9rem;align-self:flex-end;max-width:85%;'
+        : 'background:var(--g-pale);padding:10px 14px;border-radius:12px 12px 12px 4px;font-weight:600;font-size:0.9rem;color:var(--ink);align-self:flex-start;max-width:85%;';
+      el.textContent = text;
+      vioraMsgs.appendChild(el);
+      vioraMsgs.scrollTop = vioraMsgs.scrollHeight;
+      return el;
+    }
+    </script>
+
+    <!-- ── Admin Chat ── -->
+    <div class="section-card" id="admin-chat">
+      <div class="section-card-head">
+        <div class="head-icon">💬</div>
+        <h5>Chat with Admin</h5>
+      </div>
+      <div class="section-card-body">
+        <div id="adminChatMessages" style="max-height:300px;overflow-y:auto;margin-bottom:12px;padding:4px;display:flex;flex-direction:column;gap:8px;">
+          <div style="text-align:center;color:var(--muted);font-weight:700;font-size:0.85rem;padding:8px;">Loading messages...</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <input type="text" id="adminChatInput" class="form-control-custom" placeholder="Message the admin..."
+                 style="flex:1;padding:10px 14px;border:2px solid var(--g-light);border-radius:10px;font-weight:700;">
+          <button onclick="sendAdminChat()" class="btn-primary-custom" style="padding:10px 18px;">Send</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+    const adminChatMsgs = document.getElementById('adminChatMessages');
+    const adminChatInput = document.getElementById('adminChatInput');
+
+    adminChatInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') sendAdminChat(); });
+
+    async function loadAdminChat() {
+      try {
+        const r = await fetch('/api/admin_chat/messages');
+        const d = await r.json();
+        adminChatMsgs.innerHTML = '';
+        if (!d.messages || d.messages.length === 0) {
+          adminChatMsgs.innerHTML = '<div style="text-align:center;color:var(--muted);font-weight:700;font-size:0.85rem;padding:8px;">No messages yet. Start a conversation!</div>';
+          return;
+        }
+        for (const m of d.messages) {
+          const el = document.createElement('div');
+          const isUser = m.sender === 'user';
+          el.style.cssText = isUser
+            ? 'background:var(--g-mid);color:white;padding:10px 14px;border-radius:12px 12px 4px 12px;font-weight:600;font-size:0.9rem;align-self:flex-end;max-width:85%;'
+            : 'background:linear-gradient(135deg,#fef3c7,#fde68a);padding:10px 14px;border-radius:12px 12px 12px 4px;font-weight:600;font-size:0.9rem;color:#5a3e00;align-self:flex-start;max-width:85%;';
+          el.textContent = (isUser ? '' : '👤 Admin: ') + m.message;
+          adminChatMsgs.appendChild(el);
+        }
+        adminChatMsgs.scrollTop = adminChatMsgs.scrollHeight;
+      } catch(e) {
+        adminChatMsgs.innerHTML = '<div style="text-align:center;color:var(--red);font-weight:700;font-size:0.85rem;padding:8px;">Failed to load messages.</div>';
+      }
+    }
+
+    async function sendAdminChat() {
+      const msg = adminChatInput.value.trim();
+      if (!msg) return;
+      adminChatInput.value = '';
+      try {
+        await fetch('/api/admin_chat/send', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({message: msg})
+        });
+        loadAdminChat();
+      } catch(e) {
+        alert('Failed to send message.');
+      }
+    }
+
+    loadAdminChat();
+    </script>
+
     <!-- Service history card -->
     <div class="section-card">
       <div class="section-card-head">

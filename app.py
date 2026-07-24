@@ -695,6 +695,14 @@ def init_db():
         INSERT OR IGNORE INTO finances (key, label, value) VALUES ('abdullah_savings', 'Abdullah Savings ($)', 0.00);
         INSERT OR IGNORE INTO finances (key, label, value) VALUES ('abdulrahaman_savings', 'Abdulrahaman Savings ($)', 0.00);
         INSERT OR IGNORE INTO finances (key, label, value) VALUES ('business_savings', 'Business Savings ($)', 0.00);
+
+        CREATE TABLE IF NOT EXISTS admin_chats (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL REFERENCES users(id),
+            message TEXT NOT NULL,
+            sender TEXT NOT NULL DEFAULT 'user',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
     """)
     conn.commit()
 
@@ -1698,6 +1706,103 @@ def like_rating(rating_id):
 
 
 # ============================================================
+# VIORA AI CHAT
+# ============================================================
+
+NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY", "").strip()
+_NVIDIA_ENDPOINT = "https://integrate.api.nvidia.com/v1/chat/completions"
+
+
+@app.route("/api/ai/chat", methods=["POST"])
+@login_required
+def ai_chat():
+    data = request.get_json(silent=True)
+    if not data or "message" not in data:
+        return {"error": "Missing message"}, 400
+    if not NVIDIA_API_KEY:
+        return {"error": "AI not configured"}, 503
+    try:
+        resp = requests.post(
+            _NVIDIA_ENDPOINT,
+            headers={
+                "Authorization": f"Bearer {NVIDIA_API_KEY}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": "meta/llama-3.1-70b-instruct",
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": "You are Viora AI, a friendly and knowledgeable lawn & yard care assistant for Yard Services. You answer questions about lawn mowing, gardening, landscaping, tree care, weed control, pest control for yards, seasonal yard maintenance, and anything else related to outdoor home services. Keep answers helpful, concise, and practical. If you don't know something, say so honestly.",
+                    },
+                    {"role": "user", "content": data["message"]},
+                ],
+                "temperature": 0.7,
+                "max_tokens": 512,
+            },
+            timeout=60,
+        )
+        resp.raise_for_status()
+        result = resp.json()
+        reply = result["choices"][0]["message"]["content"]
+        return {"reply": reply}
+    except Exception as exc:
+        print(f"AI chat error: {exc}")
+        return {"error": "AI service unavailable"}, 502
+
+
+# ============================================================
+# ADMIN CHAT (user → admin messaging)
+# ============================================================
+
+@app.route("/api/admin_chat/send", methods=["POST"])
+@login_required
+def admin_chat_send():
+    data = request.get_json(silent=True)
+    if not data or not data.get("message", "").strip():
+        return {"error": "Missing message"}, 400
+    conn = get_db()
+    conn.execute(
+        "INSERT INTO admin_chats (user_id, message, sender) VALUES (?, ?, 'user')",
+        (current_user.id, data["message"].strip()),
+    )
+    conn.commit()
+    mark_db_dirty()
+    return {"ok": True}
+
+
+@app.route("/api/admin_chat/messages")
+@login_required
+def admin_chat_messages():
+    conn = get_db()
+    rows = conn.execute(
+        "SELECT id, message, sender, created_at FROM admin_chats WHERE user_id = ? ORDER BY created_at ASC",
+        (current_user.id,),
+    ).fetchall()
+    return {"messages": [dict(r) for r in rows]}
+
+
+@app.route("/admin/chat/reply", methods=["POST"])
+@admin_login_required
+def admin_chat_reply():
+    user_id = request.form.get("user_id", "").strip()
+    message = request.form.get("message", "").strip()
+    if not user_id or not message:
+        flash("Missing user or message.", "danger")
+        return redirect(url_for("admin_dashboard"))
+    conn = get_db()
+    conn.execute(
+        "INSERT INTO admin_chats (user_id, message, sender) VALUES (?, ?, 'admin')",
+        (int(user_id), message),
+    )
+    conn.commit()
+    mark_db_dirty()
+    sync_db_to_b2()
+    flash("Reply sent.", "success")
+    return redirect(url_for("admin_dashboard"))
+
+
+# ============================================================
 # ADMIN — Login / Logout
 # ============================================================
 
@@ -1783,6 +1888,25 @@ def admin_dashboard():
     cursor.execute("SELECT key, label, value FROM finances ORDER BY id")
     finances = {row[0]: {"label": row[1], "value": row[2]} for row in cursor.fetchall()}
 
+    cursor.execute("""
+        SELECT ac.id, ac.user_id, ac.message, ac.sender, ac.created_at, u.email
+        FROM admin_chats ac
+        JOIN users u ON ac.user_id = u.id
+        ORDER BY ac.user_id, ac.created_at ASC
+    """)
+    admin_chat_raw = cursor.fetchall()
+    admin_chat_convos = {}
+    for row in admin_chat_raw:
+        uid = row["user_id"]
+        if uid not in admin_chat_convos:
+            admin_chat_convos[uid] = {"email": row["email"], "messages": []}
+        admin_chat_convos[uid]["messages"].append({
+            "id": row["id"],
+            "message": row["message"],
+            "sender": row["sender"],
+            "created_at": row["created_at"],
+        })
+
     calendar_requests = [
         {
             "date": row[9],
@@ -1809,6 +1933,7 @@ def admin_dashboard():
         user_ips=user_ips,
         calendar_requests=calendar_requests,
         finances=finances,
+        admin_chat_convos=admin_chat_convos,
         b2_configured=b2_is_configured(),
     )
 

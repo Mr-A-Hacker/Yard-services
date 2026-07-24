@@ -706,6 +706,7 @@
       <a href="#group-appearance">🎨 Appearance</a>
       <a href="#group-announcements">📢 Announcements</a>
       <a href="#group-reviews">⭐ Reviews</a>
+      <a href="#group-adminchat">💬 Admin Chat</a>
     </nav>
 
     <!-- ════════════════════════════════════════
@@ -1699,6 +1700,47 @@
           onsubmit="return confirm('Delete ALL ratings? This cannot be undone.');">
       <button type="submit" class="btn-danger-custom btn-w-full">🗑️ Delete All Ratings</button>
     </form>
+
+    <!-- ════════════════════════════════════════
+         GROUP: ADMIN CHAT
+    ════════════════════════════════════════ -->
+    <div id="group-adminchat" class="group-head fade-in">
+      <span class="group-icon">💬</span>
+      <h2>Admin Chat</h2>
+    </div>
+
+    {% if admin_chat_convos %}
+      {% for uid, convo in admin_chat_convos.items() %}
+        <div class="section-head fade-in">
+          <span class="icon-chip chip-blue">💬</span>
+          <h3>{{ convo.email }}</h3>
+        </div>
+        <div class="section-divider"></div>
+        <div class="admin-card fade-in" style="margin-bottom:20px;">
+          <div class="card-body-inner">
+            <div style="max-height:300px;overflow-y:auto;margin-bottom:12px;display:flex;flex-direction:column;gap:6px;padding:4px;">
+              {% for m in convo.messages %}
+                {% if m.sender == 'user' %}
+                  <div style="background:var(--g-pale);padding:8px 12px;border-radius:10px 10px 10px 4px;font-size:0.88rem;font-weight:600;color:var(--ink);align-self:flex-start;max-width:85%;">{{ m.message }}</div>
+                {% else %}
+                  <div style="background:linear-gradient(135deg,#fef3c7,#fde68a);padding:8px 12px;border-radius:10px 10px 4px 10px;font-size:0.88rem;font-weight:600;color:#5a3e00;align-self:flex-end;max-width:85%;">👤 Admin: {{ m.message }}</div>
+                {% endif %}
+              {% endfor %}
+            </div>
+            <form method="POST" action="{{ url_for('admin_chat_reply') }}" style="display:flex;gap:8px;">
+              <input type="hidden" name="user_id" value="{{ uid }}">
+              <input type="text" name="message" class="form-control-custom" placeholder="Type your reply..." required style="flex:1;padding:8px 12px;border:2px solid var(--g-light);border-radius:8px;font-weight:600;">
+              <button type="submit" class="btn-primary-custom" style="padding:8px 16px;white-space:nowrap;">Reply</button>
+            </form>
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty-state fade-in" style="margin-top:10px;">
+        <div class="empty-icon">💬</div>
+        No user messages yet.
+      </div>
+    {% endif %}
 
     {% endif %} <!-- end password_ok -->
 
