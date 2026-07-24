@@ -266,6 +266,8 @@ def mark_db_dirty():
 
 
 _last_b2_sync = 0.0
+_b2_download_ok = False
+_b2_backup_exists = False
 
 
 def sync_db_to_b2():
@@ -278,8 +280,12 @@ def sync_db_to_b2():
     _last_b2_sync = now
     try:
         conn = sqlite3.connect(DB_LOCAL_PATH)
+        user_count = conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
         conn.commit()
         conn.close()
+        if user_count == 0 and _b2_backup_exists:
+            print("sync_db_to_b2 skipped: local DB has no users but B2 backup exists — not overwriting.")
+            return
         b2_upload_file(DB_LOCAL_PATH, DB_LOCAL_PATH, "application/x-sqlite3")
         print(f"DB synced to B2: {DB_LOCAL_PATH}")
     except Exception as exc:
@@ -287,28 +293,41 @@ def sync_db_to_b2():
 
 
 def download_db_from_b2():
+    global _b2_download_ok, _b2_backup_exists
     if not b2_is_configured():
         return
     if os.path.exists(DB_LOCAL_PATH):
+        _b2_download_ok = True
+        _b2_backup_exists = True
         return
     try:
         b2_download_file(DB_LOCAL_PATH, DB_LOCAL_PATH)
         print(f"DB downloaded from B2: {DB_LOCAL_PATH}")
+        _b2_download_ok = True
+        _b2_backup_exists = True
     except requests.exceptions.HTTPError as exc:
         if exc.response is not None and exc.response.status_code == 404:
             print("No existing DB in B2, starting fresh.")
+            _b2_download_ok = True
+            _b2_backup_exists = False
         else:
             print(f"Failed to download DB from B2: {exc}")
+            _b2_download_ok = False
     except Exception as exc:
         print(f"Failed to download DB from B2: {exc}")
+        _b2_download_ok = False
 
 
 def _final_b2_sync():
     if b2_is_configured() and os.path.exists(DB_LOCAL_PATH):
         try:
             conn = sqlite3.connect(DB_LOCAL_PATH)
+            user_count = conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
             conn.commit()
             conn.close()
+            if user_count == 0 and _b2_backup_exists:
+                print("Final DB sync skipped: local DB has no users but B2 backup exists — not overwriting.")
+                return
             b2_upload_file(DB_LOCAL_PATH, DB_LOCAL_PATH, "application/x-sqlite3")
             print(f"Final DB sync to B2 complete.")
         except Exception as exc:
@@ -771,7 +790,12 @@ def save_upload_to_b2(upload_file, upload_folder):
 with app.app_context():
     download_db_from_b2()
     init_db()
-    sync_db_to_b2()
+    # Only sync to B2 at boot if download succeeded (got real DB or first run).
+    # If download failed, DO NOT upload — we'd overwrite the B2 backup with an empty DB.
+    if _b2_download_ok:
+        sync_db_to_b2()
+    else:
+        print("B2 download failed — skipping boot sync to protect existing backup.")
 
 
 # ============================================================
