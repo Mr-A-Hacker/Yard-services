@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS users (
 -- SERVICES TABLE
 CREATE TABLE IF NOT EXISTS services (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
+    name TEXT NOT NULL UNIQUE,
     price REAL NOT NULL,
     description TEXT,
     image_url TEXT
@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS request_services (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     request_id INTEGER NOT NULL REFERENCES requests(id) ON DELETE CASCADE,
     service_id INTEGER REFERENCES services(id),
-    service_name TEXT NOT NULL,
+    service_name TEXT NOT NULL UNIQUE,
     price REAL NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_request_services_request_id ON request_services(request_id);
@@ -86,7 +86,7 @@ CREATE TABLE IF NOT EXISTS rating_likes (
 -- PROMOTIONS TABLE
 CREATE TABLE IF NOT EXISTS promotions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
+    name TEXT NOT NULL UNIQUE,
     token TEXT UNIQUE NOT NULL,
     discount_percent INTEGER NOT NULL,
     active BOOLEAN DEFAULT 1,

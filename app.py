@@ -303,6 +303,36 @@ def get_user_by_ip(ip):
     return None
 
 
+DEFAULT_SERVICES = [
+    ("Lawn Mowing", 30.00, "Complete lawn mowing with neat edging around walkways, driveways, fences, and garden beds. We finish by clearing loose clippings from hard surfaces so your yard looks clean, even, and freshly maintained.", "/static/uploads/services/lawn-mowing.svg"),
+    ("Snow Shoveling", 30.00, "Prompt snow clearing for driveways, sidewalks, front steps, and paths to entryways. Our team focuses on safe walking areas and dependable cleanup after winter weather.", "/static/uploads/services/snow-shoveling.svg"),
+    ("Leaf Raking", 35.00, "Seasonal leaf cleanup that includes raking, gathering, and bagging leaves from lawns, curb lines, and garden edges. Great for keeping grass healthy and your property tidy in the fall.", "/static/uploads/services/leaf-raking.svg"),
+    ("Hedge Trimming", 40.00, "Careful hedge and shrub trimming to restore shape, improve curb appeal, and keep growth away from paths and windows. We tidy up trimmings before we leave.", "/static/uploads/services/hedge-trimming.svg"),
+    ("Yard Cleanup", 45.00, "A general outdoor cleanup for sticks, small debris, weeds, scattered leaves, and light clutter. Ideal before parties, seasonal transitions, move-outs, or anytime the yard needs a reset.", "/static/uploads/services/yard-cleanup.svg"),
+    ("Garden Weeding", 35.00, "Detailed hand-weeding for flower beds, vegetable gardens, borders, and mulch areas. We remove unwanted growth while being careful around the plants you want to keep.", "/static/uploads/services/garden-weeding.svg"),
+    ("Driveway Sweeping", 25.00, "Driveway, walkway, and sidewalk sweeping to remove dirt, grass clippings, leaves, and loose debris. A quick service that makes your entrance look cleaner right away.", "/static/uploads/services/driveway-sweeping.svg"),
+    ("Mulching", 50.00, "Fresh mulch installation and spreading for garden beds, tree rings, and landscape borders. Mulch helps retain moisture, reduce weeds, and give your yard a polished finished look.", "/static/uploads/services/mulching.svg"),
+    ("Gutter Cleaning", 45.00, "Gutter clearing for accessible gutters to remove leaves and debris that can cause overflow. This helps protect siding, landscaping, and foundations from water problems.", "/static/uploads/services/gutter-cleaning.svg"),
+    ("Patio Power Washing", 55.00, "Power washing for patios, walkways, and outdoor surfaces to lift dirt, grime, and weather buildup. A great way to brighten entertaining spaces and improve traction.", "/static/uploads/services/patio-power-washing.svg"),
+    ("Garden Planting", 40.00, "Planting help for flowers, small shrubs, herbs, and vegetables, including basic spacing and bed preparation. Perfect for refreshing garden beds or starting a seasonal planting project.", "/static/uploads/services/garden-planting.svg"),
+    ("Fence Staining", 65.00, "Fence staining support to refresh wood color and add a protective finish against sun and weather. We help prep and coat outdoor fencing for a cleaner, longer-lasting look.", "/static/uploads/services/fence-staining.svg"),
+]
+
+
+def seed_default_services(cursor):
+    for name, price, description, image_url in DEFAULT_SERVICES:
+        cursor.execute(
+            """
+            INSERT INTO services (name, price, description, image_url)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(name) DO UPDATE SET
+                description=excluded.description,
+                image_url=excluded.image_url
+            """,
+            (name, price, description, image_url),
+        )
+
+
 def init_db():
     conn = get_db()
     cursor = conn.cursor()
@@ -319,59 +349,11 @@ def init_db():
 
         CREATE TABLE IF NOT EXISTS services (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
+            name TEXT NOT NULL UNIQUE,
             price REAL NOT NULL,
             description TEXT,
             image_url TEXT
         );
-
-        INSERT INTO services (name, price, description, image_url)
-        SELECT 'Lawn Mowing', 30.00, 'Friendly teen crew trims, mows, and edges your lawn with care. Great for weekly maintenance and tidy curb appeal.', 'https://source.unsplash.com/featured/?lawn+mowing'
-        WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Lawn Mowing');
-
-        INSERT INTO services (name, price, description, image_url)
-        SELECT 'Snow Shoveling', 30.00, 'Reliable teen teams will clear snow from driveways, walkways, and steps so your family can move safely after any storm.', 'https://source.unsplash.com/featured/?snow+shoveling'
-        WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Snow Shoveling');
-
-        INSERT INTO services (name, price, description, image_url)
-        SELECT 'Leaf Raking', 35.00, 'Seasonal leaf and debris cleanup by local teens who will pile, bag, and remove leaves for a neat yard.', 'https://source.unsplash.com/featured/?leaf+raking'
-        WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Leaf Raking');
-
-        INSERT INTO services (name, price, description, image_url)
-        SELECT 'Hedge Trimming', 40.00, 'Attention to detail hedge trimming and shrub shaping performed by a careful teen landscaping crew.', 'https://source.unsplash.com/featured/?hedge+trimming'
-        WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Hedge Trimming');
-
-        INSERT INTO services (name, price, description, image_url)
-        SELECT 'Yard Cleanup', 45.00, 'Quick yard cleaning including debris pickup, trash removal, and light hauling by local teens.', 'https://source.unsplash.com/featured/?yard+cleanup'
-        WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Yard Cleanup');
-
-        INSERT INTO services (name, price, description, image_url)
-        SELECT 'Garden Weeding', 35.00, 'Weeding and garden bed maintenance by friendly students who care about healthy plants.', 'https://source.unsplash.com/featured/?garden+weeding'
-        WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Garden Weeding');
-
-        INSERT INTO services (name, price, description, image_url)
-        SELECT 'Driveway Sweeping', 25.00, 'Professional driveway and sidewalk sweeping to keep your property looking its best.', 'https://source.unsplash.com/featured/?driveway+sweeping'
-        WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Driveway Sweeping');
-
-        INSERT INTO services (name, price, description, image_url)
-        SELECT 'Mulching', 50.00, 'Spring and fall mulching service to refresh garden beds and retain moisture, handled by our hardworking teen crew.', 'https://source.unsplash.com/featured/?mulching'
-        WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Mulching');
-
-        INSERT INTO services (name, price, description, image_url)
-        SELECT 'Gutter Cleaning', 45.00, 'Safe and thorough gutter clearing to protect your home, completed by reliable local teens.', 'https://source.unsplash.com/featured/?gutter+cleaning'
-        WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Gutter Cleaning');
-
-        INSERT INTO services (name, price, description, image_url)
-        SELECT 'Patio Power Washing', 55.00, 'Brighten patios, decks, and walkways with power washing from a careful teen team.', 'https://source.unsplash.com/featured/?power+washing'
-        WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Patio Power Washing');
-
-        INSERT INTO services (name, price, description, image_url)
-        SELECT 'Garden Planting', 40.00, 'Planting flowers and vegetables by thoughtful students who take pride in a beautiful yard.', 'https://source.unsplash.com/featured/?garden+planting'
-        WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Garden Planting');
-
-        INSERT INTO services (name, price, description, image_url)
-        SELECT 'Fence Staining', 65.00, 'Fence and wood trim staining service to refresh outdoor spaces and protect wood surfaces.', 'https://source.unsplash.com/featured/?fence+staining'
-        WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Fence Staining');
 
         CREATE TABLE IF NOT EXISTS requests (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -481,6 +463,8 @@ def init_db():
             seen_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     """)
+    cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_services_name_unique ON services(name)")
+    seed_default_services(cursor)
     conn.commit()
 
     # ------------------------------------------------------------
@@ -1157,7 +1141,7 @@ NON_MEMBER_FEE = 7.99
 def request_service():
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT id, name, price FROM services ORDER BY name")
+    cursor.execute("SELECT id, name, price, description, image_url FROM services ORDER BY name")
     services = cursor.fetchall()
 
     cursor.execute("SELECT date, reason FROM blocked_days ORDER BY date")

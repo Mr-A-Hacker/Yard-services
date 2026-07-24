@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-labelledby="title desc">
-  <title id="title">Lawn Mowing</title>
-  <desc id="desc">Illustration for Lawn Mowing yard service.</desc>
+  <title id="title">Garden Weeding</title>
+  <desc id="desc">Illustration for Garden Weeding yard service.</desc>
   <defs><linearGradient id="sky" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#dff7ff"/><stop offset="1" stop-color="#f1f8f2"/></linearGradient><linearGradient id="grass" x1="0" x2="1"><stop stop-color="#2d8a3e"/><stop offset="1" stop-color="#4caf50"/></linearGradient></defs>
   <rect width="640" height="360" fill="url(#sky)"/>
   <circle cx="540" cy="72" r="44" fill="#f5a623" opacity=".9"/>
   <path d="M0 250 C120 220 210 280 330 245 C450 210 540 240 640 220 L640 360 L0 360 Z" fill="url(#grass)"/>
-  <g transform="translate(70 72)"><rect width="500" height="185" rx="28" fill="#fff" opacity=".88"/><text x="250" y="84" text-anchor="middle" font-size="58" font-family="Arial, sans-serif">🌱</text><text x="250" y="132" text-anchor="middle" font-size="35" font-weight="800" fill="#1a5c2a" font-family="Arial, sans-serif">Lawn Mowing</text><text x="250" y="165" text-anchor="middle" font-size="20" font-weight="700" fill="#c47f00" font-family="Arial, sans-serif">MOWER</text></g>
+  <g transform="translate(70 72)"><rect width="500" height="185" rx="28" fill="#fff" opacity=".88"/><text x="250" y="84" text-anchor="middle" font-size="58" font-family="Arial, sans-serif">🌿</text><text x="250" y="132" text-anchor="middle" font-size="35" font-weight="800" fill="#1a5c2a" font-family="Arial, sans-serif">Garden Weeding</text><text x="250" y="165" text-anchor="middle" font-size="20" font-weight="700" fill="#c47f00" font-family="Arial, sans-serif">WEEDS</text></g>
 </svg>
