@@ -167,13 +167,14 @@ def b2_authorize():
         resp.raise_for_status()
         data = resp.json()
         _b2_auth_token = data["authorizationToken"]
-        # B2 v3 API may use different field names — accept apiUrl or s3ApiUrl
-        _b2_api_url = data.get("apiUrl") or data.get("s3ApiUrl", "")
+        # B2 v3 nests apiUrl/downloadUrl inside apiInfo
+        api_info = data.get("apiInfo", {})
+        _b2_api_url = api_info.get("apiUrl", "")
         if _b2_api_url:
             _b2_api_url = _b2_api_url.rstrip("/") + "/b2api/v3"
-        _b2_download_url = data.get("downloadUrl", "")
+        _b2_download_url = api_info.get("downloadUrl", "")
         if not _b2_api_url or not _b2_download_url:
-            print(f"B2 authorize response missing apiUrl/downloadUrl. Keys: {list(data.keys())}")
+            print(f"B2 authorize response missing apiUrl/downloadUrl. Info keys: {list(api_info.keys())}")
         return _b2_auth_token
     except Exception as exc:
         print(f"B2 authorize failed: {exc}")
@@ -1825,21 +1826,6 @@ def admin_test_b2():
         flash("B2 is NOT configured. Set B2_KEY_ID and B2_APPLICATION_KEY in Render environment.", "danger")
         return redirect(url_for("admin_dashboard"))
     try:
-        import json as _json
-        auth_str = f"{B2_KEY_ID}:{B2_APPLICATION_KEY}"
-        auth_header = base64.b64encode(auth_str.encode()).decode()
-        resp = requests.get(
-            f"{B2_ENDPOINT}/b2api/v3/b2_authorize_account",
-            headers={"Authorization": f"Basic {auth_header}"},
-            timeout=30,
-        )
-        flash(f"B2 HTTP status: {resp.status_code}", "info")
-        try:
-            data = resp.json()
-            flash(f"B2 response keys: {list(data.keys())}", "info")
-        except Exception:
-            flash(f"B2 response body (first 500 chars): {resp.text[:500]}", "info")
-        resp.raise_for_status()
         b2_authorize()
         flash("B2 authorization succeeded! ✅", "success")
     except Exception as exc:
