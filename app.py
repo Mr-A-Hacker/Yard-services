@@ -1815,6 +1815,27 @@ def admin_chat_messages():
     return {"messages": msgs}
 
 
+@app.route("/api/admin/chat/poll")
+@admin_login_required
+def admin_chat_poll():
+    last_id = request.args.get("last_id", 0, type=int)
+    conn = get_db()
+    rows = conn.execute("""
+        SELECT ac.id, ac.user_id, ac.message, ac.sender, u.email
+        FROM admin_chats ac
+        JOIN users u ON ac.user_id = u.id
+        WHERE ac.id > ?
+        ORDER BY ac.id ASC
+    """, (last_id,)).fetchall()
+    messages = []
+    max_id = last_id
+    for r in rows:
+        messages.append({"id": r["id"], "user_id": r["user_id"], "email": r["email"], "message": r["message"], "sender": r["sender"]})
+        if r["id"] > max_id:
+            max_id = r["id"]
+    return {"messages": messages, "max_id": max_id}
+
+
 @app.route("/admin/chat/reply", methods=["POST"])
 @admin_login_required
 def admin_chat_reply():
@@ -1950,6 +1971,12 @@ def admin_dashboard():
         for row in requests_data
     ]
 
+    admin_chat_max_id = 0
+    for uid, convo in admin_chat_convos.items():
+        for m in convo["messages"]:
+            if m["id"] > admin_chat_max_id:
+                admin_chat_max_id = m["id"]
+
     return render_template(
         "admin_dashboard.html",
         password_ok=True,
@@ -1967,6 +1994,7 @@ def admin_dashboard():
         calendar_requests=calendar_requests,
         finances=finances,
         admin_chat_convos=admin_chat_convos,
+        admin_chat_max_id=admin_chat_max_id,
         b2_configured=b2_is_configured(),
     )
 

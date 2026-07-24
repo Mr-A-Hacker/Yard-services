@@ -1730,7 +1730,7 @@
     ════════════════════════════════════════ -->
     <div id="group-adminchat" class="group-head fade-in">
       <span class="group-icon">💬</span>
-      <h2>Admin Chat</h2>
+      <h2>Admin Chat <span id="adminChatBadge" style="display:none;font-size:0.7rem;background:#e74c3c;color:white;padding:2px 10px;border-radius:999px;margin-left:8px;vertical-align:middle;font-family:'Nunito',sans-serif;"></span></h2>
     </div>
 
     {% if admin_chat_convos %}
@@ -1772,5 +1772,54 @@
 </div> <!-- page-body -->
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+let adminLastMsgId = {{ admin_chat_max_id or 0 }};
+let adminChatNotifPoll = null;
+
+if ('Notification' in window && Notification.permission === 'default') {
+  Notification.requestPermission();
+}
+
+function adminNotify(email, text) {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  if (!document.hidden) return;
+  try {
+    const n = new Notification('💬 New message from ' + email, {
+      body: text,
+      tag: 'admin-chat-' + email,
+    });
+    n.onclick = () => { window.focus(); n.close(); };
+    setTimeout(() => n.close(), 6000);
+  } catch(e) {}
+}
+
+function adminChatPoll() {
+  fetch('/api/admin/chat/poll?last_id=' + adminLastMsgId)
+    .then(r => r.json())
+    .then(d => {
+      if (!d.messages || !d.messages.length) return;
+      adminLastMsgId = d.max_id;
+      for (const m of d.messages) {
+        if (m.sender === 'user') {
+          adminNotify(m.email, m.message);
+        }
+      }
+      if (d.messages.some(m => m.sender === 'user')) {
+        const badge = document.getElementById('adminChatBadge');
+        if (badge) {
+          const count = d.messages.filter(m => m.sender === 'user').length;
+          badge.textContent = '🔔 ' + count + ' new';
+          badge.style.display = 'inline-block';
+          setTimeout(() => { badge.style.display = 'none'; }, 8000);
+        }
+      }
+    })
+    .catch(() => {});
+}
+
+adminChatPoll();
+adminChatNotifPoll = setInterval(adminChatPoll, 4000);
+</script>
 </body>
 </html>
