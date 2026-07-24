@@ -1779,7 +1779,13 @@ def admin_chat_messages():
         "SELECT id, message, sender, created_at FROM admin_chats WHERE user_id = ? ORDER BY created_at ASC",
         (current_user.id,),
     ).fetchall()
-    return {"messages": [dict(r) for r in rows]}
+    msgs = []
+    for r in rows:
+        m = dict(r)
+        if isinstance(m.get("created_at"), datetime.datetime):
+            m["created_at"] = m["created_at"].isoformat()
+        msgs.append(m)
+    return {"messages": msgs}
 
 
 @app.route("/admin/chat/reply", methods=["POST"])

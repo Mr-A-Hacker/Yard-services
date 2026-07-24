@@ -563,71 +563,115 @@
 
     </div>
 
-    <!-- ── Weather Widget ── -->
-    <div class="section-card">
-      <div class="section-card-head">
+    <!-- ── Weather Widget (auto-detect) ── -->
+    <div class="section-card" id="weather-card">
+      <div class="section-card-head" style="background:linear-gradient(135deg,#1e3a5f,#2d6a9f);">
         <div class="head-icon">🌤️</div>
-        <h5>Weather</h5>
+        <h5>Local Weather</h5>
+        <button onclick="fetchWeather()" title="Refresh" style="margin-left:auto;background:rgba(255,255,255,0.15);border:none;color:white;border-radius:8px;padding:4px 12px;cursor:pointer;font-size:0.8rem;font-weight:700;">🔄</button>
       </div>
       <div class="section-card-body">
-        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-          <input type="text" id="weatherCity" class="form-control-custom" placeholder="Enter your city (e.g. Miami)"
-                 style="flex:1;min-width:180px;padding:10px 14px;border:2px solid var(--g-light);border-radius:10px;font-weight:700;">
-          <button onclick="fetchWeather()" class="btn-primary-custom" style="padding:10px 20px;">🔍 Get Weather</button>
+        <div id="weatherResult" style="font-weight:700;color:var(--ink);min-height:80px;display:flex;align-items:center;justify-content:center;">
+          <span style="color:var(--muted);">📍 Detecting your location...</span>
         </div>
-        <div id="weatherResult" style="margin-top:12px;font-weight:700;color:var(--ink);"></div>
       </div>
     </div>
 
+    <style>
+    .weather-card-glow { background: linear-gradient(135deg, #1e3a5f 0%, #2d6a9f 100%); border-radius:18px; padding:24px; color:white; position:relative; overflow:hidden; }
+    .weather-card-glow::before { content:''; position:absolute; inset:0; background:radial-gradient(circle at 20% 30%, rgba(255,255,255,0.08), transparent 60%); }
+    .weather-temp { font-size:3.2rem; font-weight:900; line-height:1; }
+    .weather-detail { display:flex; align-items:center; gap:6px; font-size:0.85rem; opacity:0.85; font-weight:700; }
+    </style>
+
     <script>
-    async function fetchWeather() {
-      const city = document.getElementById('weatherCity').value.trim();
+    async function fetchWeather(lat, lon) {
       const el = document.getElementById('weatherResult');
-      if (!city) { el.innerHTML = '<span style="color:var(--red);">Please enter a city.</span>'; return; }
-      el.innerHTML = '⏳ Loading...';
+      if (!lat || !lon) {
+        el.innerHTML = '<span style="color:var(--muted);font-size:0.9rem;">📍 Enable location access for auto-weather, or use the city search below.</span>';
+        return;
+      }
+      el.innerHTML = '<span style="color:var(--muted);">⏳ Loading weather...</span>';
       try {
-        const r = await fetch(`https://wttr.in/${encodeURIComponent(city)}?format=j1`);
-        if (!r.ok) throw new Error('City not found');
+        const r = await fetch(`https://wttr.in/${lat},${lon}?format=j1`);
+        if (!r.ok) throw new Error('Weather unavailable');
         const d = await r.json();
         const c = d.current_condition[0];
+        const loc = d.nearest_area[0];
+        const city = loc.areaName[0].value;
+        const region = loc.region[0].value;
+        const icon = c.weatherDesc[0].value.includes('Sun')?'☀️':c.weatherDesc[0].value.includes('Cloud')?'☁️':c.weatherDesc[0].value.includes('Rain')||c.weatherDesc[0].value.includes('Drizzle')?'🌧️':c.weatherDesc[0].value.includes('Snow')?'❄️':c.weatherDesc[0].value.includes('Fog')||c.weatherDesc[0].value.includes('Mist')?'🌫️':c.weatherDesc[0].value.includes('Thunder')?'⛈️':'🌤️';
         el.innerHTML = `
-          <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;background:var(--g-pale);border-radius:12px;padding:14px 18px;">
-            <span style="font-size:2.2rem;">${c.weatherDesc[0].value.includes('Sun')?'☀️':c.weatherDesc[0].value.includes('Cloud')?'☁️':c.weatherDesc[0].value.includes('Rain')?'🌧️':c.weatherDesc[0].value.includes('Snow')?'❄️':'🌤️'}</span>
-            <div>
-              <div style="font-size:1.6rem;font-weight:900;color:var(--g-dark);">${c.temp_F}°F</div>
-              <div style="color:var(--muted);font-size:0.85rem;">${d.nearest_area[0].areaName[0].value}, ${d.nearest_area[0].country[0].value}</div>
+          <div class="weather-card-glow">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;position:relative;z-index:1;">
+              <div style="display:flex;align-items:center;gap:16px;">
+                <span style="font-size:3.5rem;">${icon}</span>
+                <div>
+                  <div class="weather-temp">${c.temp_F}°F</div>
+                  <div style="font-weight:700;font-size:0.9rem;opacity:0.8;">${c.weatherDesc[0].value}</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:18px;flex-wrap:wrap;">
+                <div class="weather-detail">💧 ${c.humidity}%</div>
+                <div class="weather-detail">💨 ${c.windspeedMiles} mph</div>
+                <div class="weather-detail">👁️ ${c.visibilityMiles} mi</div>
+              </div>
             </div>
-            <div style="color:var(--muted);font-size:0.85rem;border-left:2px solid var(--g-light);padding-left:16px;">
-              <div>💧 ${c.humidity}% humidity</div>
-              <div>💨 ${c.windspeedMiles} mph wind</div>
-              <div>${c.weatherDesc[0].value}</div>
+            <div style="margin-top:8px;font-size:0.8rem;opacity:0.6;font-weight:700;position:relative;z-index:1;">
+              📍 ${city}, ${region} · Feels like ${c.FeelsLikeF}°F
             </div>
           </div>`;
       } catch(e) {
-        el.innerHTML = `<span style="color:var(--red);">Could not fetch weather for "${city}". Try another city.</span>`;
+        el.innerHTML = `<span style="color:var(--red);font-size:0.9rem;">❌ Weather unavailable. <a href="#" onclick="fetchWeather();return false;" style="color:var(--g-bright);">Retry</a></span>`;
       }
     }
+
+    document.addEventListener("DOMContentLoaded", function() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => fetchWeather(pos.coords.latitude, pos.coords.longitude),
+          () => fetchWeather(null, null)
+        );
+      } else {
+        fetchWeather(null, null);
+      }
+    });
     </script>
 
-    <!-- ── Viora AI Chat ── -->
+    <!-- ── Viora AI Chat (Styled) ── -->
     <div class="section-card" id="viora-chat">
-      <div class="section-card-head">
+      <div class="section-card-head" style="background:linear-gradient(135deg,#4a1a6b,#7c3aed);">
         <div class="head-icon">🤖</div>
-        <h5>Viora AI — Lawn & Yard Assistant</h5>
+        <h5>Viora AI</h5>
+        <span style="margin-left:auto;font-size:0.7rem;background:rgba(255,255,255,0.15);padding:2px 10px;border-radius:999px;color:#c4b5fd;font-weight:700;">Lawn Expert</span>
       </div>
-      <div class="section-card-body">
-        <div id="vioraMessages" style="max-height:300px;overflow-y:auto;margin-bottom:12px;padding:4px;display:flex;flex-direction:column;gap:8px;">
-          <div style="background:var(--g-pale);padding:10px 14px;border-radius:12px 12px 12px 4px;font-weight:600;font-size:0.9rem;color:var(--ink);align-self:flex-start;max-width:85%;">
-            🌱 Hi! I'm Viora, your lawn & yard care assistant. Ask me anything about grass, gardening, trees, or yard services!
+      <div class="section-card-body" style="padding:0;">
+        <div id="vioraMessages" style="height:320px;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;background:#fafaff;">
+          <div style="display:flex;gap:10px;align-items:flex-start;max-width:88%;">
+            <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#a855f7);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">🌿</div>
+            <div style="background:white;padding:12px 16px;border-radius:4px 16px 16px 16px;font-weight:600;font-size:0.9rem;color:var(--ink);box-shadow:0 2px 8px rgba(0,0,0,0.06);line-height:1.5;">
+              Hi! I'm Viora, your lawn & yard care assistant. Ask me anything about grass, gardening, trees, or yard services!
+            </div>
           </div>
         </div>
-        <div style="display:flex;gap:8px;">
-          <input type="text" id="vioraInput" class="form-control-custom" placeholder="Ask Viora about your lawn..."
-                 style="flex:1;padding:10px 14px;border:2px solid var(--g-light);border-radius:10px;font-weight:700;">
-          <button onclick="sendViora()" class="btn-primary-custom" style="padding:10px 18px;">Send</button>
+        <div style="display:flex;gap:8px;padding:12px 16px;border-top:1.5px solid #eee;background:white;">
+          <input type="text" id="vioraInput" placeholder="Ask Viora about your lawn..."
+                 style="flex:1;padding:10px 16px;border:2px solid #e8e8f0;border-radius:25px;font-weight:600;font-size:0.9rem;outline:none;transition:border 0.2s;" onfocus="this.style.borderColor='#7c3aed'" onblur="this.style.borderColor='#e8e8f0'">
+          <button onclick="sendViora()" style="background:linear-gradient(135deg,#7c3aed,#a855f7);color:white;border:none;border-radius:25px;padding:10px 20px;font-weight:800;font-size:0.85rem;cursor:pointer;box-shadow:0 4px 14px rgba(124,58,237,0.35);transition:transform 0.15s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">Send</button>
         </div>
       </div>
     </div>
+
+    <style>
+    #vioraMessages::-webkit-scrollbar { width:5px; }
+    #vioraMessages::-webkit-scrollbar-track { background:transparent; }
+    #vioraMessages::-webkit-scrollbar-thumb { background:#d0d0e0; border-radius:10px; }
+    .viora-typing span { display:inline-block; width:8px; height:8px; border-radius:50%; background:#7c3aed; margin:0 2px; animation:vioraBounce 1.4s infinite ease-in-out both; }
+    .viora-typing span:nth-child(1) { animation-delay:-0.32s; }
+    .viora-typing span:nth-child(2) { animation-delay:-0.16s; }
+    .viora-typing span:nth-child(3) { animation-delay:0s; }
+    @keyframes vioraBounce { 0%,80%,100% { transform:scale(0.6); } 40% { transform:scale(1); } }
+    </style>
 
     <script>
     const vioraMsgs = document.getElementById('vioraMessages');
@@ -635,12 +679,47 @@
 
     vioraInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') sendViora(); });
 
+    function addVioraMsg(text, sender, isTyping) {
+      const wrapper = document.createElement('div');
+      wrapper.style.cssText = sender === 'user'
+        ? 'display:flex;gap:10px;align-items:flex-end;flex-direction:row-reverse;max-width:88%;align-self:flex-end;'
+        : 'display:flex;gap:10px;align-items:flex-start;max-width:88%;';
+      if (sender === 'bot' && !isTyping) {
+        const avatar = document.createElement('div');
+        avatar.style.cssText = 'width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#a855f7);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;';
+        avatar.textContent = '🌿';
+        wrapper.appendChild(avatar);
+      }
+      if (sender === 'user') {
+        const avatar = document.createElement('div');
+        avatar.style.cssText = 'width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#2d8a3e,#4caf50);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;';
+        avatar.textContent = '👤';
+        wrapper.appendChild(avatar);
+      }
+      const bubble = document.createElement('div');
+      if (isTyping) {
+        bubble.innerHTML = '<div class="viora-typing"><span></span><span></span><span></span></div>';
+        bubble.style.cssText = 'background:white;padding:14px 18px;border-radius:4px 16px 16px 16px;box-shadow:0 2px 8px rgba(0,0,0,0.06);';
+      } else {
+        bubble.textContent = text;
+        bubble.style.cssText = sender === 'user'
+          ? 'background:linear-gradient(135deg,#2d8a3e,#4caf50);color:white;padding:12px 16px;border-radius:16px 4px 16px 16px;font-weight:600;font-size:0.9rem;line-height:1.5;box-shadow:0 2px 8px rgba(45,138,62,0.2);'
+          : 'background:white;padding:12px 16px;border-radius:4px 16px 16px 16px;font-weight:600;font-size:0.9rem;color:var(--ink);line-height:1.5;box-shadow:0 2px 8px rgba(0,0,0,0.06);';
+      }
+      wrapper.appendChild(bubble);
+      vioraMsgs.appendChild(wrapper);
+      vioraMsgs.scrollTop = vioraMsgs.scrollHeight;
+      return wrapper;
+    }
+
+    addVioraMsg('Hi! I\'m Viora, your lawn & yard care assistant. Ask me anything about grass, gardening, trees, or yard services!', 'bot');
+
     async function sendViora() {
       const msg = vioraInput.value.trim();
       if (!msg) return;
       addVioraMsg(msg, 'user');
       vioraInput.value = '';
-      const loadingEl = addVioraMsg('⏳ Thinking...', 'bot');
+      const typingEl = addVioraMsg('', 'bot', true);
       try {
         const r = await fetch('/api/ai/chat', {
           method: 'POST',
@@ -648,50 +727,73 @@
           body: JSON.stringify({message: msg})
         });
         const d = await r.json();
-        loadingEl.remove();
+        typingEl.remove();
         if (d.reply) addVioraMsg(d.reply, 'bot');
         else addVioraMsg('❌ ' + (d.error || 'AI unavailable'), 'bot');
       } catch(e) {
-        loadingEl.remove();
-        addVioraMsg('❌ Network error', 'bot');
+        typingEl.remove();
+        addVioraMsg('❌ Network error. Check your connection.', 'bot');
       }
-    }
-
-    function addVioraMsg(text, sender) {
-      const el = document.createElement('div');
-      el.style.cssText = sender === 'user'
-        ? 'background:var(--g-mid);color:white;padding:10px 14px;border-radius:12px 12px 4px 12px;font-weight:600;font-size:0.9rem;align-self:flex-end;max-width:85%;'
-        : 'background:var(--g-pale);padding:10px 14px;border-radius:12px 12px 12px 4px;font-weight:600;font-size:0.9rem;color:var(--ink);align-self:flex-start;max-width:85%;';
-      el.textContent = text;
-      vioraMsgs.appendChild(el);
-      vioraMsgs.scrollTop = vioraMsgs.scrollHeight;
-      return el;
     }
     </script>
 
-    <!-- ── Admin Chat ── -->
+    <!-- ── Admin Chat (Live) ── -->
     <div class="section-card" id="admin-chat">
-      <div class="section-card-head">
+      <div class="section-card-head" style="background:linear-gradient(135deg,#b45309,#f59e0b);">
         <div class="head-icon">💬</div>
         <h5>Chat with Admin</h5>
+        <span id="adminChatStatus" style="margin-left:auto;font-size:0.7rem;background:rgba(255,255,255,0.15);padding:2px 10px;border-radius:999px;color:#fde68a;font-weight:700;">● Live</span>
       </div>
-      <div class="section-card-body">
-        <div id="adminChatMessages" style="max-height:300px;overflow-y:auto;margin-bottom:12px;padding:4px;display:flex;flex-direction:column;gap:8px;">
-          <div style="text-align:center;color:var(--muted);font-weight:700;font-size:0.85rem;padding:8px;">Loading messages...</div>
+      <div class="section-card-body" style="padding:0;">
+        <div id="adminChatMessages" style="height:280px;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;background:#fafaff;">
+          <div style="text-align:center;color:var(--muted);font-weight:700;font-size:0.85rem;padding:20px;">💬 Loading conversations...</div>
         </div>
-        <div style="display:flex;gap:8px;">
-          <input type="text" id="adminChatInput" class="form-control-custom" placeholder="Message the admin..."
-                 style="flex:1;padding:10px 14px;border:2px solid var(--g-light);border-radius:10px;font-weight:700;">
-          <button onclick="sendAdminChat()" class="btn-primary-custom" style="padding:10px 18px;">Send</button>
+        <div style="display:flex;gap:8px;padding:12px 16px;border-top:1.5px solid #eee;background:white;">
+          <input type="text" id="adminChatInput" placeholder="Type a message..."
+                 style="flex:1;padding:10px 16px;border:2px solid #e8e8f0;border-radius:25px;font-weight:600;font-size:0.9rem;outline:none;transition:border 0.2s;" onfocus="this.style.borderColor='#f59e0b'" onblur="this.style.borderColor='#e8e8f0'">
+          <button onclick="sendAdminChat()" style="background:linear-gradient(135deg,#b45309,#f59e0b);color:white;border:none;border-radius:25px;padding:10px 20px;font-weight:800;font-size:0.85rem;cursor:pointer;box-shadow:0 4px 14px rgba(245,158,11,0.35);transition:transform 0.15s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">Send</button>
         </div>
       </div>
     </div>
 
+    <style>
+    #adminChatMessages::-webkit-scrollbar { width:5px; }
+    #adminChatMessages::-webkit-scrollbar-track { background:transparent; }
+    #adminChatMessages::-webkit-scrollbar-thumb { background:#d0d0e0; border-radius:10px; }
+    </style>
+
     <script>
     const adminChatMsgs = document.getElementById('adminChatMessages');
     const adminChatInput = document.getElementById('adminChatInput');
+    let adminChatLastId = 0;
+    let adminChatPoll = null;
 
     adminChatInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') sendAdminChat(); });
+
+    function addAdminMsg(text, sender) {
+      const wrapper = document.createElement('div');
+      const isUser = sender === 'user';
+      wrapper.style.cssText = isUser
+        ? 'display:flex;gap:10px;align-items:flex-end;flex-direction:row-reverse;max-width:88%;align-self:flex-end;'
+        : 'display:flex;gap:10px;align-items:flex-start;max-width:88%;';
+      const avatar = document.createElement('div');
+      if (isUser) {
+        avatar.style.cssText = 'width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#2d8a3e,#4caf50);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;';
+        avatar.textContent = '👤';
+      } else {
+        avatar.style.cssText = 'width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#b45309,#f59e0b);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;';
+        avatar.textContent = '🛠️';
+      }
+      wrapper.appendChild(avatar);
+      const bubble = document.createElement('div');
+      bubble.textContent = text;
+      bubble.style.cssText = isUser
+        ? 'background:linear-gradient(135deg,#2d8a3e,#4caf50);color:white;padding:12px 16px;border-radius:16px 4px 16px 16px;font-weight:600;font-size:0.9rem;line-height:1.5;box-shadow:0 2px 8px rgba(45,138,62,0.2);'
+        : 'background:white;padding:12px 16px;border-radius:4px 16px 16px 16px;font-weight:600;font-size:0.9rem;color:var(--ink);line-height:1.5;box-shadow:0 2px 8px rgba(0,0,0,0.06);';
+      wrapper.appendChild(bubble);
+      adminChatMsgs.appendChild(wrapper);
+      adminChatMsgs.scrollTop = adminChatMsgs.scrollHeight;
+    }
 
     async function loadAdminChat() {
       try {
@@ -699,41 +801,46 @@
         const d = await r.json();
         adminChatMsgs.innerHTML = '';
         if (!d.messages || d.messages.length === 0) {
-          adminChatMsgs.innerHTML = '<div style="text-align:center;color:var(--muted);font-weight:700;font-size:0.85rem;padding:8px;">No messages yet. Start a conversation!</div>';
+          adminChatMsgs.innerHTML = '<div style="text-align:center;color:var(--muted);font-weight:700;font-size:0.85rem;padding:20px;">💬 No messages yet. Start a conversation!</div>';
+          adminChatLastId = 0;
           return;
         }
         for (const m of d.messages) {
-          const el = document.createElement('div');
-          const isUser = m.sender === 'user';
-          el.style.cssText = isUser
-            ? 'background:var(--g-mid);color:white;padding:10px 14px;border-radius:12px 12px 4px 12px;font-weight:600;font-size:0.9rem;align-self:flex-end;max-width:85%;'
-            : 'background:linear-gradient(135deg,#fef3c7,#fde68a);padding:10px 14px;border-radius:12px 12px 12px 4px;font-weight:600;font-size:0.9rem;color:#5a3e00;align-self:flex-start;max-width:85%;';
-          el.textContent = (isUser ? '' : '👤 Admin: ') + m.message;
-          adminChatMsgs.appendChild(el);
+          if (m.id > adminChatLastId) adminChatLastId = m.id;
+          addAdminMsg(m.message, m.sender);
         }
-        adminChatMsgs.scrollTop = adminChatMsgs.scrollHeight;
-      } catch(e) {
-        adminChatMsgs.innerHTML = '<div style="text-align:center;color:var(--red);font-weight:700;font-size:0.85rem;padding:8px;">Failed to load messages.</div>';
-      }
+      } catch(e) { /* silent */ }
     }
 
     async function sendAdminChat() {
       const msg = adminChatInput.value.trim();
       if (!msg) return;
       adminChatInput.value = '';
+      addAdminMsg(msg, 'user');
       try {
         await fetch('/api/admin_chat/send', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({message: msg})
         });
-        loadAdminChat();
-      } catch(e) {
-        alert('Failed to send message.');
-      }
+      } catch(e) { /* silent */ }
     }
 
+    // Start live polling
     loadAdminChat();
+    adminChatPoll = setInterval(async () => {
+      try {
+        const r = await fetch('/api/admin_chat/messages');
+        const d = await r.json();
+        if (d.messages) {
+          const newMsgs = d.messages.filter(m => m.id > adminChatLastId);
+          for (const m of newMsgs) {
+            adminChatLastId = m.id;
+            addAdminMsg(m.message, m.sender);
+          }
+        }
+      } catch(e) { /* silent */ }
+    }, 3000);
     </script>
 
     <!-- Service history card -->
