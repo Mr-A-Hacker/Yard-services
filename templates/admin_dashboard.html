@@ -689,6 +689,7 @@
       <a href="#group-customers">👥 Customers</a>
       <a href="#group-services">🛠️ Services</a>
       <a href="#group-bookings">📋 Bookings</a>
+      <a href="#group-finances">💰 Finances</a>
       <a href="#group-appearance">🎨 Appearance</a>
       <a href="#group-announcements">📢 Announcements</a>
       <a href="#group-reviews">⭐ Reviews</a>
@@ -1234,6 +1235,207 @@
                 </tbody>
               </table>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════
+         GROUP: FINANCES
+    ════════════════════════════════════════ -->
+    <div id="group-finances" class="group-head fade-in">
+      <span class="group-icon">💰</span>
+      <h2>Finances</h2>
+    </div>
+
+    <!-- Customers Served -->
+    <div class="section-head fade-in">
+      <span class="icon-chip chip-teal">👤</span>
+      <h3>Customers Served</h3>
+    </div>
+    <div class="section-divider"></div>
+
+    <div class="row g-3 fade-in">
+      <div class="col-md-6">
+        <div class="admin-card">
+          <div class="card-head">📊 Counter</div>
+          <div class="card-body-inner text-center py-4">
+            <div style="font-size:4rem;font-weight:800;color:var(--accent);line-height:1;">
+              {{ finances.customers_served.value|int }}
+            </div>
+            <div style="color:var(--muted);margin-top:6px;font-size:0.9rem;">Customers Served</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="admin-card">
+          <div class="card-head">✏️ Adjust</div>
+          <div class="card-body-inner">
+            <form method="POST" action="{{ url_for('admin_update_finance') }}" class="row g-2 align-items-end">
+              <input type="hidden" name="key" value="customers_served">
+              <div class="col-6">
+                <label class="form-label-custom">Amount</label>
+                <input type="number" name="amount" class="form-control-custom" value="1" min="0" step="1" required>
+              </div>
+              <div class="col-3">
+                <button type="submit" name="action" value="add" class="btn-primary-custom btn-w-full">➕ Add</button>
+              </div>
+              <div class="col-3">
+                <button type="submit" name="action" value="subtract" class="btn-danger-custom btn-w-full">➖ Subtract</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Money Earned -->
+    <div class="section-head fade-in">
+      <span class="icon-chip chip-gold">💵</span>
+      <h3>Money Earned</h3>
+    </div>
+    <div class="section-divider"></div>
+
+    <div class="row g-3 fade-in">
+      <div class="col-md-6">
+        <div class="admin-card">
+          <div class="card-head">📊 Total</div>
+          <div class="card-body-inner text-center py-4">
+            <div style="font-size:4rem;font-weight:800;color:var(--gold);line-height:1;">
+              ${{ "%.2f"|format(finances.money_earned.value) }}
+            </div>
+            <div style="color:var(--muted);margin-top:6px;font-size:0.9rem;">Money Earned</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="admin-card">
+          <div class="card-head">✏️ Adjust</div>
+          <div class="card-body-inner">
+            <form method="POST" action="{{ url_for('admin_update_finance') }}" class="row g-2 align-items-end">
+              <input type="hidden" name="key" value="money_earned">
+              <div class="col-6">
+                <label class="form-label-custom">Amount ($)</label>
+                <input type="number" name="amount" class="form-control-custom" value="0.00" min="0" step="0.01" required>
+              </div>
+              <div class="col-3">
+                <button type="submit" name="action" value="add" class="btn-primary-custom btn-w-full">➕ Add</button>
+              </div>
+              <div class="col-3">
+                <button type="submit" name="action" value="subtract" class="btn-danger-custom btn-w-full">➖ Subtract</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Employees -->
+    <div class="section-head fade-in">
+      <span class="icon-chip chip-blue">👥</span>
+      <h3>Employees Savings</h3>
+    </div>
+    <div class="section-divider"></div>
+
+    <div class="row g-3 fade-in">
+      <!-- Abdullah -->
+      <div class="col-md-6">
+        <div class="admin-card">
+          <div class="card-head">🧑 Abdullah</div>
+          <div class="card-body-inner">
+            <div class="text-center py-3">
+              <div style="font-size:3rem;font-weight:800;color:var(--accent);line-height:1;">
+                ${{ "%.2f"|format(finances.abdullah_savings.value) }}
+              </div>
+              <div style="color:var(--muted);margin-top:6px;font-size:0.9rem;">Savings</div>
+            </div>
+            <form method="POST" action="{{ url_for('admin_update_finance') }}" class="row g-2 align-items-end mt-2">
+              <input type="hidden" name="key" value="abdullah_savings">
+              <div class="col-5">
+                <label class="form-label-custom">Amount ($)</label>
+                <input type="number" name="amount" class="form-control-custom" value="0.00" min="0" step="0.01" required>
+              </div>
+              <div class="col-3">
+                <button type="submit" name="action" value="add" class="btn-primary-custom btn-w-full">➕</button>
+              </div>
+              <div class="col-2">
+                <button type="submit" name="action" value="subtract" class="btn-danger-custom btn-w-full">➖</button>
+              </div>
+              <div class="col-2">
+                <button type="submit" name="action" value="set" class="btn-sm-custom btn-sm-feature">🔄</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      <!-- Abdulrahaman -->
+      <div class="col-md-6">
+        <div class="admin-card">
+          <div class="card-head">🧑 Abdulrahaman</div>
+          <div class="card-body-inner">
+            <div class="text-center py-3">
+              <div style="font-size:3rem;font-weight:800;color:var(--accent);line-height:1;">
+                ${{ "%.2f"|format(finances.abdulrahaman_savings.value) }}
+              </div>
+              <div style="color:var(--muted);margin-top:6px;font-size:0.9rem;">Savings</div>
+            </div>
+            <form method="POST" action="{{ url_for('admin_update_finance') }}" class="row g-2 align-items-end mt-2">
+              <input type="hidden" name="key" value="abdulrahaman_savings">
+              <div class="col-5">
+                <label class="form-label-custom">Amount ($)</label>
+                <input type="number" name="amount" class="form-control-custom" value="0.00" min="0" step="0.01" required>
+              </div>
+              <div class="col-3">
+                <button type="submit" name="action" value="add" class="btn-primary-custom btn-w-full">➕</button>
+              </div>
+              <div class="col-2">
+                <button type="submit" name="action" value="subtract" class="btn-danger-custom btn-w-full">➖</button>
+              </div>
+              <div class="col-2">
+                <button type="submit" name="action" value="set" class="btn-sm-custom btn-sm-feature">🔄</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Business Savings -->
+    <div class="section-head fade-in">
+      <span class="icon-chip chip-gold">🏢</span>
+      <h3>Business Savings</h3>
+    </div>
+    <div class="section-divider"></div>
+
+    <div class="row g-3 fade-in">
+      <div class="col-md-6">
+        <div class="admin-card">
+          <div class="card-head">📊 Total</div>
+          <div class="card-body-inner text-center py-4">
+            <div style="font-size:4rem;font-weight:800;color:var(--gold);line-height:1;">
+              ${{ "%.2f"|format(finances.business_savings.value) }}
+            </div>
+            <div style="color:var(--muted);margin-top:6px;font-size:0.9rem;">Business Savings</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="admin-card">
+          <div class="card-head">✏️ Adjust</div>
+          <div class="card-body-inner">
+            <form method="POST" action="{{ url_for('admin_update_finance') }}" class="row g-2 align-items-end">
+              <input type="hidden" name="key" value="business_savings">
+              <div class="col-6">
+                <label class="form-label-custom">Amount ($)</label>
+                <input type="number" name="amount" class="form-control-custom" value="0.00" min="0" step="0.01" required>
+              </div>
+              <div class="col-3">
+                <button type="submit" name="action" value="add" class="btn-primary-custom btn-w-full">➕ Add</button>
+              </div>
+              <div class="col-3">
+                <button type="submit" name="action" value="subtract" class="btn-danger-custom btn-w-full">➖ Subtract</button>
+              </div>
+            </form>
           </div>
         </div>
       </div>

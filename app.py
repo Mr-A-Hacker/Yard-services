@@ -597,6 +597,20 @@ def init_db():
             ip_address TEXT NOT NULL,
             seen_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
+
+        CREATE TABLE IF NOT EXISTS finances (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            key TEXT UNIQUE NOT NULL,
+            label TEXT NOT NULL,
+            value REAL NOT NULL DEFAULT 0,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+
+        INSERT OR IGNORE INTO finances (key, label, value) VALUES ('customers_served', 'Customers Served', 0);
+        INSERT OR IGNORE INTO finances (key, label, value) VALUES ('money_earned', 'Money Earned ($)', 0.00);
+        INSERT OR IGNORE INTO finances (key, label, value) VALUES ('abdullah_savings', 'Abdullah Savings ($)', 0.00);
+        INSERT OR IGNORE INTO finances (key, label, value) VALUES ('abdulrahaman_savings', 'Abdulrahaman Savings ($)', 0.00);
+        INSERT OR IGNORE INTO finances (key, label, value) VALUES ('business_savings', 'Business Savings ($)', 0.00);
     """)
     conn.commit()
 
@@ -1671,6 +1685,9 @@ def admin_dashboard():
     """)
     user_ips = [dict(row) for row in cursor.fetchall()]
 
+    cursor.execute("SELECT key, label, value FROM finances ORDER BY id")
+    finances = {row[0]: {"label": row[1], "value": row[2]} for row in cursor.fetchall()}
+
     calendar_requests = [
         {
             "date": row[9],
@@ -1696,6 +1713,7 @@ def admin_dashboard():
         blocked_ips=blocked_ips,
         user_ips=user_ips,
         calendar_requests=calendar_requests,
+        finances=finances,
     )
 
 
@@ -1703,6 +1721,40 @@ def admin_dashboard():
 def admin_logout():
     session.pop("admin_authenticated", None)
     flash("Admin logged out.", "info")
+    return redirect(url_for("admin_dashboard"))
+
+
+# ============================================================
+# ADMIN — Finances
+# ============================================================
+
+@app.route("/admin/update_finance", methods=["POST"])
+@admin_login_required
+def admin_update_finance():
+    key = request.form.get("key", "").strip()
+    action = request.form.get("action", "set")
+    try:
+        amount = float(request.form.get("amount", 0))
+    except ValueError:
+        flash("Invalid amount.", "danger")
+        return redirect(url_for("admin_dashboard"))
+
+    valid_keys = {"customers_served", "money_earned", "abdullah_savings", "abdulrahaman_savings", "business_savings"}
+    if key not in valid_keys:
+        flash("Invalid finance key.", "danger")
+        return redirect(url_for("admin_dashboard"))
+
+    conn = get_db()
+    if action == "add":
+        conn.execute("UPDATE finances SET value = value + ?, updated_at = CURRENT_TIMESTAMP WHERE key = ?", (amount, key))
+    elif action == "subtract":
+        conn.execute("UPDATE finances SET value = value - ?, updated_at = CURRENT_TIMESTAMP WHERE key = ?", (amount, key))
+    else:
+        conn.execute("UPDATE finances SET value = ?, updated_at = CURRENT_TIMESTAMP WHERE key = ?", (amount, key))
+
+    conn.commit()
+    conn.close()
+    flash("Finance updated.", "success")
     return redirect(url_for("admin_dashboard"))
 
 
