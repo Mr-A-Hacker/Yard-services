@@ -1827,18 +1827,8 @@ def admin_test_b2():
         flash("B2 is NOT configured. Set B2_KEY_ID and B2_APPLICATION_KEY in Render environment.", "danger")
         return redirect(url_for("admin_dashboard"))
     try:
-        import json as _json
-        _auth_str = f"{B2_KEY_ID}:{B2_APPLICATION_KEY}"
-        _auth_header = base64.b64encode(_auth_str.encode()).decode()
-        _r = requests.get(f"{B2_ENDPOINT}/b2api/v3/b2_authorize_account", headers={"Authorization": f"Basic {_auth_header}"}, timeout=30)
-        _r.raise_for_status()
-        _d = _r.json()
-        _ai = _d.get("apiInfo", {})
-        flash(f"apiInfo content: {_json.dumps(_ai, indent=2)[:500]}", "info")
         b2_authorize()
         flash("B2 authorization succeeded! ✅", "success")
-        flash(f"B2 apiUrl = {_b2_api_url}", "info")
-        flash(f"B2 downloadUrl = {_b2_download_url}", "info")
     except Exception as exc:
         flash(f"B2 authorization FAILED: {exc}", "danger")
         return redirect(url_for("admin_dashboard"))
