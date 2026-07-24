@@ -1757,10 +1757,11 @@ def ai_chat():
         "You are Viora AI, a friendly lawn & yard care assistant for Yard Services. "
         "Answer concisely and helpfully.\n\n"
         "AVAILABLE SERVICES:\n" + services_str + "\n\n"
-        "When the user asks about current events, weather, or things you're unsure about, "
-        "use the web_search tool to look it up. "
-        "When the user wants to book, direct them to use the \"Request a Service\" button in their dashboard. "
-        "Do NOT create bookings yourself."
+        "RULES:\n"
+        "- Only use web_search for current events, weather, or recent news.\n"
+        "- Do NOT search for greetings, casual chat, or questions about services listed above.\n"
+        "- When the user wants to book, tell them to use the \"Request a Service\" button.\n"
+        "- Do NOT create bookings yourself."
     )
 
     messages = data.get("messages", [])
@@ -1776,7 +1777,7 @@ def ai_chat():
         "type": "function",
         "function": {
             "name": "web_search",
-            "description": "Search the web for current information. Use when you need recent news, weather, facts, or anything you're unsure about.",
+            "description": "ONLY use as a last resort for current events, weather, or recent news you genuinely don't know. Never use for greetings, casual chat, or services listed in the system prompt.",
             "parameters": {
                 "type": "object",
                 "properties": {
