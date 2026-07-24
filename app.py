@@ -1757,36 +1757,34 @@ def ai_chat():
         "You are Viora AI, a friendly lawn & yard care assistant for Yard Services. "
         "Answer concisely and helpfully.\n\n"
         "AVAILABLE SERVICES:\n" + services_str + "\n\n"
-        "RULES:\n"
-        "- Only use web_search for current events, weather, or recent news.\n"
-        "- Do NOT search for greetings, casual chat, or questions about services listed above.\n"
-        "- When the user wants to book, tell them to use the \"Request a Service\" button.\n"
-        "- Do NOT create bookings yourself."
+        "When the user wants to book, tell them to use the \"Request a Service\" button. "
+        "Do NOT create bookings yourself."
     )
 
     messages = data.get("messages", [])
     if not isinstance(messages, list) or len(messages) == 0:
         return {"error": "Missing messages"}, 400
 
+    # Check for explicit /search command
+    last_user_msg = ""
+    for m in reversed(messages):
+        if m.get("role") == "user":
+            last_user_msg = m.get("content", "").strip()
+            break
+
+    if last_user_msg.lower().startswith("/search "):
+        query = last_user_msg[8:].strip()
+        if query:
+            results = _web_search(query)
+            if results:
+                return {"reply": f"🔍 **Web search results for:** {query}\n\n{results}"}
+            return {"reply": f"❌ Couldn't find results for \"{query}\"."}
+        return {"reply": "Usage: /search your query"}
+
     if messages[0].get("role") == "system":
         messages[0]["content"] = system_prompt
     else:
         messages.insert(0, {"role": "system", "content": system_prompt})
-
-    tools = [{
-        "type": "function",
-        "function": {
-            "name": "web_search",
-            "description": "ONLY use as a last resort for current events, weather, or recent news you genuinely don't know. Never use for greetings, casual chat, or services listed in the system prompt.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "query": {"type": "string", "description": "The search query"}
-                },
-                "required": ["query"]
-            }
-        }
-    }]
 
     try:
         resp = requests.post(
@@ -1798,31 +1796,14 @@ def ai_chat():
             json={
                 "model": "meta/llama-3.1-8b-instruct",
                 "messages": messages,
-                "tools": tools,
-                "tool_choice": "auto",
                 "temperature": 0.5,
-                "max_tokens": 400,
+                "max_tokens": 300,
             },
             timeout=30,
         )
         resp.raise_for_status()
         result = resp.json()
-        choice = result["choices"][0]
-        msg = choice["message"]
-
-        if choice.get("finish_reason") == "tool_calls" and msg.get("tool_calls"):
-            tc = msg["tool_calls"][0]["function"]
-            if tc["name"] == "web_search":
-                args = json.loads(tc["arguments"])
-                query = args.get("query", "")
-                if query:
-                    results = _web_search(query)
-                    if results:
-                        return {"reply": f"🔍 **Web search results for:** {query}\n\n{results}"}
-                    return {"reply": f"❌ Couldn't find results for \"{query}\"."}
-                return {"reply": "No search query provided."}
-
-        reply = msg.get("content") or "Got it! How can I help?"
+        reply = result["choices"][0]["message"]["content"] or "Got it! How can I help?"
         return {"reply": reply}
     except Exception as exc:
         print(f"AI chat error: {exc}")
