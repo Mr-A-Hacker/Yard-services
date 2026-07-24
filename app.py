@@ -1932,6 +1932,10 @@ def ai_chat():
         "SERVICE AREA: We serve addresses within 25 miles of 4201 Grindley Park Street, Detroit, MI."
         " If an address is outside this area, let the user know politely."
         "\n\n"
+        "NOTE: All services are managed by the site admin. The services listed above"
+        " are the only ones available — they are controlled through the admin dashboard."
+        " Do not reference any services not in the list below."
+        "\n\n"
         "AVAILABLE SERVICES:\n" + services_str
         )
 
