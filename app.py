@@ -271,7 +271,7 @@ _b2_backup_exists = False
 
 
 def sync_db_to_b2():
-    global _last_b2_sync
+    global _last_b2_sync, _b2_download_ok, _b2_backup_exists
     if not b2_is_configured():
         return
     now = datetime.datetime.utcnow().timestamp()
@@ -279,14 +279,72 @@ def sync_db_to_b2():
         return
     _last_b2_sync = now
     try:
+        # Read local user count and emails before any B2 operations
+        conn = sqlite3.connect(DB_LOCAL_PATH)
+        local_user_count = conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
+        local_users = [dict(r) for r in conn.execute(
+            "SELECT email, password_hash, phone, popup_seen FROM users"
+        ).fetchall()]
+        conn.close()
+
+        # ── Boot download failed reconciliation ──
+        # If we never got the B2 backup at boot, a local user may have just been
+        # added.  Don't overwrite a richer B2 backup with a sparse local DB.
+        # Instead, download the backup, restore it, then re-insert any local-only
+        # users.
+        if not _b2_download_ok and local_user_count > 0:
+            temp_bak = DB_LOCAL_PATH + ".b2bak"
+            try:
+                b2_download_file(DB_LOCAL_PATH, temp_bak)
+                bak_conn = sqlite3.connect(temp_bak)
+                bak_user_count = bak_conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
+                bak_emails = set(
+                    r[0] for r in bak_conn.execute("SELECT email FROM users").fetchall()
+                )
+                bak_conn.close()
+
+                if bak_user_count > local_user_count or bak_user_count > 0:
+                    # B2 has more or equal users — restore it, then merge local users in
+                    local_new = [u for u in local_users if u["email"] not in bak_emails]
+                    os.remove(DB_LOCAL_PATH)
+                    os.rename(temp_bak, DB_LOCAL_PATH)
+
+                    if local_new:
+                        merge_conn = sqlite3.connect(DB_LOCAL_PATH)
+                        for u in local_new:
+                            merge_conn.execute(
+                                "INSERT OR IGNORE INTO users (email, password_hash, phone, popup_seen) VALUES (?, ?, ?, ?)",
+                                (u["email"], u["password_hash"], u["phone"], u["popup_seen"]),
+                            )
+                        merge_conn.commit()
+                        merge_conn.close()
+                        print(f"Merged {len(local_new)} local user(s) into B2 backup ({bak_user_count} existing).")
+                    else:
+                        print(f"No new local users to merge — restored B2 backup ({bak_user_count} users).")
+
+                    _b2_download_ok = True
+                    _b2_backup_exists = True
+                else:
+                    os.remove(temp_bak)
+            except Exception as bak_exc:
+                print(f"B2 backup reconciliation failed: {bak_exc}")
+                if os.path.exists(DB_LOCAL_PATH + ".b2bak"):
+                    try:
+                        os.remove(DB_LOCAL_PATH + ".b2bak")
+                    except Exception:
+                        pass
+
+        # ── Final safety check ──
         conn = sqlite3.connect(DB_LOCAL_PATH)
         user_count = conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
-        conn.commit()
         conn.close()
         if user_count == 0 and _b2_backup_exists:
             print("sync_db_to_b2 skipped: local DB has no users but B2 backup exists — not overwriting.")
             return
+
         b2_upload_file(DB_LOCAL_PATH, DB_LOCAL_PATH, "application/x-sqlite3")
+        _b2_download_ok = True
+        _b2_backup_exists = True
         print(f"DB synced to B2: {DB_LOCAL_PATH}")
     except Exception as exc:
         print(f"Failed to sync DB to B2: {exc}")
@@ -325,8 +383,8 @@ def _final_b2_sync():
             user_count = conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
             conn.commit()
             conn.close()
-            if user_count == 0 and _b2_backup_exists:
-                print("Final DB sync skipped: local DB has no users but B2 backup exists — not overwriting.")
+            if user_count == 0 and (not _b2_download_ok or _b2_backup_exists):
+                print("Final DB sync skipped: local DB has no users but B2 may have a backup — not overwriting.")
                 return
             b2_upload_file(DB_LOCAL_PATH, DB_LOCAL_PATH, "application/x-sqlite3")
             print(f"Final DB sync to B2 complete.")
