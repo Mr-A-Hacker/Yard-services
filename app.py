@@ -114,6 +114,11 @@ GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI", "https://yard-services.onrender.com/login/google/callback")
 
+# Service area — 4201 Grindley Park St, Detroit, MI
+SERVICE_AREA_LAT = float(os.getenv("SERVICE_AREA_LAT", "42.3828"))
+SERVICE_AREA_LNG = float(os.getenv("SERVICE_AREA_LNG", "-83.1165"))
+SERVICE_AREA_RADIUS_MILES = float(os.getenv("SERVICE_AREA_RADIUS_MILES", "25"))
+
 bcrypt = Bcrypt(app)
 mail = Mail(app)
 
@@ -451,6 +456,47 @@ def is_time_blocked(date_str, time_str):
         return cursor.fetchone() is not None
     except Exception:
         return False
+
+
+def _haversine_miles(lat1, lng1, lat2, lng2):
+    """Calculate distance in miles between two lat/lng coordinates."""
+    import math
+    R = 3958.8  # Earth radius in miles
+    phi1, phi2 = math.radians(lat1), math.radians(lat2)
+    dphi = math.radians(lat2 - lat1)
+    dlambda = math.radians(lng2 - lng1)
+    a = math.sin(dphi / 2) ** 2 + \
+        math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2
+    return 2 * R * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+
+def _geocode_address(address):
+    """Geocode an address using OpenStreetMap Nominatim (free, no API key)."""
+    if not address:
+        return None
+    try:
+        resp = requests.get(
+            "https://nominatim.openstreetmap.org/search",
+            params={"q": address, "format": "json", "limit": 1},
+            headers={"User-Agent": "YardServicesApp/1.0"},
+            timeout=10,
+        )
+        data = resp.json()
+        if data:
+            return float(data[0]["lat"]), float(data[0]["lon"])
+    except Exception:
+        pass
+    return None
+
+
+def is_address_in_service_area(address):
+    """Check if an address is within the service area radius."""
+    coords = _geocode_address(address)
+    if not coords:
+        return None  # Could not determine — allow it
+    lat, lng = coords
+    dist = _haversine_miles(lat, lng, SERVICE_AREA_LAT, SERVICE_AREA_LNG)
+    return dist <= SERVICE_AREA_RADIUS_MILES
 
 
 def log_user_ip(user_id, ip):
@@ -1812,7 +1858,7 @@ def ai_chat():
         for s in services_list
     )
 
-    system_prompt = (
+system_prompt = (
         "You are Viora AI, a professional lawn & yard care assistant for Yard Services.\n\n"
         "WRITING RULES — Every response must follow these rules:\n\n"
         "1. OPENING: Start with one emoji + a bold heading line.\n"
@@ -1825,7 +1871,7 @@ def ai_chat():
         "6. WARNINGS/ERRORS: Use red ❌ emoji.\n\n"
         "7. FORMAT EXAMPLE for service listings (always include the [ID:X] tag):\n"
         "═══════════════════════\n"
-        "🌿 **Service Name** [ID:1] — **$XX.XX**\n"
+        "🌿 **Service Name** [ID:X] — **$XX.XX**\n"
         "• Feature one — short description\n"
         "• Feature two — short description\n"
         "═══════════════════════\n\n"
@@ -1838,9 +1884,12 @@ def ai_chat():
         "── Total: **$XX.XX**\n"
         "═══════════════════════\n\n"
         "9. RESPONSE STYLE: Confident, friendly, expert tone. Be helpful and thorough.\n\n"
-        "10. BOOKING FLOW — When user wants to book:\n"
+        "10. SERVICE AREA: We serve addresses within 25 miles of 4201 Grindley Park Street, Detroit, MI "
+        "(coordinates approx 42.3828, -83.1165). If a user's address is outside this area, "
+        "tell them politely that we cannot service their area.\n\n"
+        "11. BOOKING FLOW — When user wants to book:\n"
         "   a. Confirm service(s) — always include the [ID:X] in the confirm line\n"
-        "   b. Ask for missing details (address, phone, email, date, time) — show blanks only for what's missing\n"
+        "   b. Ask for missing details (address, phone, email, date, time)\n"
         "   c. If user provides details in numbered format like '1. address 2. phone 3. email 4. date time', parse them correctly\n"
         "   d. Ask for notes (special instructions)\n"
         "   e. Show booking summary with the format above, filling in ALL collected info\n"
@@ -1944,6 +1993,17 @@ def ai_book():
 
     if is_time_blocked(str(date), time_value):
         return {"error": "The selected time is blocked."}, 400
+
+    in_area = is_address_in_service_area(address)
+    if in_area is False:
+        return {
+            "error": (
+                f"Sorry, {address} is outside our service area. "
+                f"We serve addresses within {int(SERVICE_AREA_RADIUS_MILES)} miles of "
+                "4201 Grindley Park Street, Detroit, MI. "
+                "Please check the address or contact us to inquire about extended service."
+            )
+        }, 400
 
     service_name = ", ".join(s["name"] for s in selected_services)
     base_price = sum(float(s["price"]) for s in selected_services)
