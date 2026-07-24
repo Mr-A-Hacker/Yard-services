@@ -445,51 +445,51 @@ def init_db():
         );
 
         INSERT INTO services (name, price, description, image_url)
-        SELECT 'Lawn Mowing', 30.00, 'Friendly teen crew trims, mows, and edges your lawn with care. Great for weekly maintenance and tidy curb appeal.', 'https://source.unsplash.com/featured/?lawn+mowing'
+        SELECT 'Lawn Mowing', 30.00, 'Full lawn care including precision mowing, edging along walkways and flower beds, trimming around trees and fences, and blowing clippings off driveways and patios. We leave your yard looking crisp, clean, and professionally maintained. Responsible neighbor teens will be doing the work.', 'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=600&q=80'
         WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Lawn Mowing');
 
         INSERT INTO services (name, price, description, image_url)
-        SELECT 'Snow Shoveling', 30.00, 'Reliable teen teams will clear snow from driveways, walkways, and steps so your family can move safely after any storm.', 'https://source.unsplash.com/featured/?snow+shoveling'
+        SELECT 'Snow Shoveling', 30.00, 'Complete snow removal from driveways, front and back walkways, porch steps, and entry paths. We also spread salt or ice melt on slippery surfaces to keep your family safe. Service includes same-day response after any storm. Responsible neighbor teens will be doing the work.', 'https://images.unsplash.com/photo-1585670149963-60c0ce1b1a42?w=600&q=80'
         WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Snow Shoveling');
 
         INSERT INTO services (name, price, description, image_url)
-        SELECT 'Leaf Raking', 35.00, 'Seasonal leaf and debris cleanup by local teens who will pile, bag, and remove leaves for a neat yard.', 'https://source.unsplash.com/featured/?leaf+raking'
+        SELECT 'Leaf Raking', 35.00, 'Thorough leaf removal from your entire yard including hard-to-reach corners, under bushes, and along fence lines. We rake, pile, bag, and haul away all leaves and debris so your lawn can breathe and stay healthy through the season. Responsible neighbor teens will be doing the work.', 'https://images.unsplash.com/photo-1598902178163-cc89e5cbb801?w=600&q=80'
         WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Leaf Raking');
 
         INSERT INTO services (name, price, description, image_url)
-        SELECT 'Hedge Trimming', 40.00, 'Attention to detail hedge trimming and shrub shaping performed by a careful teen landscaping crew.', 'https://source.unsplash.com/featured/?hedge+trimming'
+        SELECT 'Hedge Trimming', 40.00, 'Precision trimming and shaping of hedges, bushes, and shrubs to keep them neat, healthy, and well-defined. We prune overgrown branches, shape formal hedges, and clean up clippings so your landscape looks polished and well-cared-for. Responsible neighbor teens will be doing the work.', 'https://images.unsplash.com/photo-1589923188900-85dae523342b?w=600&q=80'
         WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Hedge Trimming');
 
         INSERT INTO services (name, price, description, image_url)
-        SELECT 'Yard Cleanup', 45.00, 'Quick yard cleaning including debris pickup, trash removal, and light hauling by local teens.', 'https://source.unsplash.com/featured/?yard+cleanup'
+        SELECT 'Yard Cleanup', 45.00, 'Comprehensive yard cleaning covering debris pickup, fallen branch removal, trash and litter collection, and light hauling of unwanted items. We sweep patios, tidy up garden borders, and leave your outdoor space spotless and ready to enjoy. Responsible neighbor teens will be doing the work.', 'https://images.unsplash.com/photo-1621255111168-c8d19a6e8d88?w=600&q=80'
         WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Yard Cleanup');
 
         INSERT INTO services (name, price, description, image_url)
-        SELECT 'Garden Weeding', 35.00, 'Weeding and garden bed maintenance by friendly students who care about healthy plants.', 'https://source.unsplash.com/featured/?garden+weeding'
+        SELECT 'Garden Weeding', 35.00, 'Careful hand weeding of garden beds, flower borders, and vegetable patches. We remove weeds by the root to prevent regrowth, loosen compacted soil, and tidy up the area so your plants have room to thrive. Responsible neighbor teens will be doing the work.', 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=600&q=80'
         WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Garden Weeding');
 
         INSERT INTO services (name, price, description, image_url)
-        SELECT 'Driveway Sweeping', 25.00, 'Professional driveway and sidewalk sweeping to keep your property looking its best.', 'https://source.unsplash.com/featured/?driveway+sweeping'
+        SELECT 'Driveway Sweeping', 25.00, 'Complete driveway and sidewalk sweeping to remove dirt, leaves, gravel, and debris. We edge along the driveway for a clean line and blow everything off hard surfaces so your home looks well-maintained from the street. Responsible neighbor teens will be doing the work.', 'https://images.unsplash.com/photo-1612865542449-7c2c3c7e4843?w=600&q=80'
         WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Driveway Sweeping');
 
         INSERT INTO services (name, price, description, image_url)
-        SELECT 'Mulching', 50.00, 'Spring and fall mulching service to refresh garden beds and retain moisture, handled by our hardworking teen crew.', 'https://source.unsplash.com/featured/?mulching'
+        SELECT 'Mulching', 50.00, 'Fresh mulch installation in garden beds, around trees, and along pathways to retain moisture, suppress weeds, and give your yard a clean finished look. We remove old mulch, prep the area, and spread new mulch evenly for a professional appearance. Responsible neighbor teens will be doing the work.', 'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=600&q=80'
         WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Mulching');
 
         INSERT INTO services (name, price, description, image_url)
-        SELECT 'Gutter Cleaning', 45.00, 'Safe and thorough gutter clearing to protect your home, completed by reliable local teens.', 'https://source.unsplash.com/featured/?gutter+cleaning'
+        SELECT 'Gutter Cleaning', 45.00, 'Safe and thorough cleaning of your home gutters and downspouts. We remove leaves, twigs, dirt, and blockages to prevent water damage and clogs. We also check that downspouts are clear and flowing properly before we finish. Responsible neighbor teens will be doing the work.', 'https://images.unsplash.com/photo-1603105037880-880cd4edfb0d?w=600&q=80'
         WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Gutter Cleaning');
 
         INSERT INTO services (name, price, description, image_url)
-        SELECT 'Patio Power Washing', 55.00, 'Brighten patios, decks, and walkways with power washing from a careful teen team.', 'https://source.unsplash.com/featured/?power+washing'
+        SELECT 'Patio Power Washing', 55.00, 'High-pressure washing of patios, decks, walkways, driveways, and siding to remove built-up dirt, moss, mildew, and stains. We restore the original look of your outdoor surfaces and leave them fresh and clean. Responsible neighbor teens will be doing the work.', 'https://images.unsplash.com/photo-1584483766112-9b33e1f177ce?w=600&q=80'
         WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Patio Power Washing');
 
         INSERT INTO services (name, price, description, image_url)
-        SELECT 'Garden Planting', 40.00, 'Planting flowers and vegetables by thoughtful students who take pride in a beautiful yard.', 'https://source.unsplash.com/featured/?garden+planting'
+        SELECT 'Garden Planting', 40.00, 'Professional planting of flowers, shrubs, vegetables, and decorative plants in your garden beds or containers. We prepare the soil, dig proper holes, plant with care, and water everything in. Perfect for refreshing your garden for spring or fall. Responsible neighbor teens will be doing the work.', 'https://images.unsplash.com/photo-1558428915-31fb7d7b61a5?w=600&q=80'
         WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Garden Planting');
 
         INSERT INTO services (name, price, description, image_url)
-        SELECT 'Fence Staining', 65.00, 'Fence and wood trim staining service to refresh outdoor spaces and protect wood surfaces.', 'https://source.unsplash.com/featured/?fence+staining'
+        SELECT 'Fence Staining', 65.00, 'Complete fence cleaning and staining to protect wood surfaces from weather, rot, and fading. We lightly power wash, let dry, then apply an even coat of high-quality stain or sealant. Your fence will look refreshed and be protected for seasons to come. Responsible neighbor teens will be doing the work.', 'https://images.unsplash.com/photo-1602872030214-96526f26a23f?w=600&q=80'
         WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Fence Staining');
 
         CREATE TABLE IF NOT EXISTS requests (
