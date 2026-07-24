@@ -897,9 +897,15 @@
     </div>
 
     <div class="table-wrap fade-in">
+      <form id="bulkDeleteForm" method="POST" action="{{ url_for('admin_delete_services') }}" onsubmit="return confirm('Delete selected services?');">
+      <div style="margin-bottom:10px;display:flex;gap:10px;align-items:center;">
+        <button type="submit" class="btn-sm-custom btn-sm-delete" id="bulkDeleteBtn" style="display:none;">🗑️ Delete Selected</button>
+        <span id="selectedCount" style="font-size:0.85rem;color:var(--muted);font-weight:700;"></span>
+      </div>
       <table class="yard-table">
         <thead>
           <tr>
+            <th><input type="checkbox" id="selectAll" onchange="toggleSelectAll()"></th>
             <th>#</th>
             <th>Name</th>
             <th>Price</th>
@@ -911,6 +917,7 @@
         <tbody>
           {% for s in services %}
           <tr>
+            <td><input type="checkbox" name="service_ids" value="{{ s.id }}" onchange="updateBulkDeleteBtn()"></td>
             <td style="color:var(--muted);">{{ s.id }}</td>
             <td><strong>{{ s.name }}</strong></td>
             <td><span class="badge-gold">${{ "%.2f"|format(s.price|float) }}</span></td>
@@ -926,16 +933,13 @@
               <div class="action-group">
                 <a href="{{ url_for('admin_edit_service', service_id=s.id) }}"
                    class="btn-sm-custom btn-sm-edit">✏️ Edit</a>
-                <form method="POST" action="{{ url_for('admin_delete_service', service_id=s.id) }}"
-                      onsubmit="return confirm('Delete this service?');" style="display:inline;">
-                  <button type="submit" class="btn-sm-custom btn-sm-delete">🗑️ Delete</button>
-                </form>
+                <a href="#" onclick="if(confirm('Delete this service?')){var f=document.createElement('form');f.method='POST';f.action='{{ url_for('admin_delete_service', service_id=s.id) }}';document.body.appendChild(f);f.submit();}" class="btn-sm-custom btn-sm-delete">🗑️ Delete</a>
               </div>
             </td>
           </tr>
           {% else %}
           <tr>
-            <td colspan="6">
+            <td colspan="7">
               <div class="empty-state">
                 <div class="empty-icon">🌱</div>
                 No services added yet.
@@ -945,7 +949,27 @@
           {% endfor %}
         </tbody>
       </table>
+      </form>
     </div>
+    <script>
+    function toggleSelectAll() {
+      const checked = document.getElementById('selectAll').checked;
+      document.querySelectorAll('input[name="service_ids"]').forEach(cb => cb.checked = checked);
+      updateBulkDeleteBtn();
+    }
+    function updateBulkDeleteBtn() {
+      const checked = document.querySelectorAll('input[name="service_ids"]:checked');
+      const btn = document.getElementById('bulkDeleteBtn');
+      const count = document.getElementById('selectedCount');
+      if (checked.length) {
+        btn.style.display = 'inline-block';
+        count.textContent = checked.length + ' selected';
+      } else {
+        btn.style.display = 'none';
+        count.textContent = '';
+      }
+    }
+    </script>
 
     <!-- Discount Promotions -->
     <div class="section-head fade-in">

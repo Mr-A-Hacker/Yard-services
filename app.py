@@ -2129,6 +2129,23 @@ def admin_delete_service(service_id):
     return redirect(url_for("admin_dashboard"))
 
 
+@app.route("/admin/delete_services", methods=["POST"])
+@admin_login_required
+def admin_delete_services():
+    ids = request.form.getlist("service_ids")
+    if not ids:
+        flash("No services selected.", "warning")
+        return redirect(url_for("admin_dashboard"))
+    conn = get_db()
+    cursor = conn.cursor()
+    placeholders = ",".join("?" for _ in ids)
+    cursor.execute(f"DELETE FROM services WHERE id IN ({placeholders})", ids)
+    conn.commit()
+    mark_db_dirty()
+    flash(f"Deleted {len(ids)} service(s).", "info")
+    return redirect(url_for("admin_dashboard"))
+
+
 @app.route("/admin/search_services")
 @admin_login_required
 def admin_search_services():
