@@ -16,42 +16,62 @@
     .top-nav .brand .icon-badge{background:linear-gradient(135deg,#7c3aed,#a855f7);color:white;width:32px;height:32px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 0 20px rgba(124,58,237,0.35);}
     .nav-back{color:rgba(255,255,255,0.6);font-size:0.82rem;font-weight:700;text-decoration:none;padding:6px 14px;border-radius:999px;border:1px solid rgba(255,255,255,0.12);transition:all 0.2s;}
     .nav-back:hover{background:rgba(255,255,255,0.08);color:white;}
-    .chat-container{max-width:820px;margin:0 auto;width:100%;flex:1;display:flex;flex-direction:column;padding:20px 16px 0;gap:16px;min-height:0;}
-    .chat-header{text-align:center;padding:10px 0 4px;flex-shrink:0;}
-    .chat-header h1{font-family:'Bitter',serif;font-size:1.6rem;font-weight:900;background:linear-gradient(135deg,#c084fc,#a855f7,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-    .chat-header p{color:rgba(255,255,255,0.4);font-size:0.82rem;font-weight:600;margin-top:2px;}
+    .layout{display:flex;flex:1;min-height:0;padding:0 16px;gap:12px;margin-top:16px;}
+    .sidebar{width:260px;background:rgba(18,18,40,0.85);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.06);border-radius:16px;display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;transition:width 0.3s,margin 0.3s,opacity 0.3s;}
+    .sidebar.collapsed{width:0;margin:0;opacity:0;overflow:hidden;border:none;padding:0;}
+    .sidebar-header{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+    .sidebar-header h3{font-family:'Bitter',serif;font-size:0.95rem;color:rgba(255,255,255,0.7);font-weight:900;}
+    .sidebar-header button{background:rgba(124,58,237,0.15);border:1px solid rgba(124,58,237,0.2);color:#a78bfa;border-radius:8px;padding:4px 10px;font-size:0.75rem;font-weight:700;cursor:pointer;transition:all 0.2s;}
+    .sidebar-header button:hover{background:rgba(124,58,237,0.25);color:white;}
+    .sidebar-list{flex:1;overflow-y:auto;padding:8px;min-height:0;}
+    .sidebar-list::-webkit-scrollbar{width:4px;}
+    .sidebar-list::-webkit-scrollbar-track{background:transparent;}
+    .sidebar-list::-webkit-scrollbar-thumb{background:rgba(124,58,237,0.2);border-radius:10px;}
+    .chat-item{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);border-radius:10px;padding:10px 12px;margin-bottom:6px;cursor:pointer;transition:all 0.2s;}
+    .chat-item:hover{background:rgba(124,58,237,0.1);border-color:rgba(124,58,237,0.2);}
+    .chat-item.active{background:rgba(124,58,237,0.15);border-color:rgba(124,58,237,0.3);}
+    .chat-item-title{color:#e8e0f0;font-size:0.82rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .chat-item-date{color:rgba(255,255,255,0.25);font-size:0.7rem;font-weight:600;margin-top:2px;}
+    .chat-item-del{float:right;background:none;border:none;color:rgba(255,255,255,0.15);cursor:pointer;font-size:0.8rem;padding:0 2px;}
+    .chat-item-del:hover{color:#ef4444;}
+    .sidebar-empty{color:rgba(255,255,255,0.15);font-size:0.82rem;font-weight:600;text-align:center;padding:30px 16px;}
+    .chat-container{flex:1;display:flex;flex-direction:column;min-height:0;}
     .chat-card{background:rgba(18,18,40,0.85);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.06);border-radius:20px;flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;box-shadow:0 20px 60px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.04);}
-    .chat-msgs{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:12px;scroll-behavior:smooth;min-height:0;}
+    .chat-top{display:flex;align-items:center;gap:10px;padding:12px 18px 0;}
+    .chat-top button{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.4);border-radius:8px;padding:5px 10px;font-size:0.85rem;cursor:pointer;transition:all 0.2s;flex-shrink:0;}
+    .chat-top button:hover{background:rgba(124,58,237,0.15);border-color:rgba(124,58,237,0.2);color:#a78bfa;}
+    .chat-top h2{font-family:'Bitter',serif;font-size:1rem;font-weight:900;background:linear-gradient(135deg,#c084fc,#a855f7,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;flex:1;text-align:center;}
+    .chat-msgs{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth;min-height:0;}
     .chat-msgs::-webkit-scrollbar{width:6px;}
     .chat-msgs::-webkit-scrollbar-track{background:transparent;}
     .chat-msgs::-webkit-scrollbar-thumb{background:rgba(124,58,237,0.3);border-radius:10px;}
     .msg-row{display:flex;gap:10px;align-items:flex-end;max-width:92%;animation:msgIn 0.3s cubic-bezier(0.34,1.56,0.64,1) both;}
     .msg-row.user{flex-direction:row-reverse;align-self:flex-end;}
     .msg-row.bot{align-self:flex-start;}
-    .msg-avatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+    .msg-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
     .msg-avatar.user{background:linear-gradient(135deg,#2d8a3e,#4caf50);box-shadow:0 0 16px rgba(76,175,80,0.2);}
     .msg-avatar.bot{background:linear-gradient(135deg,#7c3aed,#a855f7);box-shadow:0 0 16px rgba(124,58,237,0.3);}
-    .msg-bubble{padding:12px 16px;border-radius:16px;font-weight:600;font-size:0.9rem;line-height:1.55;box-shadow:0 4px 12px rgba(0,0,0,0.15);}
-    .msg-bubble.user{background:linear-gradient(135deg,#2d8a3e,#4caf50);color:white;border-radius:16px 4px 16px 16px;white-space:pre-wrap;}
-    .msg-bubble.bot{background:rgba(255,255,255,0.06);color:#e8e0f0;border-radius:4px 16px 16px 16px;border:1px solid rgba(255,255,255,0.05);white-space:pre-wrap;}
+    .msg-bubble{padding:10px 14px;border-radius:14px;font-weight:600;font-size:0.88rem;line-height:1.5;box-shadow:0 4px 12px rgba(0,0,0,0.15);}
+    .msg-bubble.user{background:linear-gradient(135deg,#2d8a3e,#4caf50);color:white;border-radius:14px 4px 14px 14px;white-space:pre-wrap;}
+    .msg-bubble.bot{background:rgba(255,255,255,0.06);color:#e8e0f0;border-radius:4px 14px 14px 14px;border:1px solid rgba(255,255,255,0.05);white-space:pre-wrap;}
     .msg-bubble.bot strong{color:#c084fc;}
-    .typing-dots span{display:inline-block;width:8px;height:8px;border-radius:50%;background:#7c3aed;margin:0 2px;animation:dotBounce 1.4s infinite ease-in-out both;}
+    .typing-dots span{display:inline-block;width:7px;height:7px;border-radius:50%;background:#7c3aed;margin:0 2px;animation:dotBounce 1.4s infinite ease-in-out both;}
     .typing-dots span:nth-child(1){animation-delay:-0.32s;}
     .typing-dots span:nth-child(2){animation-delay:-0.16s;}
     .typing-dots span:nth-child(3){animation-delay:0s;}
     @keyframes dotBounce{0%,80%,100%{transform:scale(0.6);opacity:0.4;}40%{transform:scale(1);opacity:1;}}
     @keyframes msgIn{from{opacity:0;transform:translateY(12px) scale(0.96);}to{opacity:1;transform:translateY(0) scale(1);}}
-    .chat-input-wrap{display:flex;gap:8px;padding:14px 18px;border-top:1px solid rgba(255,255,255,0.06);background:rgba(10,10,30,0.5);}
-    .chat-input-wrap input{flex:1;padding:12px 18px;border:1.5px solid rgba(255,255,255,0.08);border-radius:30px;font-weight:600;font-size:0.9rem;outline:none;background:rgba(255,255,255,0.05);color:#e8e0f0;transition:all 0.2s;}
+    .chat-input-wrap{display:flex;gap:8px;padding:12px 16px;border-top:1px solid rgba(255,255,255,0.06);background:rgba(10,10,30,0.5);}
+    .chat-input-wrap input{flex:1;padding:11px 16px;border:1.5px solid rgba(255,255,255,0.08);border-radius:30px;font-weight:600;font-size:0.88rem;outline:none;background:rgba(255,255,255,0.05);color:#e8e0f0;transition:all 0.2s;}
     .chat-input-wrap input::placeholder{color:rgba(255,255,255,0.2);}
     .chat-input-wrap input:focus{border-color:#7c3aed;box-shadow:0 0 0 3px rgba(124,58,237,0.12);}
-    .chat-input-wrap button{background:linear-gradient(135deg,#7c3aed,#a855f7);color:white;border:none;border-radius:30px;padding:12px 22px;font-weight:800;font-size:0.85rem;cursor:pointer;box-shadow:0 4px 20px rgba(124,58,237,0.35);transition:all 0.2s;}
+    .chat-input-wrap button{background:linear-gradient(135deg,#7c3aed,#a855f7);color:white;border:none;border-radius:30px;padding:11px 20px;font-weight:800;font-size:0.82rem;cursor:pointer;box-shadow:0 4px 20px rgba(124,58,237,0.35);transition:all 0.2s;}
     .chat-input-wrap button:hover{transform:translateY(-2px) scale(1.02);box-shadow:0 8px 30px rgba(124,58,237,0.45);}
     .chat-input-wrap button:active{transform:scale(0.97);}
-    .quick-actions{display:flex;gap:8px;flex-wrap:wrap;padding:0 0 6px;margin-top:-4px;}
-    .quick-actions button{background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.15);color:#a78bfa;border-radius:999px;padding:6px 16px;font-size:0.78rem;font-weight:700;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
+    .quick-actions{display:flex;gap:6px;flex-wrap:wrap;padding:0 16px 6px;margin-top:2px;}
+    .quick-actions button{background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.15);color:#a78bfa;border-radius:999px;padding:5px 14px;font-size:0.75rem;font-weight:700;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
     .quick-actions button:hover{background:rgba(124,58,237,0.2);border-color:#7c3aed;color:white;transform:translateY(-1px);}
-    footer{background:rgba(10,10,30,0.8);backdrop-filter:blur(12px);color:rgba(255,255,255,0.2);text-align:center;padding:14px;font-size:0.75rem;font-weight:700;border-top:1px solid rgba(255,255,255,0.04);}
+    footer{background:rgba(10,10,30,0.8);backdrop-filter:blur(12px);color:rgba(255,255,255,0.2);text-align:center;padding:12px;font-size:0.72rem;font-weight:700;border-top:1px solid rgba(255,255,255,0.04);}
   </style>
 </head>
 <body>
@@ -63,34 +83,41 @@
     <a href="{{ url_for('dashboard') }}" class="nav-back">⬅ Dashboard</a>
   </nav>
 
-  <div class="chat-container">
-    <div class="chat-header">
-      <h1>🤖 Viora AI</h1>
-      <p>Your lawn &amp; yard care expert</p>
+  <div class="layout">
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <h3>💬 Chats</h3>
+        <button onclick="saveAndNewChat()">➕ New</button>
+      </div>
+      <div class="sidebar-list" id="chatList"></div>
     </div>
 
-    <div class="chat-card">
-      <div class="chat-msgs" id="vioraMessages">
-        <div class="msg-row bot">
-          <div class="msg-avatar bot">🌿</div>
-          <div class="msg-bubble bot">Hi! I'm Viora 🌿<br>Ask me about services, pricing, or book a yard service right here!</div>
+    <div class="chat-container">
+      <div class="chat-card">
+        <div class="chat-top">
+          <button onclick="toggleSidebar()" id="sidebarToggle" title="Toggle history">☰</button>
+          <h2>🤖 Viora AI</h2>
+          <div style="width:32px;"></div>
         </div>
-      </div>
-
-      <div style="padding:0 18px 4px;">
-        <div class="quick-actions">
-          <button onclick="quickAction('Show me your services')">📋 Services</button>
-          <button onclick="quickAction('Book lawn mowing')">🧹 Book Mowing</button>
-          <button onclick="quickAction('What\'s your price list?')">💰 Pricing</button>
-          <button onclick="quickAction('Help me choose a service')">🤔 Help</button>
-          <button onclick="quickAction('/search latest lawn care tips')" title="Search the web">🌐 Search</button>
-          <button onclick="clearHistory()" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.06);color:rgba(255,255,255,0.25);">➕ New Chat</button>
+        <div class="chat-msgs" id="vioraMessages">
+          <div class="msg-row bot">
+            <div class="msg-avatar bot">🌿</div>
+            <div class="msg-bubble bot">Hi! I'm Viora 🌿<br>Ask me about services, pricing, or yard care!</div>
+          </div>
         </div>
-      </div>
-
-      <div class="chat-input-wrap">
-        <input type="text" id="vioraInput" placeholder="Type a message...">
-        <button onclick="sendViora()">Send</button>
+        <div style="padding:0 16px 4px;">
+          <div class="quick-actions">
+            <button onclick="quickAction('Show me your services')">📋 Services</button>
+            <button onclick="quickAction('Book lawn mowing')">🧹 Book Mowing</button>
+            <button onclick="quickAction('What\'s your price list?')">💰 Pricing</button>
+            <button onclick="quickAction('Help me choose a service')">🤔 Help</button>
+            <button onclick="quickAction('/search latest lawn care tips')">🌐 Search</button>
+          </div>
+        </div>
+        <div class="chat-input-wrap">
+          <input type="text" id="vioraInput" placeholder="Type a message...">
+          <button onclick="sendViora()">Send</button>
+        </div>
       </div>
     </div>
   </div>
@@ -98,45 +125,117 @@
   <footer>© 2025 Yard Services. All rights reserved. 🌿</footer>
   <script>
     const STORAGE_KEY = 'viora_history';
+    const LIST_KEY = 'viora_chat_list';
+    const ACTIVE_KEY = 'viora_active_id';
     const vioraMsgs = document.getElementById('vioraMessages');
     const vioraInput = document.getElementById('vioraInput');
+    const chatList = document.getElementById('chatList');
 
-    function loadConversation() {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed) && parsed.length) return parsed;
-        } catch(e) {}
-      }
-      return [{role:'system',content:'You are Viora AI, a friendly lawn & yard care assistant for Yard Services. Answer concisely.'}];
+    let activeChatId = localStorage.getItem(ACTIVE_KEY) || 'current';
+    let conversation = [];
+
+    function loadChatList() {
+      try { return JSON.parse(localStorage.getItem(LIST_KEY)) || []; } catch(e) { return []; }
     }
 
-    function saveConversation() {
+    function saveChatList(list) {
+      localStorage.setItem(LIST_KEY, JSON.stringify(list));
+    }
+
+    function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+    function getTitle(msgs) {
+      for (const m of msgs) if (m.role === 'user') return m.content.slice(0, 50) + (m.content.length > 50 ? '…' : '');
+      return 'New Chat';
+    }
+
+    function loadConversation(id) {
+      const list = loadChatList();
+      if (id === 'current') {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) { try { return JSON.parse(saved); } catch(e) {} }
+        return [{role:'system',content:'You are Viora AI, a friendly lawn & yard care assistant for Yard Services. Answer concisely.'}];
+      }
+      const found = list.find(c => c.id === id);
+      if (found) return found.messages;
+      return null;
+    }
+
+    function saveCurrentConversation() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(conversation));
     }
 
     function restoreMessages() {
+      vioraMsgs.innerHTML = '';
       for (const m of conversation) {
         if (m.role === 'user') addMsg(m.content, 'user');
         else if (m.role === 'assistant') addMsg(m.content, 'bot');
       }
+      if (conversation.length <= 1) {
+        addMsg('Hi! I\'m Viora 🌿 Ask me about services, pricing, or yard care!', 'bot');
+      }
     }
 
-    let conversation = loadConversation();
-    if (conversation.length > 1) {
-      vioraMsgs.innerHTML = '';
+    function renderSidebar() {
+      const list = loadChatList();
+      chatList.innerHTML = '';
+      if (list.length === 0) {
+        chatList.innerHTML = '<div class="sidebar-empty">No past chats</div>';
+        return;
+      }
+      for (const c of list) {
+        const div = document.createElement('div');
+        div.className = 'chat-item' + (c.id === activeChatId ? ' active' : '');
+        div.innerHTML = '<div class="chat-item-title">' + (c.title || 'Chat') + '</div><div class="chat-item-date">' + c.date + '</div>';
+        div.onclick = () => switchChat(c.id);
+        chatList.appendChild(div);
+      }
+    }
+
+    function switchChat(id) {
+      saveCurrentConversation();
+      const list = loadChatList();
+      const chat = list.find(c => c.id === id);
+      if (!chat) return;
+      activeChatId = id;
+      localStorage.setItem(ACTIVE_KEY, id);
+      conversation = JSON.parse(JSON.stringify(chat.messages));
       restoreMessages();
+      renderSidebar();
     }
 
-    function clearHistory() {
+    function saveAndNewChat() {
+      // Save current to list if it has messages
+      if (conversation.length > 1) {
+        const list = loadChatList();
+        list.unshift({
+          id: genId(),
+          title: getTitle(conversation),
+          date: new Date().toLocaleDateString(),
+          messages: JSON.parse(JSON.stringify(conversation)),
+        });
+        saveChatList(list);
+      }
+      // Start fresh
+      activeChatId = 'current';
+      localStorage.setItem(ACTIVE_KEY, 'current');
+      conversation = [{role:'system',content:'You are Viora AI, a friendly lawn & yard care assistant for Yard Services. Answer concisely.'}];
       localStorage.removeItem(STORAGE_KEY);
-      conversation.length = 0;
-      conversation.push({role:'system',content:'You are Viora AI, a friendly lawn & yard care assistant for Yard Services. Answer concisely.'});
       vioraMsgs.innerHTML = '';
       addMsg('Hi! I\'m Viora 🌿 Ask me about services, pricing, or yard care!', 'bot');
-      saveConversation();
+      saveCurrentConversation();
+      renderSidebar();
     }
+
+    // Init
+    conversation = loadConversation(activeChatId);
+    if (!conversation) {
+      activeChatId = 'current';
+      localStorage.setItem(ACTIVE_KEY, 'current');
+      conversation = loadConversation('current');
+    }
+    restoreMessages();
+    renderSidebar();
 
     vioraInput.addEventListener('keydown', function(e) {
       if (e.key === 'Enter') sendViora();
@@ -155,7 +254,7 @@
         bubble.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
         bubble.style.background = 'rgba(255,255,255,0.06)';
         bubble.style.border = '1px solid rgba(255,255,255,0.05)';
-        bubble.style.borderRadius = '4px 16px 16px 16px';
+        bubble.style.borderRadius = '4px 14px 14px 14px';
       } else {
         bubble.textContent = text;
       }
@@ -170,12 +269,16 @@
       sendViora();
     }
 
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('collapsed');
+    }
+
     async function sendViora() {
       const msg = vioraInput.value.trim();
       if (!msg) return;
       addMsg(msg, 'user');
       conversation.push({role:'user', content:msg});
-      saveConversation();
+      saveCurrentConversation();
       vioraInput.value = '';
       const typingEl = addMsg('', 'bot', true);
       try {
@@ -189,7 +292,18 @@
         if (d.reply) {
           addMsg(d.reply, 'bot');
           conversation.push({role:'assistant', content:d.reply});
-          saveConversation();
+          saveCurrentConversation();
+          // Update the sidebar list if this is a saved chat
+          if (activeChatId !== 'current') {
+            const list = loadChatList();
+            const idx = list.findIndex(c => c.id === activeChatId);
+            if (idx !== -1) {
+              list[idx].messages = JSON.parse(JSON.stringify(conversation));
+              list[idx].title = getTitle(conversation);
+              saveChatList(list);
+              renderSidebar();
+            }
+          }
         } else {
           addMsg('❌ ' + (d.error || 'AI unavailable'), 'bot');
         }
