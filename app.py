@@ -2007,6 +2007,9 @@ def ai_book():
     if not service_ids:
         return {"error": "No service selected"}, 400
 
+    if not address or not phone or not email or not date or not time_value:
+        return {"error": "Missing required fields: address, phone, email, date, time."}, 400
+
     try:
         date = datetime.datetime.strptime(raw_date, "%Y-%m-%d").date()
     except (ValueError, TypeError):
@@ -2068,9 +2071,12 @@ def ai_book():
             for s in selected_services
         ],
     )
-    conn.commit()
-    mark_db_dirty()
-    sync_db_to_b2()
+    try:
+        conn.commit()
+        mark_db_dirty()
+        sync_db_to_b2()
+    except Exception as exc:
+        print(f"ai_book sync error: {exc}")
 
     return {"success": True, "request_id": new_request_id, "message": f"✅ **Booking confirmed!**<br>═══<br>📋 **Booking Confirmed**<br>🧹 **Service:** {service_name}<br>📅 **Date:** {date} at {time_value}<br>💰 **Total:** ${base_price:.2f}<br>📝 **Notes:** {note or 'None'}<br>═══<br>📍 **Address:** {address}<br><br>🌿 Your booking is set! You'll receive a confirmation shortly."}
 
