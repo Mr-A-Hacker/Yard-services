@@ -692,6 +692,9 @@
       {% else %}
         <span style="background:#3a1a1a;color:#f87171;padding:4px 12px;border-radius:20px;font-size:0.8rem;font-weight:600;border:1px solid #5a2a2a;">❌ B2 Not Configured — Accounts Will NOT Persist!</span>
       {% endif %}
+      <form method="POST" action="{{ url_for('admin_test_b2') }}" style="display:inline;">
+        <button type="submit" style="background:var(--bg-card);color:var(--text);border:1px solid var(--border);padding:4px 14px;border-radius:20px;font-size:0.8rem;cursor:pointer;font-weight:600;">🔄 Test B2</button>
+      </form>
     </div>
 
     <!-- ── Section Navigation ── -->

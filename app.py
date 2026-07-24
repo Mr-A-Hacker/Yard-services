@@ -1813,6 +1813,28 @@ def admin_logout():
     return redirect(url_for("admin_dashboard"))
 
 
+@app.route("/admin/test_b2", methods=["POST"])
+@admin_login_required
+def admin_test_b2():
+    if not b2_is_configured():
+        flash("B2 is NOT configured. Set B2_KEY_ID and B2_APPLICATION_KEY in Render environment.", "danger")
+        return redirect(url_for("admin_dashboard"))
+    try:
+        b2_authorize()
+        flash("B2 authorization succeeded! ✅", "success")
+    except Exception as exc:
+        flash(f"B2 authorization FAILED: {exc}", "danger")
+        return redirect(url_for("admin_dashboard"))
+    try:
+        upload_url, upload_auth = b2_get_upload_url()
+        flash(f"Got upload URL from B2 ✅ ({upload_url[:60]}...)", "success")
+    except Exception as exc:
+        flash(f"B2 get_upload_url FAILED: {exc}", "danger")
+        return redirect(url_for("admin_dashboard"))
+    flash("B2 is fully working! Accounts will persist across restarts. 🎉", "success")
+    return redirect(url_for("admin_dashboard"))
+
+
 # ============================================================
 # ADMIN — Finances
 # ============================================================
