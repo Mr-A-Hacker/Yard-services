@@ -1821,32 +1821,36 @@ def ai_chat():
     )
 
     system_prompt = (
-        "You are Viora AI, a friendly lawn & yard care assistant for Yard Services.\n\n"
-        "WRITING STYLE:\n"
-        "- Keep responses short, punchy, and confident.\n"
-        "- Use emojis naturally: 🌿 for nature, 🧹 for mowing, 💰 for pricing, ✅ for confirmations.\n"
-        "- Bold key info with **asterisks**.\n"
-        "- Use bullet points for lists.\n"
-        "- Start replies with a quick emoji that matches the topic.\n"
-        "- Sound like a cool lawn expert who loves what they do.\n\n"
-        "SERVICE PREVIEW FORMAT — When discussing a specific service, show it like this:\n"
-        "🧹 **Service Name** — $XX.XX\n"
-        "> Brief description of the service.\n\n"
-        "When listing multiple services, use a compact bullet list:\n"
-        "• **Service Name** — $XX.XX — Short description\n\n"
-        "BOOKING PREVIEW — When the user wants to book, collect details (service, address, phone, date, time) "
-        "conversationally, then show a booking summary like this:\n"
+        "You are Viora AI, a professional lawn & yard care assistant for Yard Services.\n\n"
+        "WRITING FORMAT — Always structure responses clearly:\n"
+        "• Start with a relevant emoji header.\n"
+        "• Use **bold** for key terms and prices.\n"
+        "• Use bullet points (•) for lists and features.\n"
+        "• Use divider lines (═══) to separate sections.\n"
+        "• Use box-style formatting for summaries and confirmations.\n"
+        "• Keep responses informative but concise.\n\n"
+        "SERVICE LIST:\n" + services_str + "\n\n"
+        "BOOKING FLOW — When a user wants to book a service:\n"
+        "1. Confirm which service(s) they want.\n"
+        "2. Ask for their address, phone, email, preferred date & time.\n"
+        "3. Ask if they want to add notes (special instructions).\n"
+        "4. Show a structured booking summary using this format:\n"
         "═══════════════════════\n"
-        "📋 **Booking Summary**\n"
-        "🧹 Service: Lawn Mowing\n"
-        "📍 Address: 123 Main St\n"
-        "📅 Date: 2025-07-24 at 2:00 PM\n"
-        "💰 Total: $24.99\n"
+        "📋 **Booking Preview**\n"
+        "🧹 Service: <service name>\n"
+        "📍 Address: <address>\n"
+        "📞 Phone: <phone>\n"
+        "📧 Email: <email>\n"
+        "📅 Date: <date> at <time>\n"
+        "📝 Notes: <notes or 'None'>\n"
+        "💰 Total: $XX.XX\n"
         "═══════════════════════\n"
-        "Then tell them to use the **Request a Service** button to confirm. "
-        "Do NOT create bookings yourself.\n\n"
+        "Then reply: \"✅ **Ready to book!** Click the button below to confirm.\"\n"
+        "Append this HTML button to your reply:\n"
+        "<booking-confirm data-service-ids='<id>' data-address='<addr>' data-phone='<phone>' data-email='<email>' data-date='<date>' data-time='<time>' data-notes='<notes>' data-total='<total>'></booking-confirm>\n\n"
+        "When you see this button format, the frontend automatically renders a **Confirm Booking** button.\n\n"
         "AVAILABLE SERVICES:\n" + services_str
-    )
+        )
 
     messages = data.get("messages", [])
     if not isinstance(messages, list) or len(messages) == 0:
@@ -1895,6 +1899,74 @@ def ai_chat():
     except Exception as exc:
         print(f"AI chat error: {exc}")
         return {"error": "AI service unavailable"}, 502
+
+
+@app.route("/api/ai/book", methods=["POST"])
+@login_required
+def ai_book():
+    data = request.get_json(silent=True)
+    if not data:
+        return {"error": "Missing data"}, 400
+
+    service_ids_raw = data.get("service_ids", "")
+    service_ids = [s.strip() for s in service_ids_raw.split(",") if s.strip()]
+    address = data.get("address", "").strip()
+    phone = data.get("phone", "").strip()
+    email = data.get("email", "").strip() or current_user.email
+    date = data.get("date", "").strip()
+    time_value = data.get("time", "").strip()
+    note = data.get("notes", "").strip()
+
+    if not service_ids:
+        return {"error": "No service selected"}, 400
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    placeholders = ",".join("?" for _ in service_ids)
+    cursor.execute(
+        f"SELECT id, name, price FROM services WHERE id IN ({placeholders})",
+        service_ids,
+    )
+    selected_services = cursor.fetchall()
+    if not selected_services or len(selected_services) != len(set(service_ids)):
+        return {"error": "Invalid service selection"}, 400
+
+    if is_day_blocked(date):
+        return {"error": "That day is blocked for service requests."}, 400
+
+    if is_time_blocked(date, time_value):
+        return {"error": "The selected time is blocked."}, 400
+
+    service_name = ", ".join(s["name"] for s in selected_services)
+    base_price = sum(float(s["price"]) for s in selected_services)
+
+    cursor.execute("""
+        INSERT INTO requests
+            (user_id, service_id, address, phone, email, payment,
+             note, date, time, token, discount, final_price, verification_code)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        current_user.id, selected_services[0]["id"], address, phone, email, "card",
+        note, date, time_value, None, 0, base_price, str(random.randint(100000, 999999)),
+    ))
+    new_request_id = cursor.lastrowid
+
+    cursor.executemany(
+        """
+        INSERT INTO request_services (request_id, service_id, service_name, price)
+        VALUES (?, ?, ?, ?)
+        """,
+        [
+            (new_request_id, s["id"], s["name"], float(s["price"]))
+            for s in selected_services
+        ],
+    )
+    conn.commit()
+    mark_db_dirty()
+    sync_db_to_b2()
+
+    return {"success": True, "request_id": new_request_id, "message": f"✅ **Booking confirmed!**<br>═══<br>📋 **Booking Confirmed**<br>🧹 **Service:** {service_name}<br>📅 **Date:** {date} at {time_value}<br>💰 **Total:** ${base_price:.2f}<br>📝 **Notes:** {note or 'None'}<br>═══<br>📍 **Address:** {address}<br><br>🌿 Your booking is set! You'll receive a confirmation shortly."}
 
 
 def _web_search(query):

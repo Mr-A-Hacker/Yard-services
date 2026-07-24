@@ -85,11 +85,14 @@
 
   <div class="layout">
     <div class="sidebar" id="sidebar">
-      <div class="sidebar-header">
-        <h3>💬 Chats</h3>
-        <button onclick="saveAndNewChat()">➕ New</button>
-      </div>
-      <div class="sidebar-list" id="chatList"></div>
+<div class="sidebar-header">
+         <h3>💬 Chats</h3>
+         <div style="display:flex;gap:4px;">
+           <button onclick="deleteAllChats()" title="Delete all chats">🗑</button>
+           <button onclick="saveAndNewChat()">➕ New</button>
+         </div>
+       </div>
+       <div class="sidebar-list" id="chatList"></div>
     </div>
 
     <div class="chat-container">
@@ -176,21 +179,21 @@
       }
     }
 
-    function renderSidebar() {
-      const list = loadChatList();
-      chatList.innerHTML = '';
-      if (list.length === 0) {
-        chatList.innerHTML = '<div class="sidebar-empty">No past chats</div>';
-        return;
-      }
-      for (const c of list) {
-        const div = document.createElement('div');
-        div.className = 'chat-item' + (c.id === activeChatId ? ' active' : '');
-        div.innerHTML = '<div class="chat-item-title">' + (c.title || 'Chat') + '</div><div class="chat-item-date">' + c.date + '</div>';
-        div.onclick = () => switchChat(c.id);
-        chatList.appendChild(div);
-      }
-    }
+function renderSidebar() {
+       const list = loadChatList();
+       chatList.innerHTML = '';
+       if (list.length === 0) {
+         chatList.innerHTML = '<div class="sidebar-empty">No past chats</div>';
+         return;
+       }
+       for (const c of list) {
+         const div = document.createElement('div');
+         div.className = 'chat-item' + (c.id === activeChatId ? ' active' : '');
+         div.innerHTML = '<div class="chat-item-title">' + (c.title || 'Chat') + '</div><div class="chat-item-date">' + c.date + '</div><button class="chat-item-del" title="Delete this chat" onclick="event.stopPropagation();deleteChat(\'' + c.id + '\')">✕</button>';
+         div.onclick = () => switchChat(c.id);
+         chatList.appendChild(div);
+       }
+     }
 
     function switchChat(id) {
       saveCurrentConversation();
@@ -273,45 +276,149 @@
       document.getElementById('sidebar').classList.toggle('collapsed');
     }
 
-    async function sendViora() {
-      const msg = vioraInput.value.trim();
-      if (!msg) return;
-      addMsg(msg, 'user');
-      conversation.push({role:'user', content:msg});
-      saveCurrentConversation();
-      vioraInput.value = '';
-      const typingEl = addMsg('', 'bot', true);
-      try {
-        const r = await fetch('/api/ai/chat', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({messages: conversation})
-        });
-        const d = await r.json();
-        typingEl.remove();
-        if (d.reply) {
-          addMsg(d.reply, 'bot');
-          conversation.push({role:'assistant', content:d.reply});
-          saveCurrentConversation();
-          // Update the sidebar list if this is a saved chat
-          if (activeChatId !== 'current') {
-            const list = loadChatList();
-            const idx = list.findIndex(c => c.id === activeChatId);
-            if (idx !== -1) {
-              list[idx].messages = JSON.parse(JSON.stringify(conversation));
-              list[idx].title = getTitle(conversation);
-              saveChatList(list);
-              renderSidebar();
-            }
-          }
-        } else {
-          addMsg('❌ ' + (d.error || 'AI unavailable'), 'bot');
-        }
-      } catch(e) {
-        typingEl.remove();
-        addMsg('❌ Network error.', 'bot');
-      }
-    }
+function deleteChat(id) {
+       const list = loadChatList();
+       const filtered = list.filter(c => c.id !== id);
+       saveChatList(filtered);
+       if (activeChatId === id) {
+         activeChatId = 'current';
+         localStorage.setItem(ACTIVE_KEY, 'current');
+         conversation = [{role:'system',content:'You are Viora AI, a friendly lawn & yard care assistant for Yard Services. Answer concisely.'}];
+         localStorage.removeItem(STORAGE_KEY);
+         restoreMessages();
+       }
+       renderSidebar();
+     }
+
+     function deleteAllChats() {
+       if (!confirm('Delete all past chats?')) return;
+       saveChatList([]);
+       activeChatId = 'current';
+       localStorage.setItem(ACTIVE_KEY, 'current');
+       conversation = [{role:'system',content:'You are Viora AI, a friendly lawn & yard care assistant for Yard Services. Answer concisely.'}];
+       localStorage.removeItem(STORAGE_KEY);
+       restoreMessages();
+       renderSidebar();
+     }
+
+     function showBookingConfirm(html) {
+       const container = document.createElement('div');
+       container.innerHTML = html;
+       const el = container.querySelector('booking-confirm');
+       if (!el) return;
+       const card = document.createElement('div');
+       card.style.cssText = 'background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.2);border-radius:12px;padding:12px 16px;margin-top:8px;';
+       card.innerHTML = '<div style="font-weight:800;color:#c084fc;margin-bottom:8px;">📋 Confirm Booking</div>' +
+         '<div style="font-size:0.82rem;color:#e8e0f0;line-height:1.6;"></div>';
+       const details = card.querySelector('div:last-child');
+       const sid = el.getAttribute('data-service-ids') || '';
+       const addr = el.getAttribute('data-address') || '';
+       const ph = el.getAttribute('data-phone') || '';
+       const em = el.getAttribute('data-email') || '';
+       const dt = el.getAttribute('data-date') || '';
+       const tm = el.getAttribute('data-time') || '';
+       const nt = el.getAttribute('data-notes') || '';
+       const total = el.getAttribute('data-total') || '';
+       details.innerHTML =
+         '🧹 <b>Services:</b> ' + sid + '<br>' +
+         '📍 <b>Address:</b> ' + addr + '<br>' +
+         '📞 <b>Phone:</b> ' + ph + '<br>' +
+         '📧 <b>Email:</b> ' + em + '<br>' +
+         '📅 <b>Date:</b> ' + dt + ' at ' + tm + '<br>' +
+         '📝 <b>Notes:</b> ' + (nt || 'None') + '<br>' +
+         '💰 <b>Total:</b> $' + total;
+       const btn = document.createElement('button');
+       btn.style.cssText = 'margin-top:10px;padding:8px 18px;background:linear-gradient(135deg,#2d8a3e,#4caf50);color:white;font-weight:800;border:none;border-radius:10px;cursor:pointer;font-size:0.82rem;';
+       btn.textContent = '✅ Confirm Booking';
+       btn.onclick = async function() {
+         btn.disabled = true;
+         btn.textContent = 'Booking...';
+         try {
+           const r = await fetch('/api/ai/book', {
+             method: 'POST',
+             headers: {'Content-Type': 'application/json'},
+             body: JSON.stringify({
+               service_ids: sid, address: addr, phone: ph, email: em,
+               date: dt, time: tm, notes: nt,
+             }),
+           });
+           const d = await r.json();
+           if (d.success) {
+             card.querySelector('div:last-child').innerHTML = d.message.replace('✅ **Booking confirmed!**<br>═══<br>', '').replace(/<br>/g, '<br>');
+             card.querySelector('button').remove();
+             return;
+           }
+           addMsg('❌ Booking failed: ' + (d.error || 'Unknown error'), 'bot');
+         } catch(e) {
+           addMsg('❌ Booking request failed.', 'bot');
+         }
+       };
+       card.appendChild(btn);
+       const row = document.createElement('div');
+       row.className = 'msg-row bot';
+       const avatar = document.createElement('div');
+       avatar.className = 'msg-avatar bot';
+       avatar.textContent = '🌿';
+       row.appendChild(avatar);
+       const bubble = document.createElement('div');
+       bubble.className = 'msg-bubble bot';
+       bubble.style.whiteSpace = 'pre-wrap';
+       bubble.appendChild(card);
+       row.appendChild(bubble);
+       vioraMsgs.appendChild(row);
+       vioraMsgs.scrollTop = vioraMsgs.scrollHeight;
+     }
+
+     async function sendViora() {
+       const msg = vioraInput.value.trim();
+       if (!msg) return;
+       addMsg(msg, 'user');
+       conversation.push({role:'user', content:msg});
+       saveCurrentConversation();
+       vioraInput.value = '';
+       const typingEl = addMsg('', 'bot', true);
+       try {
+         const r = await fetch('/api/ai/chat', {
+           method: 'POST',
+           headers: {'Content-Type': 'application/json'},
+           body: JSON.stringify({messages: conversation})
+         });
+         const d = await r.json();
+         typingEl.remove();
+         if (d.reply) {
+           if (d.reply.includes('<booking-confirm')) {
+             const temp = document.createElement('div');
+             temp.innerHTML = d.reply;
+             const bookingEl = temp.querySelector('booking-confirm');
+             if (bookingEl) {
+               addMsg(d.reply.replace(bookingEl.outerHTML, '').trim(), 'bot');
+               showBookingConfirm(d.reply);
+             } else {
+               addMsg(d.reply, 'bot');
+             }
+           } else {
+             addMsg(d.reply, 'bot');
+           }
+           conversation.push({role:'assistant', content:d.reply});
+           saveCurrentConversation();
+           if (activeChatId !== 'current') {
+             const list = loadChatList();
+             const idx = list.findIndex(c => c.id === activeChatId);
+             if (idx !== -1) {
+               list[idx].messages = JSON.parse(JSON.stringify(conversation));
+               list[idx].title = getTitle(conversation);
+               saveChatList(list);
+               renderSidebar();
+             }
+           }
+         } else {
+           addMsg('❌ ' + (d.error || 'AI unavailable'), 'bot');
+         }
+       } catch(e) {
+         typingEl.remove();
+         addMsg('❌ Network error.', 'bot');
+       }
+     }
   </script>
 </body>
 </html>
