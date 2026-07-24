@@ -1912,12 +1912,20 @@ def ai_book():
     address = data.get("address", "").strip()
     phone = data.get("phone", "").strip()
     email = data.get("email", "").strip() or current_user.email
-    date = data.get("date", "").strip()
+    raw_date = data.get("date", "").strip()
     time_value = data.get("time", "").strip()
     note = data.get("notes", "").strip()
 
     if not service_ids:
         return {"error": "No service selected"}, 400
+
+    try:
+        date = datetime.datetime.strptime(raw_date, "%Y-%m-%d").date()
+    except (ValueError, TypeError):
+        try:
+            date = datetime.date.today() + datetime.timedelta(days=1)
+        except Exception:
+            return {"error": "Invalid date. Please use YYYY-MM-DD format."}, 400
 
     conn = get_db()
     cursor = conn.cursor()
@@ -1931,10 +1939,10 @@ def ai_book():
     if not selected_services or len(selected_services) != len(set(service_ids)):
         return {"error": "Invalid service selection"}, 400
 
-    if is_day_blocked(date):
+    if is_day_blocked(str(date)):
         return {"error": "That day is blocked for service requests."}, 400
 
-    if is_time_blocked(date, time_value):
+    if is_time_blocked(str(date), time_value):
         return {"error": "The selected time is blocked."}, 400
 
     service_name = ", ".join(s["name"] for s in selected_services)
@@ -1947,7 +1955,7 @@ def ai_book():
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         current_user.id, selected_services[0]["id"], address, phone, email, "card",
-        note, date, time_value, None, 0, base_price, str(random.randint(100000, 999999)),
+        note, str(date), time_value, None, 0, base_price, str(random.randint(100000, 999999)),
     ))
     new_request_id = cursor.lastrowid
 

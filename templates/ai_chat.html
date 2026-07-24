@@ -343,14 +343,15 @@ function deleteChat(id) {
              }),
            });
            const d = await r.json();
-           if (d.success) {
-             card.querySelector('div:last-child').innerHTML = d.message.replace('✅ **Booking confirmed!**<br>═══<br>', '').replace(/<br>/g, '<br>');
-             card.querySelector('button').remove();
-             return;
-           }
-           addMsg('❌ Booking failed: ' + (d.error || 'Unknown error'), 'bot');
+           const msg = r.ok && d.success
+             ? d.message.replace('✅ **Booking confirmed!**<br>═══<br>', '').replace(/<br>/g, '<br>')
+             : (d.error || 'Unknown error');
+           card.querySelector('div:last-child').innerHTML = msg;
+           card.querySelector('button').remove();
+           return;
          } catch(e) {
-           addMsg('❌ Booking request failed.', 'bot');
+           card.querySelector('div:last-child').innerHTML = 'Network error. Please try again.';
+           card.querySelector('button').remove();
          }
        };
        card.appendChild(btn);
