@@ -566,17 +566,9 @@ def init_db():
 
         INSERT INTO services (name, price, description, image_url)
         SELECT 'Garden Planting', 40.00, 'Professional planting of flowers, shrubs, vegetables, and decorative plants in your garden beds or containers. We prepare the soil, dig proper holes, plant with care, and water everything in. Perfect for refreshing your garden for spring or fall. Responsible neighbor teens will be doing the work.', 'https://images.unsplash.com/photo-1558428915-31fb7d7b61a5?w=600&q=80'
-        WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Garden Planting');
+WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Garden Planting');
 
-        INSERT INTO services (name, price, description, image_url)
-        SELECT 'Wood Pickup', 40.00, 'We haul away fallen branches, cut tree limbs, scrap lumber, and piled brush from your property. Our team loads, cleans up, and disposes of everything so your yard stays safe and tidy. Perfect after a storm or landscaping project. Responsible neighbor teens will be doing the work.', 'https://images.unsplash.com/photo-1599220148469-d0a06c9339e7?w=600&q=80'
-        WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Wood Pickup');
-
-        INSERT INTO services (name, price, description, image_url)
-        SELECT 'Hardscape Weed Control', 40.00, 'Targeted weed removal from patios, walkways, driveways, retaining walls, and stone pathways. We pull weeds from cracks and joints, sweep away debris, and apply treatment to keep hard surfaces clean and weed-free for longer. Responsible neighbor teens will be doing the work.', 'https://images.unsplash.com/photo-1621255111168-c8d19a6e8d88?w=600&q=80'
-        WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Hardscape Weed Control');
-
-        CREATE TABLE IF NOT EXISTS requests (
+         CREATE TABLE IF NOT EXISTS requests (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL REFERENCES users(id),
             service_id INTEGER REFERENCES services(id),
