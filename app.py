@@ -1248,8 +1248,8 @@ def login():
 
         if row and bcrypt.check_password_hash(row["password_hash"], password):
             user = User(row["id"], row["email"], row["password_hash"], row["phone"], row["popup_seen"])
-            # Use remember=True so the session persists across browser restarts
-            login_user(user, remember=True)
+            remember = request.form.get("remember") == "on"
+            login_user(user, remember=remember)
             session["popup_seen"] = row["popup_seen"]
             log_user_ip(row["id"], get_client_ip())
 
