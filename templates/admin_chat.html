@@ -128,6 +128,27 @@
         });
       } catch(e) { /* silent */ }
     }
+    // Request notification permission
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+
+    function notifyAdminReply(text) {
+      if (!('Notification' in window)) return;
+      if (Notification.permission !== 'granted') return;
+      // Don't notify if the tab is focused — user can see it
+      if (!document.hidden) return;
+      try {
+        const n = new Notification('💬 Admin replied', {
+          body: text,
+          icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🛠️</text></svg>',
+          tag: 'admin-chat',
+        });
+        n.onclick = () => { window.focus(); n.close(); };
+        setTimeout(() => n.close(), 5000);
+      } catch(e) { /* silent */ }
+    }
+
     loadAdminChat();
     adminChatPoll = setInterval(async () => {
       try {
@@ -138,6 +159,7 @@
           for (const m of newMsgs) {
             adminChatLastId = m.id;
             addAdminMsg(m.message, m.sender);
+            if (m.sender === 'admin') notifyAdminReply(m.message);
           }
         }
       } catch(e) { /* silent */ }
