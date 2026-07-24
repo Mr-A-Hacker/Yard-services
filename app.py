@@ -94,12 +94,8 @@ app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY") or "change-me-in-production"
 app.config["UPLOAD_FOLDER"] = os.path.join("static", "uploads")
 
-# "Remember me" cookie so returning users are auto-signed-in on this browser.
-app.config["REMEMBER_COOKIE_DURATION"] = datetime.timedelta(days=30)
-app.config["REMEMBER_COOKIE_HTTPONLY"] = True
-app.config["REMEMBER_COOKIE_SAMESITE"] = "Lax"
-# Only send the cookie over HTTPS in production (set FLASK_ENV=production there).
-app.config["REMEMBER_COOKIE_SECURE"] = os.getenv("FLASK_ENV") == "production"
+# "Remember me" — permanent session lasts 30 days when checked
+app.config["PERMANENT_SESSION_LIFETIME"] = datetime.timedelta(days=30)
 
 app.config.update(
     MAIL_SERVER=os.getenv("MAIL_SERVER", ""),
@@ -1226,8 +1222,9 @@ def login():
 
         if row and bcrypt.check_password_hash(row["password_hash"], password):
             user = User(row["id"], row["email"], row["password_hash"], row["phone"], row["popup_seen"])
-            remember = request.form.get("remember") == "on"
-            login_user(user, remember=remember)
+            login_user(user)
+            if request.form.get("remember") == "on":
+                session.permanent = True
             session["popup_seen"] = row["popup_seen"]
             log_user_ip(row["id"], get_client_ip())
 
