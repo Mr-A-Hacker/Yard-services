@@ -1321,6 +1321,28 @@ def dashboard():
 
 
 # ============================================================
+# WEATHER, AI CHAT, ADMIN CHAT pages
+# ============================================================
+
+@app.route("/weather")
+@login_required
+def weather_page():
+    return render_template("weather.html")
+
+
+@app.route("/ai-chat")
+@login_required
+def ai_chat_page():
+    return render_template("ai_chat.html")
+
+
+@app.route("/admin-chat")
+@login_required
+def admin_chat_page():
+    return render_template("admin_chat.html")
+
+
+# ============================================================
 # MANAGE ACCOUNT
 # ============================================================
 

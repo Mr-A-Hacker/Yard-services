@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+  <title>Weather — Yard Services</title>
+  <script>atOptions={key:'d0fd3067ca9fd49b0435270473b5aef6',format:'iframe',height:60,width:468,params:{}};</script>
+  <script src="https://www.highperformanceformat.com/d0fd3067ca9fd49b0435270473b5aef6/invoke.js"></script>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5186647140863001" crossorigin="anonymous"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Bitter:wght@700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='themes/' + active_theme + '.css') }}">
+  <style>body{ {% if bg_image %}background-image:url('{{ bg_image }}');background-position:{{ bg_position }};background-size:{{ bg_size }};background-repeat:{{ bg_repeat }};background-attachment:{{ bg_attachment }};{% endif %} }</style>
+  <style>
+    :root{--g-dark:#1a5c2a;--g-mid:#2d8a3e;--g-bright:#4caf50;--g-light:#c8e6c9;--g-pale:#f1f8f2;--gold:#f5a623;--gold-soft:#fff8e1;--gold-dark:#c47f00;--white:#ffffff;--ink:#1a2e1c;--muted:#6a8f70;--shadow:0 8px 36px rgba(26,92,42,0.16);}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Nunito',sans-serif;background-color:var(--g-pale);min-height:100vh;display:flex;flex-direction:column;position:relative;}
+    body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(170deg,rgba(76,175,80,0.05) 0px,rgba(76,175,80,0.05) 20px,transparent 20px,transparent 40px);pointer-events:none;z-index:0;}
+    .top-nav{background:linear-gradient(90deg,var(--g-dark),var(--g-mid));padding:14px 24px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 3px 16px rgba(0,0,0,0.2);position:sticky;top:0;z-index:100;}
+    .top-nav .brand{font-family:'Bitter',serif;font-size:1.2rem;font-weight:900;color:white;text-decoration:none;display:flex;align-items:center;gap:10px;}
+    .top-nav .brand .icon-badge{background:var(--gold);color:var(--g-dark);width:32px;height:32px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:15px;}
+    .nav-back{color:var(--g-light);font-size:0.85rem;font-weight:700;text-decoration:none;padding:6px 14px;border-radius:999px;border:1.5px solid rgba(255,255,255,0.25);transition:background 0.2s;}
+    .nav-back:hover{background:rgba(255,255,255,0.15);color:white;}
+    .page-wrap{position:relative;z-index:1;max-width:800px;margin:0 auto;padding:36px 16px 60px;flex:1;width:100%;}
+    .form-hero{background:linear-gradient(135deg,#1e3a5f 0%,#2d6a9f 100%);border-radius:20px 20px 0 0;padding:32px 36px 26px;text-align:center;position:relative;overflow:hidden;box-shadow:var(--shadow);}
+    .form-hero::before{content:'🌤️';font-size:110px;position:absolute;right:-14px;top:-18px;opacity:0.09;}
+    .form-hero .ring{width:64px;height:64px;background:rgba(255,255,255,0.15);border:3px solid rgba(255,255,255,0.3);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 14px;animation:popIn 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.1s both;}
+    .form-hero h2{font-family:'Bitter',serif;font-size:1.8rem;font-weight:900;color:white;margin:0;}
+    .gold-strip{height:5px;background:linear-gradient(90deg,var(--gold),#ffe082,var(--gold));}
+    .form-card{background:var(--white);border-radius:0 0 20px 20px;border:2px solid #2d6a9f;border-top:none;box-shadow:var(--shadow);padding:32px;animation:fadeUp 0.4s ease 0.15s both;}
+    .weather-card-glow{background:linear-gradient(135deg,#1e3a5f 0%,#2d6a9f 100%);border-radius:18px;padding:24px;color:white;position:relative;overflow:hidden;}
+    .weather-card-glow::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 20% 30%,rgba(255,255,255,0.08),transparent 60%);}
+    .weather-temp{font-size:3.2rem;font-weight:900;line-height:1;}
+    .weather-detail{display:flex;align-items:center;gap:6px;font-size:0.85rem;opacity:0.85;font-weight:700;}
+    footer{position:relative;z-index:1;background:var(--g-dark);color:var(--g-light);text-align:center;padding:16px;font-size:0.82rem;font-weight:700;margin-top:auto;}
+    @keyframes popIn{from{opacity:0;transform:scale(0.5);}to{opacity:1;transform:scale(1);}}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);}}
+  </style>
+</head>
+<body>
+  <nav class="top-nav">
+    <a class="brand" href="{{ url_for('home') }}">
+      <span class="icon-badge">🌿</span>
+      Yard Services
+    </a>
+    <a href="{{ url_for('dashboard') }}" class="nav-back">⬅ Dashboard</a>
+  </nav>
+
+  <div class="page-wrap">
+    <div class="form-hero">
+      <div class="ring">🌤️</div>
+      <h2>Local Weather</h2>
+    </div>
+    <div class="gold-strip"></div>
+    <div class="form-card">
+      <div id="weatherResult" style="font-weight:700;color:var(--ink);min-height:120px;display:flex;align-items:center;justify-content:center;">
+        <span style="color:var(--muted);">📍 Detecting your location...</span>
+      </div>
+      <div style="text-align:center;margin-top:16px;">
+        <button onclick="fetchWeather()" style="background:linear-gradient(135deg,#1e3a5f,#2d6a9f);color:white;border:none;border-radius:12px;padding:10px 24px;font-weight:800;font-size:0.9rem;cursor:pointer;box-shadow:0 4px 14px rgba(30,58,95,0.3);transition:transform 0.15s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">🔄 Refresh Weather</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>© 2025 Yard Services. All rights reserved. 🌿</footer>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    let weatherFetched = false;
+    async function fetchWeather(lat, lon) {
+      const el = document.getElementById('weatherResult');
+      if (!lat && !lon) {
+        if (!navigator.geolocation) { el.innerHTML = '<span style="color:var(--muted);font-size:0.9rem;">📍 Location not available.</span>'; return; }
+        navigator.geolocation.getCurrentPosition(
+          (pos) => fetchWeather(pos.coords.latitude, pos.coords.longitude),
+          () => { el.innerHTML = '<span style="color:var(--muted);font-size:0.9rem;">📍 Enable location access for weather.</span>'; }
+        );
+        return;
+      }
+      el.innerHTML = '<span style="color:var(--muted);">⏳ Loading weather...</span>';
+      try {
+        const r = await fetch(`https://wttr.in/${lat},${lon}?format=j1`);
+        if (!r.ok) throw new Error('Weather unavailable');
+        const d = await r.json();
+        const c = d.current_condition[0];
+        const loc = d.nearest_area[0];
+        const city = loc.areaName[0].value;
+        const region = loc.region[0].value;
+        const icon = c.weatherDesc[0].value.includes('Sun')?'☀️':c.weatherDesc[0].value.includes('Cloud')?'☁️':c.weatherDesc[0].value.includes('Rain')||c.weatherDesc[0].value.includes('Drizzle')?'🌧️':c.weatherDesc[0].value.includes('Snow')?'❄️':c.weatherDesc[0].value.includes('Fog')||c.weatherDesc[0].value.includes('Mist')?'🌫️':c.weatherDesc[0].value.includes('Thunder')?'⛈️':'🌤️';
+        el.innerHTML = `
+          <div class="weather-card-glow">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;position:relative;z-index:1;">
+              <div style="display:flex;align-items:center;gap:16px;">
+                <span style="font-size:3.5rem;">${icon}</span>
+                <div>
+                  <div class="weather-temp">${c.temp_F}°F</div>
+                  <div style="font-weight:700;font-size:0.9rem;opacity:0.8;">${c.weatherDesc[0].value}</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:18px;flex-wrap:wrap;">
+                <div class="weather-detail">💧 ${c.humidity}%</div>
+                <div class="weather-detail">💨 ${c.windspeedMiles} mph</div>
+                <div class="weather-detail">👁️ ${c.visibilityMiles} mi</div>
+              </div>
+            </div>
+            <div style="margin-top:8px;font-size:0.8rem;opacity:0.6;font-weight:700;position:relative;z-index:1;">
+              📍 ${city}, ${region} · Feels like ${c.FeelsLikeF}°F
+            </div>
+          </div>`;
+        weatherFetched = true;
+      } catch(e) {
+        el.innerHTML = `<span style="color:var(--red);font-size:0.9rem;">❌ Weather unavailable. <a href="#" onclick="fetchWeather();return false;" style="color:var(--g-bright);">Retry</a></span>`;
+      }
+    }
+    document.addEventListener("DOMContentLoaded", function() { fetchWeather(); });
+  </script>
+</body>
+</html>
