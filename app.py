@@ -135,6 +135,12 @@ SMS_TO_PHONE = os.getenv("SMS_TO_PHONE", "").strip()
 # ============================================================
 
 DB_LOCAL_PATH = os.getenv("DB_LOCAL_PATH", "yard.db")
+B2_BUCKET_NAME = os.getenv("B2_BUCKET_NAME", "").strip()
+B2_BUCKET_ID = os.getenv("B2_BUCKET_ID", "").strip()
+B2_ENDPOINT_URL = os.getenv("B2_ENDPOINT_URL", "").strip()
+B2_KEY_ID = os.getenv("B2_KEY_ID", "").strip()
+B2_APPLICATION_KEY = os.getenv("B2_APPLICATION_KEY", "").strip()
+B2_DB_OBJECT_KEY = os.getenv("B2_DB_OBJECT_KEY", "yard.db").strip() or "yard.db"
 app.config["UPLOAD_FOLDER"] = os.path.join("static", "uploads")
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
@@ -195,8 +201,115 @@ def load_db_cache():
         print(f"Warning: failed to load DB cache: {exc}")
 
 
+def b2_is_configured():
+    return requests is not None and all([B2_BUCKET_NAME, B2_KEY_ID, B2_APPLICATION_KEY])
+
+
+def get_b2_auth():
+    if not b2_is_configured():
+        return None
+
+    try:
+        response = requests.get(
+            "https://api.backblazeb2.com/b2api/v2/b2_authorize_account",
+            auth=(B2_KEY_ID, B2_APPLICATION_KEY),
+            timeout=20,
+        )
+        response.raise_for_status()
+        return response.json()
+    except requests.RequestException as exc:
+        print(f"Warning: failed to authorize Backblaze B2: {exc}")
+        return None
+
+
+def restore_db_from_b2():
+    if not b2_is_configured() or os.path.exists(DB_LOCAL_PATH):
+        return
+
+    auth = get_b2_auth()
+    if not auth:
+        return
+
+    db_dir = os.path.dirname(DB_LOCAL_PATH)
+    if db_dir:
+        os.makedirs(db_dir, exist_ok=True)
+
+    bucket_name = B2_BUCKET_NAME
+    object_key = B2_DB_OBJECT_KEY.lstrip("/")
+    download_url = f"{auth['downloadUrl']}/file/{bucket_name}/{object_key}"
+
+    try:
+        response = requests.get(
+            download_url,
+            headers={"Authorization": auth["authorizationToken"]},
+            timeout=60,
+        )
+        if response.status_code == 404:
+            return
+        response.raise_for_status()
+        with open(DB_LOCAL_PATH, "wb") as db_file:
+            db_file.write(response.content)
+        print(f"Restored SQLite database from Backblaze B2 object '{object_key}'.")
+    except requests.RequestException as exc:
+        print(f"Warning: failed to restore database from Backblaze B2: {exc}")
+
+
+def upload_file_to_b2(local_path, object_key):
+    auth = get_b2_auth()
+    if not auth:
+        return
+
+    try:
+        upload_url_response = requests.post(
+            f"{auth['apiUrl']}/b2api/v2/b2_get_upload_url",
+            headers={"Authorization": auth["authorizationToken"]},
+            json={"bucketId": B2_BUCKET_ID or auth["allowed"].get("bucketId")},
+            timeout=20,
+        )
+        upload_url_response.raise_for_status()
+        upload_info = upload_url_response.json()
+
+        with open(local_path, "rb") as upload_file:
+            file_bytes = upload_file.read()
+
+        upload_response = requests.post(
+            upload_info["uploadUrl"],
+            headers={
+                "Authorization": upload_info["authorizationToken"],
+                "X-Bz-File-Name": object_key.lstrip("/"),
+                "Content-Type": "application/octet-stream",
+                "Content-Length": str(len(file_bytes)),
+                "X-Bz-Content-Sha1": "do_not_verify",
+            },
+            data=file_bytes,
+            timeout=60,
+        )
+        upload_response.raise_for_status()
+    except requests.RequestException as exc:
+        print(f"Warning: failed to upload '{object_key}' to Backblaze B2: {exc}")
+
+
 def sync_db_to_b2():
-    return
+    if not b2_is_configured() or not os.path.exists(DB_LOCAL_PATH):
+        return
+
+    db_dir = os.path.dirname(DB_LOCAL_PATH) or "."
+    fd, snapshot_path = tempfile.mkstemp(prefix="yard-db-", suffix=".sqlite", dir=db_dir)
+    os.close(fd)
+
+    try:
+        source = sqlite3.connect(DB_LOCAL_PATH)
+        source.execute("PRAGMA wal_checkpoint(FULL)")
+        backup = sqlite3.connect(snapshot_path)
+        source.backup(backup)
+        backup.close()
+        source.close()
+        upload_file_to_b2(snapshot_path, B2_DB_OBJECT_KEY)
+    except (sqlite3.Error, OSError) as exc:
+        print(f"Warning: failed to prepare database backup for Backblaze B2: {exc}")
+    finally:
+        if os.path.exists(snapshot_path):
+            os.remove(snapshot_path)
 
 
 def get_client_ip():
@@ -581,6 +694,8 @@ def save_upload_to_b2(upload_file, upload_folder):
 # BOOTSTRAP — init local database and cache
 # ============================================================
 
+restore_db_from_b2()
+
 with app.app_context():
     init_db()
     # load a lightweight cache of users/services/requests for quick access
@@ -829,6 +944,7 @@ def inject_globals():
 def sync_db_after_request(response):
     global _db_dirty
     if _db_dirty:
+        sync_db_to_b2()
         _db_dirty = False
     return response
 
