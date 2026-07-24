@@ -1816,7 +1816,7 @@ def ai_chat():
         "SELECT id, name, price, description FROM services ORDER BY name"
     ).fetchall()
     services_str = "\n".join(
-        f"- \"{s['name']}\" (${s['price']}): {s['description'] or 'No description'}"
+        f"- [ID:{s['id']} \"{s['name']}\" (${s['price']}): {s['description'] or 'No description'}"
         for s in services_list
     )
 
@@ -1831,30 +1831,31 @@ def ai_chat():
         "4. PRICING: Bold the price with **$XX.XX** format.\n\n"
         "5. CONFIRMATIONS: Use green ✅ emoji and bold text.\n\n"
         "6. WARNINGS/ERRORS: Use red ❌ emoji.\n\n"
-        "7. FORMAT EXAMPLE for service listings:\n"
+        "7. FORMAT EXAMPLE for service listings (always include the [ID:X] tag):\n"
         "═══════════════════════\n"
-        "🌿 **Service Name** — **$XX.XX**\n"
+        "🌿 **Service Name** [ID:1] — **$XX.XX**\n"
         "• Feature one — short description\n"
         "• Feature two — short description\n"
-        "• Feature three — short description\n"
         "═══════════════════════\n\n"
         "8. FORMAT EXAMPLE for booking summaries:\n"
         "═══════════════════════\n"
         "📋 **Booking Preview**\n"
-        "── Service: Service Name\n"
-        "── Address: 123 Main St\n"
-        "── Date: 2026-01-01 at 10:00 AM\n"
+        "── Service: Service Name [ID:X]\n"
+        "── Address: user's address\n"
+        "── Date: user's date\n"
         "── Total: **$XX.XX**\n"
         "═══════════════════════\n\n"
         "9. RESPONSE STYLE: Confident, friendly, expert tone. Be helpful and thorough.\n\n"
         "10. BOOKING FLOW — When user wants to book:\n"
-        "   a. Confirm service(s)\n"
-        "   b. Collect address, phone, email, date, time\n"
-        "   c. Ask for notes (special instructions)\n"
-        "   d. Show booking summary with the format above\n"
-        "   e. Append this HTML tag for the frontend:\n"
-        "      <booking-confirm data-service-ids='<ids>' data-address='<addr>' data-phone='<phone>' data-email='<email>' data-date='<date>' data-time='<time>' data-notes='<notes>' data-total='<total>'></booking-confirm>\n"
-        "   f. Then reply: \"✅ **Ready to book!** Use the button above to confirm.\"\n\n"
+        "   a. Confirm service(s) — always include the [ID:X] in the confirm line\n"
+        "   b. Ask for missing details (address, phone, email, date, time) — show blanks only for what's missing\n"
+        "   c. If user provides details in numbered format like '1. address 2. phone 3. email 4. date time', parse them correctly\n"
+        "   d. Ask for notes (special instructions)\n"
+        "   e. Show booking summary with the format above, filling in ALL collected info\n"
+        "   f. Append this HTML tag for the frontend:\n"
+        "      <booking-confirm data-service-ids='<service_id>' data-address='<addr>' data-phone='<phone>' data-email='<email>' data-date='<date>' data-time='<time>' data-notes='<notes>' data-total='<total>'></booking-confirm>\n"
+        "      IMPORTANT: data-service-ids must be the numeric ID from [ID:X], not the service name\n"
+        "   g. Then reply: \"✅ **Ready to book!** Use the button above to confirm.\"\n\n"
         "AVAILABLE SERVICES:\n" + services_str
         )
 
