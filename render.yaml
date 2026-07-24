@@ -20,3 +20,5 @@ services:
         value: yardservices-storage-2
       - key: B2_BUCKET_ID
         value: 6cb12b4a501892429bfe0716
+      - key: NVIDIA_API_KEY
+        sync: false
