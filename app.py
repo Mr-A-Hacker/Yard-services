@@ -1044,13 +1044,13 @@ class User(UserMixin):
 def load_user(user_id):
     conn = get_db()
     cursor = conn.cursor()
-cursor.execute(
-            "SELECT id, email, password_hash, phone, name, popup_seen FROM users WHERE id = ?",
-            (user_id,),
-        )
-        row = cursor.fetchone()
-        if row:
-            return User(row["id"], row["email"], row["password_hash"], row["phone"], row["name"], row["popup_seen"])
+    cursor.execute(
+        "SELECT id, email, password_hash, phone, name, popup_seen FROM users WHERE id = ?",
+        (user_id,),
+    )
+    row = cursor.fetchone()
+    if row:
+        return User(row["id"], row["email"], row["password_hash"], row["phone"], row["name"], row["popup_seen"])
     return None
 
 
