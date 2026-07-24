@@ -82,6 +82,9 @@
   <script>
     const vioraMsgs = document.getElementById('vioraMessages');
     const vioraInput = document.getElementById('vioraInput');
+    const conversation = [
+      {role:'system',content:'You are Viora AI, a friendly and knowledgeable lawn & yard care assistant for Yard Services. You answer questions about lawn mowing, gardening, landscaping, tree care, weed control, pest control for yards, seasonal yard maintenance, and anything else related to outdoor home services. Keep answers helpful, concise, and practical. If you don\'t know something, say so honestly.'}
+    ];
     vioraInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') sendViora(); });
     function addVioraMsg(text, sender, isTyping) {
       const wrapper = document.createElement('div');
@@ -119,18 +122,23 @@
       const msg = vioraInput.value.trim();
       if (!msg) return;
       addVioraMsg(msg, 'user');
+      conversation.push({role:'user', content:msg});
       vioraInput.value = '';
       const typingEl = addVioraMsg('', 'bot', true);
       try {
         const r = await fetch('/api/ai/chat', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({message: msg})
+          body: JSON.stringify({messages: conversation})
         });
         const d = await r.json();
         typingEl.remove();
-        if (d.reply) addVioraMsg(d.reply, 'bot');
-        else addVioraMsg('❌ ' + (d.error || 'AI unavailable'), 'bot');
+        if (d.reply) {
+          addVioraMsg(d.reply, 'bot');
+          conversation.push({role:'assistant', content:d.reply});
+        } else {
+          addVioraMsg('❌ ' + (d.error || 'AI unavailable'), 'bot');
+        }
       } catch(e) {
         typingEl.remove();
         addVioraMsg('❌ Network error. Check your connection.', 'bot');

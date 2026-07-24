@@ -1739,10 +1739,21 @@ _NVIDIA_ENDPOINT = "https://integrate.api.nvidia.com/v1/chat/completions"
 @login_required
 def ai_chat():
     data = request.get_json(silent=True)
-    if not data or "message" not in data:
-        return {"error": "Missing message"}, 400
+    if not data:
+        return {"error": "Missing data"}, 400
     if not NVIDIA_API_KEY:
         return {"error": "AI not configured"}, 503
+    messages = data.get("messages")
+    if not messages or not isinstance(messages, list):
+        if "message" not in data:
+            return {"error": "Missing message"}, 400
+        messages = [
+            {
+                "role": "system",
+                "content": "You are Viora AI, a friendly and knowledgeable lawn & yard care assistant for Yard Services. You answer questions about lawn mowing, gardening, landscaping, tree care, weed control, pest control for yards, seasonal yard maintenance, and anything else related to outdoor home services. Keep answers helpful, concise, and practical. If you don't know something, say so honestly.",
+            },
+            {"role": "user", "content": data["message"]},
+        ]
     try:
         resp = requests.post(
             _NVIDIA_ENDPOINT,
@@ -1751,18 +1762,12 @@ def ai_chat():
                 "Content-Type": "application/json",
             },
             json={
-                "model": "meta/llama-3.1-70b-instruct",
-                "messages": [
-                    {
-                        "role": "system",
-                        "content": "You are Viora AI, a friendly and knowledgeable lawn & yard care assistant for Yard Services. You answer questions about lawn mowing, gardening, landscaping, tree care, weed control, pest control for yards, seasonal yard maintenance, and anything else related to outdoor home services. Keep answers helpful, concise, and practical. If you don't know something, say so honestly.",
-                    },
-                    {"role": "user", "content": data["message"]},
-                ],
-                "temperature": 0.7,
-                "max_tokens": 512,
+                "model": "meta/llama-3.1-8b-instruct",
+                "messages": messages,
+                "temperature": 0.5,
+                "max_tokens": 256,
             },
-            timeout=60,
+            timeout=30,
         )
         resp.raise_for_status()
         result = resp.json()
