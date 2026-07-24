@@ -1858,7 +1858,7 @@ def ai_chat():
         for s in services_list
     )
 
-system_prompt = (
+    system_prompt = (
         "You are Viora AI, a friendly and professional lawn & yard care assistant for Yard Services."
         "\n\n"
         "WRITING STYLE — Be warm, natural, and conversational:"
