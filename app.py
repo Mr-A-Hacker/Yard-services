@@ -473,24 +473,20 @@ def init_db():
         WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Driveway Sweeping');
 
         INSERT INTO services (name, price, description, image_url)
-        SELECT 'Mulching', 50.00, 'Fresh mulch installation in garden beds, around trees, and along pathways to retain moisture, suppress weeds, and give your yard a clean finished look. We remove old mulch, prep the area, and spread new mulch evenly for a professional appearance. Responsible neighbor teens will be doing the work.', 'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=600&q=80'
-        WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Mulching');
-
-        INSERT INTO services (name, price, description, image_url)
         SELECT 'Gutter Cleaning', 45.00, 'Safe and thorough cleaning of your home gutters and downspouts. We remove leaves, twigs, dirt, and blockages to prevent water damage and clogs. We also check that downspouts are clear and flowing properly before we finish. Responsible neighbor teens will be doing the work.', 'https://images.unsplash.com/photo-1603105037880-880cd4edfb0d?w=600&q=80'
         WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Gutter Cleaning');
-
-        INSERT INTO services (name, price, description, image_url)
-        SELECT 'Patio Power Washing', 55.00, 'High-pressure washing of patios, decks, walkways, driveways, and siding to remove built-up dirt, moss, mildew, and stains. We restore the original look of your outdoor surfaces and leave them fresh and clean. Responsible neighbor teens will be doing the work.', 'https://images.unsplash.com/photo-1584483766112-9b33e1f177ce?w=600&q=80'
-        WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Patio Power Washing');
 
         INSERT INTO services (name, price, description, image_url)
         SELECT 'Garden Planting', 40.00, 'Professional planting of flowers, shrubs, vegetables, and decorative plants in your garden beds or containers. We prepare the soil, dig proper holes, plant with care, and water everything in. Perfect for refreshing your garden for spring or fall. Responsible neighbor teens will be doing the work.', 'https://images.unsplash.com/photo-1558428915-31fb7d7b61a5?w=600&q=80'
         WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Garden Planting');
 
         INSERT INTO services (name, price, description, image_url)
-        SELECT 'Fence Staining', 65.00, 'Complete fence cleaning and staining to protect wood surfaces from weather, rot, and fading. We lightly power wash, let dry, then apply an even coat of high-quality stain or sealant. Your fence will look refreshed and be protected for seasons to come. Responsible neighbor teens will be doing the work.', 'https://images.unsplash.com/photo-1602872030214-96526f26a23f?w=600&q=80'
-        WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Fence Staining');
+        SELECT 'Wood Pickup', 40.00, 'We haul away fallen branches, cut tree limbs, scrap lumber, and piled brush from your property. Our team loads, cleans up, and disposes of everything so your yard stays safe and tidy. Perfect after a storm or landscaping project. Responsible neighbor teens will be doing the work.', 'https://images.unsplash.com/photo-1599220148469-d0a06c9339e7?w=600&q=80'
+        WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Wood Pickup');
+
+        INSERT INTO services (name, price, description, image_url)
+        SELECT 'Hardscape Weed Control', 40.00, 'Targeted weed removal from patios, walkways, driveways, retaining walls, and stone pathways. We pull weeds from cracks and joints, sweep away debris, and apply treatment to keep hard surfaces clean and weed-free for longer. Responsible neighbor teens will be doing the work.', 'https://images.unsplash.com/photo-1621255111168-c8d19a6e8d88?w=600&q=80'
+        WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Hardscape Weed Control');
 
         CREATE TABLE IF NOT EXISTS requests (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -677,6 +673,28 @@ def init_db():
         CREATE INDEX IF NOT EXISTS idx_blocked_days_date   ON blocked_days(date);
         CREATE INDEX IF NOT EXISTS idx_blocked_time_slots_date ON blocked_time_slots(date);
     """)
+
+    conn.commit()
+
+    # ------------------------------------------------------------
+    # MIGRATION — remove old services and add new ones for existing DBs
+    # ------------------------------------------------------------
+    removed_services = ["Mulching", "Patio Power Washing", "Fence Staining"]
+    for svc_name in removed_services:
+        cursor.execute("DELETE FROM request_services WHERE service_name = ?", (svc_name,))
+        cursor.execute("DELETE FROM services WHERE name = ?", (svc_name,))
+        print(f"Migrated: removed service '{svc_name}'")
+
+    new_services = [
+        ("Wood Pickup", 40.00, "We haul away fallen branches, cut tree limbs, scrap lumber, and piled brush from your property. Our team loads, cleans up, and disposes of everything so your yard stays safe and tidy. Perfect after a storm or landscaping project. Responsible neighbor teens will be doing the work.", "https://images.unsplash.com/photo-1599220148469-d0a06c9339e7?w=600&q=80"),
+        ("Hardscape Weed Control", 40.00, "Targeted weed removal from patios, walkways, driveways, retaining walls, and stone pathways. We pull weeds from cracks and joints, sweep away debris, and apply treatment to keep hard surfaces clean and weed-free for longer. Responsible neighbor teens will be doing the work.", "https://images.unsplash.com/photo-1621255111168-c8d19a6e8d88?w=600&q=80"),
+    ]
+    for name, price, desc, img in new_services:
+        cursor.execute(
+            "INSERT OR IGNORE INTO services (name, price, description, image_url) VALUES (?, ?, ?, ?)",
+            (name, price, desc, img),
+        )
+        print(f"Migrated: added service '{name}'")
 
     conn.commit()
     mark_db_dirty()
