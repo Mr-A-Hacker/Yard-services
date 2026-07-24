@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+  <title>Booking Confirmed — Yard Services</title>
+
+  <script>
+    atOptions = {
+      key: 'd0fd3067ca9fd49b0435270473b5aef6',
+      format: 'iframe',
+      height: 60,
+      width: 468,
+      params: {}
+    };
+  </script>
+  <script src="https://www.highperformanceformat.com/d0fd3067ca9fd49b0435270473b5aef6/invoke.js"></script>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Bitter:wght@700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='themes/' + active_theme + '.css') }}">
+
+  <style>
+    body {
+      {% if bg_image %}
+        background-image: url('{{ bg_image }}');
+        background-position: {{ bg_position }};
+        background-size: {{ bg_size }};
+        background-repeat: {{ bg_repeat }};
+        background-attachment: {{ bg_attachment }};
+      {% endif %}
+    }
+  </style>
+
+  <style>
+    :root {
+      --g-dark:   #1a5c2a;
+      --g-mid:    #2d8a3e;
+      --g-bright: #4caf50;
+      --g-light:  #c8e6c9;
+      --g-pale:   #f1f8f2;
+      --gold:     #f5a623;
+      --gold-soft:#fff8e1;
+      --gold-dark:#c47f00;
+      --red:      #e53935;
+      --blue:     #1565c0;
+      --sky-blue: #e3f2fd;
+      --amber:    #fff3cd;
+      --white:    #ffffff;
+      --ink:      #1a2e1c;
+      --muted:    #6a8f70;
+      --shadow:   0 8px 36px rgba(26,92,42,0.16);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background-color: var(--g-pale);
+      min-height: 100vh;
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        170deg,
+        rgba(76,175,80,0.05) 0px, rgba(76,175,80,0.05) 20px,
+        transparent 20px, transparent 40px
+      );
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Navbar ── */
+    .top-nav {
+      background: linear-gradient(90deg, var(--g-dark), var(--g-mid));
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 3px 16px rgba(0,0,0,0.2);
+      position: relative;
+      z-index: 10;
+    }
+
+    .top-nav .brand {
+      font-family: 'Bitter', serif;
+      font-size: 1.2rem;
+      font-weight: 900;
+      color: white;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .top-nav .brand .icon-badge {
+      background: var(--gold);
+      color: var(--g-dark);
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+    }
+
+    /* ── Ad banner ── */
+    .ad-wrap {
+      display: flex;
+      justify-content: center;
+      padding: 18px 0 4px;
+      position: relative;
+      z-index: 1;
+      opacity: 0.85;
+    }
+
+    /* ── Page wrapper ── */
+    .page-wrap {
+      position: relative;
+      z-index: 1;
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 28px 16px 60px;
+    }
+
+    /* ── Success hero banner ── */
+    .success-hero {
+      background: linear-gradient(135deg, var(--g-dark) 0%, var(--g-mid) 55%, var(--g-bright) 100%);
+      border-radius: 20px 20px 0 0;
+      padding: 36px 36px 30px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .success-hero::before {
+      content: '🌿';
+      font-size: 130px;
+      position: absolute;
+      right: -20px;
+      top: -20px;
+      opacity: 0.1;
+      transform: rotate(-15deg);
+    }
+
+    .success-hero::after {
+      content: '✂️';
+      font-size: 90px;
+      position: absolute;
+      left: -10px;
+      bottom: -20px;
+      opacity: 0.08;
+      transform: rotate(10deg);
+    }
+
+    .checkmark-ring {
+      width: 72px;
+      height: 72px;
+      background: rgba(255,255,255,0.15);
+      border: 3px solid rgba(255,255,255,0.35);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      margin: 0 auto 16px;
+      animation: popIn 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.1s both;
+    }
+
+    .success-hero h2 {
+      font-family: 'Bitter', serif;
+      font-size: 1.9rem;
+      font-weight: 900;
+      color: white;
+      margin: 0 0 8px;
+    }
+
+    .success-hero p {
+      color: var(--g-light);
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .gold-strip {
+      height: 5px;
+      background: linear-gradient(90deg, var(--gold), #ffe082, var(--gold));
+    }
+
+    /* ── Main card ── */
+    .confirm-card {
+      background: var(--white);
+      border-radius: 0 0 20px 20px;
+      border: 2px solid var(--g-bright);
+      border-top: none;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      animation: fadeUp 0.4s ease 0.2s both;
+    }
+
+    /* ── Section blocks ── */
+    .info-section {
+      padding: 26px 32px;
+      border-bottom: 1.5px solid var(--g-light);
+    }
+
+    .info-section:last-of-type { border-bottom: none; }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-family: 'Bitter', serif;
+      font-size: 1rem;
+      font-weight: 900;
+      color: var(--g-dark);
+      margin-bottom: 16px;
+    }
+
+    .section-title .s-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+
+    .icon-green { background: linear-gradient(135deg, var(--g-bright), var(--g-mid)); }
+    .icon-gold  { background: linear-gradient(135deg, #ffe082, var(--gold)); }
+    .icon-blue  { background: linear-gradient(135deg, #64b5f6, var(--blue)); }
+    .icon-red   { background: linear-gradient(135deg, #ef9a9a, var(--red)); }
+
+    /* ── Info rows ── */
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px dashed #e8f5e9;
+      font-size: 0.93rem;
+    }
+
+    .info-row:last-child { border-bottom: none; }
+
+    .info-row .label {
+      font-weight: 800;
+      color: var(--muted);
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .info-row .value {
+      font-weight: 700;
+      color: var(--ink);
+      text-align: right;
+    }
+
+    /* ── Price highlight ── */
+    .price-highlight {
+      background: linear-gradient(135deg, var(--g-pale), #e0f2e1);
+      border: 2px solid var(--g-bright);
+      border-radius: 14px;
+      padding: 18px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 14px;
+    }
+
+    .price-highlight .price-label {
+      font-family: 'Bitter', serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--g-dark);
+    }
+
+    .price-highlight .price-value {
+      font-family: 'Bitter', serif;
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: var(--g-dark);
+    }
+
+    /* FIX: discount_token was referenced in template but not passed from app.py —
+       show token from the 'token' variable which IS passed */
+    .discount-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--gold-soft);
+      border: 1.5px solid var(--gold);
+      color: var(--gold-dark);
+      padding: 5px 14px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── Payment alert boxes ── */
+    .alert-custom {
+      border-radius: 12px;
+      padding: 14px 18px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      line-height: 1.5;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      margin-top: 12px;
+    }
+
+    .alert-custom .alert-icon { font-size: 1.2rem; flex-shrink: 0; margin-top: 1px; }
+
+    .alert-info-custom {
+      background: var(--sky-blue);
+      border-left: 4px solid var(--blue);
+      color: #0d3d7a;
+    }
+
+    .alert-warning-custom {
+      background: var(--amber);
+      border-left: 4px solid var(--gold);
+      color: #7a4f00;
+    }
+
+    .alert-default-custom {
+      background: var(--g-pale);
+      border-left: 4px solid var(--g-bright);
+      color: var(--g-dark);
+    }
+
+    /* ── Verification code ── */
+    .vcode-wrap {
+      background: linear-gradient(135deg, var(--g-dark), var(--g-mid));
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+      margin-top: 12px;
+    }
+
+    .vcode-label {
+      color: var(--g-light);
+      font-size: 0.8rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 12px;
+    }
+
+    .vcode-digits {
+      font-family: 'Courier New', monospace;
+      font-size: 2.8rem;
+      font-weight: 900;
+      color: var(--white);
+      letter-spacing: 10px;
+      text-shadow: 0 2px 12px rgba(0,0,0,0.3);
+      background: rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 12px 20px;
+      display: inline-block;
+      border: 2px solid rgba(255,255,255,0.2);
+    }
+
+    .vcode-hint {
+      color: var(--g-light);
+      font-size: 0.82rem;
+      font-weight: 700;
+      margin-top: 12px;
+    }
+
+    /* ── CTA button ── */
+    .btn-dashboard {
+      display: block;
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, var(--g-mid), var(--g-dark));
+      color: white;
+      font-family: 'Bitter', serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 12px;
+      text-align: center;
+      text-decoration: none;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 4px 18px rgba(26,92,42,0.35);
+    }
+
+    .btn-dashboard::before {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+      transition: left 0.4s;
+    }
+
+    .btn-dashboard:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 26px rgba(26,92,42,0.45);
+      color: white;
+    }
+
+    .btn-dashboard:hover::before { left: 100%; }
+
+    /* ── Footer ── */
+    footer {
+      position: relative;
+      z-index: 1;
+      background: var(--g-dark);
+      color: var(--g-light);
+      text-align: center;
+      padding: 16px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      margin-top: 40px;
+    }
+
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.5); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="top-nav">
+    <a class="brand" href="{{ url_for('dashboard') }}">
+      <span class="icon-badge">🌿</span>
+      Yard Services
+    </a>
+  </nav>
+
+  <!-- Ad banner -->
+  <div class="ad-wrap"></div>
+
+  <div class="page-wrap">
+
+    <!-- Success hero -->
+    <div class="success-hero">
+      <div class="checkmark-ring">✅</div>
+      <h2>Booking Confirmed!</h2>
+      <p>Thank you for choosing Yard Services — we'll see you soon 🌱</p>
+    </div>
+    <div class="gold-strip"></div>
+
+    <div class="confirm-card">
+
+      <!-- ── Service Summary ── -->
+      <div class="info-section">
+        <div class="section-title">
+          <span class="s-icon icon-green">📦</span> Service Summary
+        </div>
+
+        {% if services and services|length > 1 %}
+          {% for svc in services %}
+            <div class="info-row">
+              <span class="label">{{ svc.name }}</span>
+              <span class="value">${{ "%.2f"|format(svc.price|float) }}</span>
+            </div>
+          {% endfor %}
+          <div class="info-row">
+            <span class="label">Services Subtotal</span>
+            <span class="value">${{ "%.2f"|format(base_price|float) }}</span>
+          </div>
+        {% else %}
+          <div class="info-row">
+            <span class="label">Service</span>
+            <span class="value">{{ service_name }}</span>
+          </div>
+
+          <div class="info-row">
+            <span class="label">Base Price</span>
+            <span class="value">${{ "%.2f"|format(base_price|float) }}</span>
+          </div>
+        {% endif %}
+
+        {% if discount > 0 %}
+        <div class="info-row">
+          <span class="label">Discount</span>
+          <span class="value">
+            <span class="discount-badge">🎟 {{ discount }}% OFF
+              {# FIX: original used discount_token which is never passed from app.py;
+                 use 'token' which is the correct variable name in confirmation() #}
+              {% if token %} — {{ token }}{% endif %}
+            </span>
+          </span>
+        </div>
+        {% endif %}
+
+        {% if non_member_fee %}
+        <div class="info-row">
+          <span class="label">Non-member fee</span>
+          <span class="value" style="color:#c0392b;">+$7.99</span>
+        </div>
+        {% endif %}
+
+        <div class="price-highlight">
+          <span class="price-label">💵 Final Price</span>
+          <span class="price-value">${{ "%.2f"|format(final_price|float) }}</span>
+        </div>
+      </div>
+
+      <!-- ── Payment ── -->
+      <div class="info-section">
+        <div class="section-title">
+          <span class="s-icon icon-gold">💳</span> Payment Method
+        </div>
+
+        <div class="info-row">
+          <span class="label">Method</span>
+          <span class="value">{{ payment | capitalize }}</span>
+        </div>
+
+        {% if payment | lower == "zelle" %}
+          <div class="alert-custom alert-info-custom">
+            <span class="alert-icon">📱</span>
+            <div>We'll contact you shortly with Zelle payment instructions.
+            Please <strong>do not send any payment</strong> until we confirm the details.</div>
+          </div>
+          {% if token %}
+          <div class="alert-custom alert-info-custom" style="margin-top:8px;">
+            <span class="alert-icon">🔖</span>
+            <div><strong>Payment Token:</strong> {{ token }}<br>
+            Use this code in the memo when sending your Zelle payment on arrival.</div>
+          </div>
+          {% endif %}
+
+        {% elif payment | lower == "cash" %}
+          <div class="alert-custom alert-warning-custom">
+            <span class="alert-icon">💵</span>
+            <div>You'll pay in person. Our worker will confirm the amount when they arrive.</div>
+          </div>
+
+        {% else %}
+          <div class="alert-custom alert-default-custom">
+            <span class="alert-icon">✅</span>
+            <div>Your payment will be processed as selected. We'll follow up if needed.</div>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- ── Verification Code ── -->
+      <div class="info-section">
+        <div class="section-title">
+          <span class="s-icon icon-blue">🔐</span> Your Verification Code
+        </div>
+        <p style="font-size:0.9rem;color:var(--muted);font-weight:700;margin-bottom:0;">
+          Our worker will ask for this when they arrive. Keep it handy!
+        </p>
+        <div class="vcode-wrap">
+          <div class="vcode-label">6-Digit Confirmation Code</div>
+          <div class="vcode-digits">{{ verification_code }}</div>
+          <div class="vcode-hint">📋 Screenshot this for easy reference</div>
+        </div>
+      </div>
+
+      <!-- ── CTA ── -->
+      <div class="info-section">
+        <a href="{{ url_for('dashboard') }}" class="btn-dashboard">
+          🏠 Return to Dashboard
+        </a>
+        <a href="{{ url_for('history') }}" class="btn-dashboard"
+           style="margin-top:10px;background:transparent;color:var(--g-dark);border:2.5px solid var(--g-bright);box-shadow:none;">
+          📋 View Booking History
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+  <footer>
+    © 2025 Yard Services. All rights reserved. 🌿
+  </footer>
+
+</body>
+</html>

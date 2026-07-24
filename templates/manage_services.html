@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+  <title>Search Services — Yard Services Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Bitter:ital,wght@0,700;0,900;1,700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='themes/' + active_theme + '.css') }}">
+  <style>
+    :root {
+      --g-dark: #1a5c2a; --g-mid: #2d8a3e; --g-bright: #4caf50;
+      --g-light: #c8e6c9; --g-pale: #f1f8f2; --gold: #f5a623;
+      --red: #e53935; --blue: #1565c0; --white: #ffffff;
+      --ink: #1a2e1c; --muted: #6a8f70; --radius: 14px;
+      --shadow-sm: 0 2px 12px rgba(26,92,42,0.10);
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: var(--g-pale); color: var(--ink); min-height: 100vh;
+      {% if bg_image %}
+        background-image: url('{{ bg_image }}'); background-position: {{ bg_position }};
+        background-size: {{ bg_size }}; background-repeat: {{ bg_repeat }};
+        background-attachment: {{ bg_attachment }};
+      {% endif %}
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0;
+      background: repeating-linear-gradient(170deg, rgba(76,175,80,0.04) 0px, rgba(76,175,80,0.04) 20px, transparent 20px, transparent 40px);
+      pointer-events: none; z-index: 0;
+    }
+    .page-body { position: relative; z-index: 1; }
+    .top-nav {
+      background: linear-gradient(90deg, var(--g-dark), var(--g-mid));
+      padding: 14px 28px; display: flex; align-items: center;
+      justify-content: space-between; box-shadow: 0 3px 18px rgba(0,0,0,0.25);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .top-nav .brand { font-family: 'Bitter', serif; font-size: 1.3rem; font-weight: 900; color: var(--white); text-decoration: none; display: flex; align-items: center; gap: 10px; }
+    .top-nav .brand .icon-badge { background: var(--gold); color: var(--g-dark); width: 34px; height: 34px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; font-size: 16px; }
+    .top-nav a.nav-pill { color: var(--g-light); font-size: 0.85rem; font-weight: 700; text-decoration: none; padding: 6px 14px; border-radius: 999px; border: 1.5px solid rgba(255,255,255,0.2); transition: background 0.2s; }
+    .top-nav a.nav-pill:hover { background: rgba(255,255,255,0.15); color: white; }
+    .dashboard-wrap { max-width: 1200px; margin: 0 auto; padding: 36px 24px 60px; }
+    .page-title { font-family: 'Bitter', serif; font-size: 2rem; font-weight: 900; color: var(--g-dark); margin-bottom: 4px; }
+    .page-subtitle { color: var(--muted); font-weight: 600; font-size: 0.95rem; margin-bottom: 36px; }
+    .section-head { display: flex; align-items: center; gap: 10px; margin: 44px 0 18px; }
+    .section-head .icon-chip { width: 38px; height: 38px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+    .chip-blue { background: linear-gradient(135deg, #64b5f6, var(--blue)); }
+    .section-head h3 { font-family: 'Bitter', serif; font-size: 1.3rem; font-weight: 900; color: var(--g-dark); margin: 0; }
+    .section-divider { height: 3px; background: linear-gradient(90deg, var(--g-bright), var(--g-light), transparent); border-radius: 2px; margin-bottom: 22px; }
+    .admin-card { background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow-sm); border: 1.5px solid var(--g-light); overflow: hidden; }
+    .admin-card .card-body { padding: 24px; }
+    .search-box { display: flex; gap: 12px; margin-bottom: 24px; }
+    .search-box input { flex: 1; border: 2px solid var(--g-light); border-radius: 10px; padding: 12px 16px; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 0.95rem; }
+    .search-box input:focus { outline: none; border-color: var(--g-bright); box-shadow: 0 0 0 3px rgba(76,175,80,0.18); }
+    .search-box button { background: linear-gradient(135deg, var(--g-mid), var(--g-dark)); color: white; font-weight: 800; border: none; border-radius: 10px; padding: 12px 24px; cursor: pointer; transition: transform 0.15s; }
+    .search-box button:hover { transform: translateY(-1px); }
+    .yard-table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+    .yard-table th { background: var(--g-dark); color: white; font-weight: 800; text-align: left; padding: 12px 14px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    .yard-table td { padding: 12px 14px; border-bottom: 1px solid var(--g-light); vertical-align: middle; }
+    .yard-table tbody tr:hover { background: rgba(76,175,80,0.05); }
+    .badge-gold { background: linear-gradient(135deg, #ffe082, var(--gold)); color: var(--g-dark); font-weight: 800; padding: 3px 12px; border-radius: 999px; font-size: 0.85rem; }
+    .svc-thumb { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 2px solid var(--g-light); }
+    .action-group { display: flex; gap: 6px; flex-wrap: wrap; }
+    .btn-sm-custom { display: inline-block; padding: 5px 14px; border-radius: 999px; font-size: 0.8rem; font-weight: 800; text-decoration: none; border: none; cursor: pointer; transition: transform 0.15s; }
+    .btn-sm-custom:hover { transform: translateY(-1px); }
+    .btn-sm-edit { background: var(--sky, #e3f2fd); color: var(--blue); }
+    .btn-sm-delete { background: #ffebee; color: var(--red); }
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--muted); }
+    .empty-icon { font-size: 48px; margin-bottom: 12px; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-in { animation: fadeIn 0.4s ease both; }
+  </style>
+</head>
+<body>
+  <nav class="top-nav">
+    <a class="brand" href="{{ url_for('admin_dashboard') }}">
+      <span class="icon-badge">🌿</span> Yard Services Admin
+    </a>
+    <div class="nav-links">
+      <a href="{{ url_for('admin_dashboard') }}" class="nav-pill">⬅ Dashboard</a>
+    </div>
+  </nav>
+  <div class="page-body">
+    <div class="dashboard-wrap">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}{% for category, message in messages %}
+          <div class="alert alert-{{ category }} fade-in" style="border-radius:10px;font-weight:700;">{{ message }}</div>
+        {% endfor %}{% endif %}
+      {% endwith %}
+
+      <h1 class="page-title fade-in" style="animation-delay:0.05s;">🔍 Search Services</h1>
+      <p class="page-subtitle fade-in" style="animation-delay:0.1s;">Find and manage your yard service offerings.</p>
+
+      <div class="section-head fade-in" style="animation-delay:0.15s;">
+        <span class="icon-chip chip-blue">🔎</span>
+        <h3>Search</h3>
+      </div>
+      <div class="section-divider" style="animation-delay:0.15s;"></div>
+
+      <div class="admin-card fade-in" style="animation-delay:0.2s;">
+        <div class="card-body">
+          <form method="GET" action="{{ url_for('admin_search_services') }}" class="search-box">
+            <input type="text" name="q" placeholder="Search by name or description..." value="{{ query }}" autofocus>
+            <button type="submit">Search</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="section-head fade-in" style="animation-delay:0.25s;">
+        <span class="icon-chip chip-blue">📋</span>
+        <h3>Results {% if query %}<span style="font-weight:400;color:var(--muted);font-size:0.9rem;">&nbsp;for "{{ query }}"</span>{% endif %}</h3>
+      </div>
+      <div class="section-divider" style="animation-delay:0.25s;"></div>
+
+      <div class="admin-card fade-in" style="animation-delay:0.3s;">
+        <div class="card-body" style="padding:0;">
+          <table class="yard-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Price</th>
+                <th>Description</th>
+                <th>Image</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for s in services %}
+              <tr>
+                <td style="color:var(--muted);">{{ s.id }}</td>
+                <td><strong>{{ s.name }}</strong></td>
+                <td><span class="badge-gold">${{ "%.2f"|format(s.price|float) }}</span></td>
+                <td style="max-width:260px;color:#555;">{{ s.description or '—' }}</td>
+                <td>
+                  {% if s.image_url %}
+                    <img src="{{ s.image_url }}" class="svc-thumb">
+                  {% else %}
+                    <span style="color:var(--muted);font-size:0.82rem;">No image</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <div class="action-group">
+                    <a href="{{ url_for('admin_edit_service', service_id=s.id) }}" class="btn-sm-custom btn-sm-edit">✏️ Edit</a>
+                    <form method="POST" action="{{ url_for('admin_delete_service', service_id=s.id) }}" onsubmit="return confirm('Delete this service?');" style="display:inline;">
+                      <button type="submit" class="btn-sm-custom btn-sm-delete">🗑️ Delete</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="6">
+                  <div class="empty-state">
+                    <div class="empty-icon">🌱</div>
+                    {% if query %}No services found matching "{{ query }}".{% else %}No services available yet.{% endif %}
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
