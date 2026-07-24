@@ -1818,31 +1818,27 @@ def ai_chat():
 
 def _web_search(query):
     try:
-        url = "https://api.duckduckgo.com/"
-        params = {"q": query, "format": "json", "no_html": 1, "skip_disambig": 1}
-        resp = requests.get(url, params=params, timeout=10)
-        data = resp.json()
-        parts = []
-        if data.get("AbstractText"):
-            parts.append(data["AbstractText"])
-        if data.get("Answer"):
-            parts.append(data["Answer"])
-        for topic in data.get("RelatedTopics", []):
-            if isinstance(topic, dict) and topic.get("Text"):
-                parts.append(topic["Text"])
-                if len(parts) >= 6:
-                    break
-        if parts:
-            return "\n\n".join(parts[:5])
-        fallback = requests.get(
+        import re
+        resp = requests.get(
             "https://html.duckduckgo.com/html/",
             params={"q": query},
             timeout=10,
+            headers={"User-Agent": "Mozilla/5.0"},
         )
-        import re
-        snippets = re.findall(r'<a[^>]+class="result__a"[^>]*>([^<]+)</a>', fallback.text)
-        if snippets:
-            return "\n".join(f"• {s}" for s in snippets[:8])
+        results = re.findall(
+            r'<a[^>]+class="result__a"[^>]*>([^<]+)</a>',
+            resp.text,
+        )
+        snippets = re.findall(
+            r'<a[^>]+class="result__snippet"[^>]*>([^<]+)</a>',
+            resp.text,
+        )
+        if results:
+            lines = []
+            for i, title in enumerate(results[:8]):
+                desc = snippets[i] if i < len(snippets) else ""
+                lines.append(f"• **{title}**" + (f" — {desc}" if desc else ""))
+            return "\n".join(lines)
         return None
     except Exception as e:
         print(f"Web search error: {e}")
