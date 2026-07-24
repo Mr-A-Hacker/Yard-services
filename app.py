@@ -2140,6 +2140,7 @@ def admin_update_finance():
         conn.execute("UPDATE finances SET value = ?, updated_at = CURRENT_TIMESTAMP WHERE key = ?", (amount, key))
 
     conn.commit()
+    mark_db_dirty()
     conn.close()
     flash("Finance updated.", "success")
     return redirect(url_for("admin_dashboard"))
