@@ -84,7 +84,7 @@
           <button onclick="quickAction('What\'s your price list?')">💰 Pricing</button>
           <button onclick="quickAction('Help me choose a service')">🤔 Help</button>
           <button onclick="quickAction('/search latest lawn care tips')" title="Search the web">🌐 Search</button>
-          <button onclick="clearHistory()" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.06);color:rgba(255,255,255,0.25);">🗑️ Clear</button>
+          <button onclick="clearHistory()" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.06);color:rgba(255,255,255,0.25);">➕ New Chat</button>
         </div>
       </div>
 
@@ -130,7 +130,6 @@
     }
 
     function clearHistory() {
-      if (!confirm('Clear chat history?')) return;
       localStorage.removeItem(STORAGE_KEY);
       conversation.length = 0;
       conversation.push({role:'system',content:'You are Viora AI, a friendly lawn & yard care assistant for Yard Services. Answer concisely.'});
