@@ -781,28 +781,6 @@ def init_db():
     """)
 
     conn.commit()
-
-    # ------------------------------------------------------------
-    # MIGRATION — remove old services and add new ones for existing DBs
-    # ------------------------------------------------------------
-    removed_services = ["Mulching", "Patio Power Washing", "Fence Staining"]
-    for svc_name in removed_services:
-        cursor.execute("DELETE FROM request_services WHERE service_name = ?", (svc_name,))
-        cursor.execute("DELETE FROM services WHERE name = ?", (svc_name,))
-        print(f"Migrated: removed service '{svc_name}'")
-
-    new_services = [
-        ("Wood Pickup", 40.00, "We haul away fallen branches, cut tree limbs, scrap lumber, and piled brush from your property. Our team loads, cleans up, and disposes of everything so your yard stays safe and tidy. Perfect after a storm or landscaping project. Responsible neighbor teens will be doing the work.", "https://images.unsplash.com/photo-1599220148469-d0a06c9339e7?w=600&q=80"),
-        ("Hardscape Weed Control", 40.00, "Targeted weed removal from patios, walkways, driveways, retaining walls, and stone pathways. We pull weeds from cracks and joints, sweep away debris, and apply treatment to keep hard surfaces clean and weed-free for longer. Responsible neighbor teens will be doing the work.", "https://images.unsplash.com/photo-1621255111168-c8d19a6e8d88?w=600&q=80"),
-    ]
-    for name, price, desc, img in new_services:
-        cursor.execute(
-            "INSERT OR IGNORE INTO services (name, price, description, image_url) VALUES (?, ?, ?, ?)",
-            (name, price, desc, img),
-        )
-        print(f"Migrated: added service '{name}'")
-
-    conn.commit()
     mark_db_dirty()
 
 
