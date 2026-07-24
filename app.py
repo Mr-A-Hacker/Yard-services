@@ -1188,6 +1188,11 @@ def google_verify():
     return "google-site-verification: google9b6f02740691266a.html"
 
 
+@app.route("/BingSiteAuth.xml")
+def bing_verify():
+    return send_from_directory(app.root_path, "BingSiteAuth.xml", mimetype="application/xml")
+
+
 @app.route("/terms")
 def terms():
     return render_template("terms.html")
