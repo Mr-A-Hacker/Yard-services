@@ -1757,8 +1757,10 @@ def ai_chat():
         "You are Viora AI, a friendly lawn & yard care assistant for Yard Services. "
         "Answer concisely and helpfully.\n\n"
         "AVAILABLE SERVICES:\n" + services_str + "\n\n"
-        "When the user wants to book, direct them to use the \"Request a Service\" button in their dashboard "
-        "or tell them to visit the Request Service page. Do NOT create bookings yourself."
+        "When the user asks about current events, weather, or things you're unsure about, "
+        "use the web_search tool to look it up. "
+        "When the user wants to book, direct them to use the \"Request a Service\" button in their dashboard. "
+        "Do NOT create bookings yourself."
     )
 
     messages = data.get("messages", [])
@@ -1770,6 +1772,21 @@ def ai_chat():
     else:
         messages.insert(0, {"role": "system", "content": system_prompt})
 
+    tools = [{
+        "type": "function",
+        "function": {
+            "name": "web_search",
+            "description": "Search the web for current information. Use when you need recent news, weather, facts, or anything you're unsure about.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "The search query"}
+                },
+                "required": ["query"]
+            }
+        }
+    }]
+
     try:
         resp = requests.post(
             _NVIDIA_ENDPOINT,
@@ -1780,18 +1797,68 @@ def ai_chat():
             json={
                 "model": "meta/llama-3.1-8b-instruct",
                 "messages": messages,
+                "tools": tools,
+                "tool_choice": "auto",
                 "temperature": 0.5,
-                "max_tokens": 300,
+                "max_tokens": 400,
             },
             timeout=30,
         )
         resp.raise_for_status()
         result = resp.json()
-        reply = result["choices"][0]["message"]["content"] or "Got it! How can I help?"
+        choice = result["choices"][0]
+        msg = choice["message"]
+
+        if choice.get("finish_reason") == "tool_calls" and msg.get("tool_calls"):
+            tc = msg["tool_calls"][0]["function"]
+            if tc["name"] == "web_search":
+                args = json.loads(tc["arguments"])
+                query = args.get("query", "")
+                if query:
+                    results = _web_search(query)
+                    if results:
+                        return {"reply": f"🔍 **Web search results for:** {query}\n\n{results}"}
+                    return {"reply": f"❌ Couldn't find results for \"{query}\"."}
+                return {"reply": "No search query provided."}
+
+        reply = msg.get("content") or "Got it! How can I help?"
         return {"reply": reply}
     except Exception as exc:
         print(f"AI chat error: {exc}")
         return {"error": "AI service unavailable"}, 502
+
+
+def _web_search(query):
+    try:
+        url = "https://api.duckduckgo.com/"
+        params = {"q": query, "format": "json", "no_html": 1, "skip_disambig": 1}
+        resp = requests.get(url, params=params, timeout=10)
+        data = resp.json()
+        parts = []
+        if data.get("AbstractText"):
+            parts.append(data["AbstractText"])
+        if data.get("Answer"):
+            parts.append(data["Answer"])
+        for topic in data.get("RelatedTopics", []):
+            if isinstance(topic, dict) and topic.get("Text"):
+                parts.append(topic["Text"])
+                if len(parts) >= 6:
+                    break
+        if parts:
+            return "\n\n".join(parts[:5])
+        fallback = requests.get(
+            "https://html.duckduckgo.com/html/",
+            params={"q": query},
+            timeout=10,
+        )
+        import re
+        snippets = re.findall(r'<a[^>]+class="result__a"[^>]*>([^<]+)</a>', fallback.text)
+        if snippets:
+            return "\n".join(f"• {s}" for s in snippets[:8])
+        return None
+    except Exception as e:
+        print(f"Web search error: {e}")
+        return None
 
 
 # ============================================================
