@@ -83,6 +83,7 @@
           <button onclick="quickAction('Book lawn mowing')">🧹 Book Mowing</button>
           <button onclick="quickAction('What\'s your price list?')">💰 Pricing</button>
           <button onclick="quickAction('Help me choose a service')">🤔 Help</button>
+          <button onclick="clearHistory()" style="background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.06);color:rgba(255,255,255,0.25);">🗑️ Clear</button>
         </div>
       </div>
 
@@ -95,13 +96,51 @@
 
   <footer>© 2025 Yard Services. All rights reserved. 🌿</footer>
   <script>
+    const STORAGE_KEY = 'viora_history';
     const vioraMsgs = document.getElementById('vioraMessages');
     const vioraInput = document.getElementById('vioraInput');
-    const conversation = [
-      {role:'system',content:'You are Viora AI, a friendly lawn & yard care assistant for Yard Services. Answer concisely.'}
-    ];
 
-    vioraInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') sendViora(); });
+    function loadConversation() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length) return parsed;
+        } catch(e) {}
+      }
+      return [{role:'system',content:'You are Viora AI, a friendly lawn & yard care assistant for Yard Services. Answer concisely.'}];
+    }
+
+    function saveConversation() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(conversation));
+    }
+
+    function restoreMessages() {
+      for (const m of conversation) {
+        if (m.role === 'user') addMsg(m.content, 'user');
+        else if (m.role === 'assistant') addMsg(m.content, 'bot');
+      }
+    }
+
+    let conversation = loadConversation();
+    if (conversation.length > 1) {
+      vioraMsgs.innerHTML = '';
+      restoreMessages();
+    }
+
+    function clearHistory() {
+      if (!confirm('Clear chat history?')) return;
+      localStorage.removeItem(STORAGE_KEY);
+      conversation.length = 0;
+      conversation.push({role:'system',content:'You are Viora AI, a friendly lawn & yard care assistant for Yard Services. Answer concisely.'});
+      vioraMsgs.innerHTML = '';
+      addMsg('Hi! I\'m Viora 🌿 Ask me about services, pricing, or yard care!', 'bot');
+      saveConversation();
+    }
+
+    vioraInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') sendViora();
+    });
 
     function addMsg(text, sender, isTyping) {
       const row = document.createElement('div');
@@ -136,6 +175,7 @@
       if (!msg) return;
       addMsg(msg, 'user');
       conversation.push({role:'user', content:msg});
+      saveConversation();
       vioraInput.value = '';
       const typingEl = addMsg('', 'bot', true);
       try {
@@ -149,6 +189,7 @@
         if (d.reply) {
           addMsg(d.reply, 'bot');
           conversation.push({role:'assistant', content:d.reply});
+          saveConversation();
         } else {
           addMsg('❌ ' + (d.error || 'AI unavailable'), 'bot');
         }
