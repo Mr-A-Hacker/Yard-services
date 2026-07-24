@@ -1828,6 +1828,8 @@ def admin_test_b2():
     try:
         b2_authorize()
         flash("B2 authorization succeeded! ✅", "success")
+        flash(f"B2 apiUrl = {_b2_api_url}", "info")
+        flash(f"B2 downloadUrl = {_b2_download_url}", "info")
     except Exception as exc:
         flash(f"B2 authorization FAILED: {exc}", "danger")
         return redirect(url_for("admin_dashboard"))
