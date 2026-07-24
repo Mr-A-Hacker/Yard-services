@@ -846,6 +846,12 @@ def save_upload_to_b2(upload_file, upload_folder):
 # ============================================================
 
 with app.app_context():
+    if b2_is_configured():
+        print(f"B2 storage configured (bucket: {B2_BUCKET_NAME})")
+    else:
+        print("*** WARNING: B2 not configured — user accounts will NOT persist across restarts! ***")
+        print("*** Set B2_KEY_ID and B2_APPLICATION_KEY in Render dashboard Environment. ***")
+
     download_db_from_b2()
     init_db()
     # Only sync to B2 at boot if download succeeded (got real DB or first run).
@@ -1796,6 +1802,7 @@ def admin_dashboard():
         user_ips=user_ips,
         calendar_requests=calendar_requests,
         finances=finances,
+        b2_configured=b2_is_configured(),
     )
 
 
