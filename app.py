@@ -13,6 +13,7 @@ import atexit
 from io import StringIO
 from functools import wraps
 from urllib import request as urllib_request
+from urllib.parse import urlencode
 
 try:
     import requests
@@ -497,12 +498,12 @@ def get_user_by_ip(ip):
 
         user_id = rows[0]["user_id"]
         cursor.execute(
-            "SELECT id, email, password_hash, phone, popup_seen FROM users WHERE id = ?",
+            "SELECT id, email, password_hash, phone, name, popup_seen FROM users WHERE id = ?",
             (user_id,),
         )
         row = cursor.fetchone()
         if row:
-            return User(row["id"], row["email"], row["password_hash"], row["phone"], row["popup_seen"])
+            return User(row["id"], row["email"], row["password_hash"], row["phone"], row["name"], row["popup_seen"])
     except Exception:
         return None
     return None
@@ -518,6 +519,7 @@ def init_db():
             email TEXT UNIQUE NOT NULL,
             password_hash TEXT NOT NULL,
             phone TEXT,
+            name TEXT DEFAULT '',
             popup_seen INTEGER DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
@@ -719,6 +721,7 @@ def init_db():
     _required_columns = {
         "users": [
             ("phone", "TEXT"),
+            ("name", "TEXT DEFAULT ''"),
             ("popup_seen", "INTEGER DEFAULT 0"),
             ("created_at", "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"),
         ],
@@ -1028,11 +1031,12 @@ login_manager.login_view = "login"
 
 
 class User(UserMixin):
-    def __init__(self, id, email, password_hash, phone, popup_seen):
+    def __init__(self, id, email, password_hash, phone, name, popup_seen):
         self.id = id
         self.email = email
         self.password_hash = password_hash
         self.phone = phone
+        self.name = name
         self.popup_seen = popup_seen
 
 
@@ -1040,13 +1044,13 @@ class User(UserMixin):
 def load_user(user_id):
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute(
-        "SELECT id, email, password_hash, phone, popup_seen FROM users WHERE id = ?",
-        (user_id,),
-    )
-    row = cursor.fetchone()
-    if row:
-        return User(row["id"], row["email"], row["password_hash"], row["phone"], row["popup_seen"])
+cursor.execute(
+            "SELECT id, email, password_hash, phone, name, popup_seen FROM users WHERE id = ?",
+            (user_id,),
+        )
+        row = cursor.fetchone()
+        if row:
+            return User(row["id"], row["email"], row["password_hash"], row["phone"], row["name"], row["popup_seen"])
     return None
 
 
@@ -1173,8 +1177,8 @@ def signup():
         cursor = conn.cursor()
         try:
             cursor.execute(
-                "INSERT INTO users (email, password_hash, phone) VALUES (?, ?, ?)",
-                (email, password_hash, phone),
+                "INSERT INTO users (email, password_hash, phone, name) VALUES (?, ?, ?, ?)",
+                (email, password_hash, phone, ""),
             )
             conn.commit()
             mark_db_dirty()
@@ -1182,7 +1186,7 @@ def signup():
 
             # Fetch the newly created user and log them in immediately
             cursor.execute(
-                "SELECT id, email, password_hash, phone, popup_seen FROM users WHERE email = ?",
+                "SELECT id, email, password_hash, phone, name, popup_seen FROM users WHERE email = ?",
                 (email,),
             )
             new_user = cursor.fetchone()
@@ -1195,6 +1199,7 @@ def signup():
                     new_user["email"],
                     new_user["password_hash"],
                     new_user["phone"],
+                    new_user["name"],
                     new_user["popup_seen"],
                 )
                 login_user(user, remember=True)
@@ -1221,13 +1226,13 @@ def login():
         conn = get_db()
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT id, email, password_hash, phone, popup_seen FROM users WHERE email = ?",
+            "SELECT id, email, password_hash, phone, name, popup_seen FROM users WHERE email = ?",
             (email,),
         )
         row = cursor.fetchone()
 
         if row and bcrypt.check_password_hash(row["password_hash"], password):
-            user = User(row["id"], row["email"], row["password_hash"], row["phone"], row["popup_seen"])
+            user = User(row["id"], row["email"], row["password_hash"], row["phone"], row["name"], row["popup_seen"])
             login_user(user)
             if request.form.get("remember") == "on":
                 session.permanent = True
@@ -1304,22 +1309,25 @@ def google_callback():
 
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT id, email, password_hash, phone, popup_seen FROM users WHERE email = ?", (email,))
+    cursor.execute(
+        "SELECT id, email, password_hash, phone, name, popup_seen FROM users WHERE email = ?",
+        (email,),
+    )
     row = cursor.fetchone()
 
     if row:
-        user = User(row["id"], row["email"], row["password_hash"], row["phone"], row["popup_seen"])
+        user = User(row["id"], row["email"], row["password_hash"], row["phone"], row["name"], row["popup_seen"])
         login_user(user)
         session["popup_seen"] = row["popup_seen"]
     else:
         cursor.execute(
-            "INSERT INTO users (email, password_hash, phone) VALUES (?, ?, ?)",
-            (email, bcrypt.generate_password_hash("GOOGLE_OAUTH").decode("utf-8"), ""),
+            "INSERT INTO users (email, password_hash, phone, name) VALUES (?, ?, ?, ?)",
+            (email, bcrypt.generate_password_hash("GOOGLE_OAUTH").decode("utf-8"), "", name or ""),
         )
         conn.commit()
         mark_db_dirty()
         new_id = cursor.lastrowid
-        user = User(new_id, email, bcrypt.generate_password_hash("GOOGLE_OAUTH").decode("utf-8"), "", False)
+        user = User(new_id, email, bcrypt.generate_password_hash("GOOGLE_OAUTH").decode("utf-8"), "", name or "", False)
         login_user(user)
         session["popup_seen"] = False
 
