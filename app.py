@@ -578,6 +578,8 @@ def init_db():
             image_url TEXT
         );
 
+        DELETE FROM services WHERE name IN ('Hardscape Weed Control', 'Wood Pickup');
+
         INSERT INTO services (name, price, description, image_url)
         SELECT 'Lawn Mowing', 30.00, 'Full lawn care including precision mowing, edging along walkways and flower beds, trimming around trees and fences, and blowing clippings off driveways and patios. We leave your yard looking crisp, clean, and professionally maintained. Responsible neighbor teens will be doing the work.', 'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=600&q=80'
         WHERE NOT EXISTS (SELECT 1 FROM services WHERE name = 'Lawn Mowing');
