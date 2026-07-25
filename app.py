@@ -1899,7 +1899,8 @@ def ai_chat():
         "\n\n"
         '\"Great choice! 🌿 Lawn Mowing is $30.00. To get started, I will need your address, phone number, email, preferred date and time, and any notes.\"'
         "\n\n"
-        "SERVICES LIST:\n" + services_str + "\n\n"
+        "SERVICES LIST (managed by the admin dashboard — these are all the services available):\n" + services_str + "\n\n"
+        "When a user asks what services you offer, list each service from the SERVICES LIST by name and price in your response.\n\n"
         "BOOKING FLOW:"
         "\n"
         "When someone wants to book, first output the <service-picker> tag so the frontend shows clickable service cards:"
