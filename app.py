@@ -1276,8 +1276,9 @@ def login():
 
         if row and bcrypt.check_password_hash(row["password_hash"], password):
             user = User(row["id"], row["email"], row["password_hash"], row["phone"], row["name"], row["popup_seen"])
-            login_user(user)
-            if request.form.get("remember") == "on":
+            remember_val = request.form.get("remember") == "on"
+            login_user(user, remember=remember_val)
+            if remember_val:
                 session.permanent = True
             session["popup_seen"] = row["popup_seen"]
             log_user_ip(row["id"], get_client_ip())
@@ -1294,7 +1295,6 @@ def login():
 def logout():
     session.pop("popup_seen", None)
     logout_user()
-    flash("You have been logged out.", "info")
     return redirect(url_for("login"))
 
 
@@ -2337,7 +2337,6 @@ def admin_dashboard():
 @app.route("/admin/logout")
 def admin_logout():
     session.pop("admin_authenticated", None)
-    flash("Admin logged out.", "info")
     return redirect(url_for("admin_dashboard"))
 
 

@@ -18,7 +18,7 @@
     .nav-back:hover{background:rgba(255,255,255,0.08);color:white;}
     .layout{display:flex;flex:1;min-height:0;position:relative;}
     .sidebar{width:260px;background:rgba(18,18,40,0.92);backdrop-filter:blur(16px);border-right:1px solid rgba(255,255,255,0.06);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;transition:width 0.25s ease,opacity 0.25s ease;}
-    .sidebar.collapsed{width:0;opacity:0;border-right:none;overflow:hidden;}
+    .sidebar.collapsed{width:0;min-width:0;padding:0;opacity:0;border-right:none;overflow:hidden;flex:0 0 0;}
     .sidebar-header{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
     .sidebar-header h3{font-family:'Bitter',serif;font-size:0.9rem;color:rgba(255,255,255,0.6);font-weight:900;letter-spacing:0.3px;}
     .sidebar-header button{background:rgba(124,58,237,0.15);border:1px solid rgba(124,58,237,0.2);color:#a78bfa;border-radius:8px;padding:4px 10px;font-size:0.73rem;font-weight:700;cursor:pointer;transition:all 0.2s;}
@@ -27,13 +27,14 @@
     .sidebar-list::-webkit-scrollbar{width:4px;}
     .sidebar-list::-webkit-scrollbar-track{background:transparent;}
     .sidebar-list::-webkit-scrollbar-thumb{background:rgba(124,58,237,0.2);border-radius:10px;}
-    .chat-item{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);border-radius:10px;padding:10px 12px;margin-bottom:6px;cursor:pointer;transition:all 0.2s;}
+    .chat-item{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);border-radius:10px;padding:10px 12px;margin-bottom:6px;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:8px;}
     .chat-item:hover{background:rgba(124,58,237,0.1);border-color:rgba(124,58,237,0.2);}
     .chat-item.active{background:rgba(124,58,237,0.15);border-color:rgba(124,58,237,0.3);}
+    .chat-item-content{flex:1;min-width:0;}
     .chat-item-title{color:#e8e0f0;font-size:0.82rem;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
     .chat-item-date{color:rgba(255,255,255,0.25);font-size:0.68rem;font-weight:600;margin-top:2px;}
-    .chat-item-del{float:right;background:none;border:none;color:rgba(255,255,255,0.15);cursor:pointer;font-size:0.8rem;padding:0 2px;}
-    .chat-item-del:hover{color:#ef4444;}
+    .chat-item-del{background:none;border:none;color:rgba(255,255,255,0.15);cursor:pointer;font-size:0.85rem;padding:4px 6px;border-radius:6px;flex-shrink:0;transition:all 0.2s;line-height:1;}
+    .chat-item-del:hover{background:rgba(239,68,68,0.15);color:#ef4444;}
     .sidebar-empty{color:rgba(255,255,255,0.15);font-size:0.82rem;font-weight:600;text-align:center;padding:30px 16px;}
     .chat-container{flex:1;display:flex;flex-direction:column;min-height:0;background:rgba(10,10,30,0.6);}
     .chat-card{background:rgba(18,18,40,0.85);backdrop-filter:blur(16px);margin:12px;border-radius:20px;flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;box-shadow:0 20px 60px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.04);}
@@ -206,7 +207,7 @@ function renderSidebar() {
        for (const c of list) {
          const div = document.createElement('div');
          div.className = 'chat-item' + (c.id === activeChatId ? ' active' : '');
-         div.innerHTML = '<div class="chat-item-title">' + (c.title || 'Chat') + '</div><div class="chat-item-date">' + c.date + '</div><button class="chat-item-del" title="Delete this chat" onclick="event.stopPropagation();deleteChat(\'' + c.id + '\')">✕</button>';
+          div.innerHTML = '<div class="chat-item-content"><div class="chat-item-title">' + (c.title || 'Chat') + '</div><div class="chat-item-date">' + c.date + '</div></div><button class="chat-item-del" title="Delete this chat" onclick="event.stopPropagation();deleteChat(\'' + c.id + '\')">✕</button>';
          div.onclick = () => switchChat(c.id);
          chatList.appendChild(div);
        }
