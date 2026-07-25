@@ -1674,19 +1674,20 @@ def request_service():
         send_admin_notification(
             subject=f"New service request from {current_user.email}",
             body=(
-                f"A new service request was submitted:\n\n"
-                f"User: {current_user.email}\n"
+                f"New Request #{new_request_id}\n"
+                f"━━━━━━━━━━━━━━━━━\n"
+                f"User: {current_user.name or 'N/A'} ({current_user.email})\n"
                 f"Services:\n{services_list_text}\n"
                 f"Address: {address}\n"
                 f"Phone: {phone}\n"
                 f"Email: {email}\n"
-                f"Payment method: {payment}\n"
+                f"Payment: {payment}\n"
                 f"Date: {date}\n"
                 f"Time: {time_value}\n"
-                f"Discount token: {token or 'N/A'}\n"
                 f"Discount: {discount}%\n"
                 f"Final price: ${final_price:.2f}\n"
-                f"Note: {note or 'None'}\n"
+                f"Notes: {note or 'None'}\n"
+                f"Status: Pending"
             ),
             html=(
                 f"<p>A new service request was submitted.</p>"
@@ -2088,16 +2089,18 @@ def ai_book():
         send_admin_notification(
             subject=f"New AI booking from {current_user.email or current_user.name or 'Unknown'}",
             body=(
-                f"A new booking was made through Viora AI:\n\n"
-                f"User: {current_user.email or current_user.name or 'Guest'}\n"
-                f"Service(s): {service_name}\n"
+                f"New AI Booking #{new_request_id}\n"
+                f"━━━━━━━━━━━━━━━━━\n"
+                f"User: {current_user.name or 'N/A'} ({current_user.email})\n"
+                f"Services:\n{chr(10).join(f'  - {s["name"]} (${float(s["price"]):.2f})' for s in selected_services)}\n"
                 f"Address: {address}\n"
                 f"Phone: {phone}\n"
                 f"Email: {email}\n"
                 f"Date: {date}\n"
                 f"Time: {time_value}\n"
                 f"Notes: {note or 'None'}\n"
-                f"Total: ${base_price:.2f}"
+                f"Total: ${base_price:.2f}\n"
+                f"Status: Pending"
             ),
         )
     except Exception as exc:
