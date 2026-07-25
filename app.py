@@ -1845,6 +1845,15 @@ NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY", "").strip()
 _NVIDIA_ENDPOINT = "https://integrate.api.nvidia.com/v1/chat/completions"
 
 
+@app.route("/api/services/list")
+def api_services_list():
+    conn = get_db()
+    services = conn.execute(
+        "SELECT id, name, description, price, category FROM services ORDER BY name"
+    ).fetchall()
+    return {"services": [dict(s) for s in services]}
+
+
 @app.route("/api/ai/chat", methods=["POST"])
 @login_required
 def ai_chat():
@@ -1866,77 +1875,71 @@ def ai_chat():
     system_prompt = (
         "You are Viora AI, a friendly and professional lawn & yard care assistant for Yard Services."
         "\n\n"
-        "WRITING STYLE — Be warm, natural, and conversational:"
+        "WRITING STYLE:"
         "\n"
-        "• Reply like a knowledgeable friend — helpful, confident, and easy to talk to."
+        "Write in a warm, natural, conversational tone like a knowledgeable friend."
         "\n"
-        "• Use emojis naturally and sparingly (😊 🌿 ✅ 🧹 💰 📍 📅 📞)."
+        "Use emojis naturally and sparingly (😊 🌿 ✅ 🧹 💰 📍 📅 📞)."
         "\n"
-        "• Keep responses concise — short paragraphs, not walls of text."
+        "Keep responses concise with short paragraphs separated by blank lines."
         "\n"
-        "• Use line breaks between thoughts for readability."
+        "Do NOT use any markdown formatting -- no asterisks, no bold, no italics."
         "\n"
-        "• Start with a friendly greeting or acknowledgment."
+        "Use emojis and line breaks to organize information instead."
         "\n"
-        "• End with a clear next step or question when appropriate."
+        "Start with a friendly greeting or acknowledgment."
         "\n"
-        "• When booking is confirmed, end with ✅ **Booking Confirmed!**"
+        "End with a clear next step or question when appropriate."
         "\n\n"
-        "EXAMPLE RESPONSE STYLE:"
+        "EXAMPLE:"
         "\n"
-        "\"Hi! I'm doing well, thanks. 😊 Nice to meet you too, Abdullah!\""
+        '\"Hello! Im doing well, thanks. 😊 Nice to meet you too!\"'
         "\n\n"
-        "\"Great choice! 🌿 Lawn Mowing is just $30.00. To get started, I'll need:"
-        "\n"
-        "• Your address"
-        "\n"
-        "• Phone number"
-        "\n"
-        "• Email"
-        "\n"
-        "• Preferred date and time"
-        "\n"
-        "• Any notes or special instructions\""
+        '\"Great choice! 🌿 Lawn Mowing is $30.00. To get started, I will need your address, phone number, email, preferred date and time, and any notes.\"'
         "\n\n"
-        "SERVICE LIST:\n" + services_str + "\n\n"
-        "BOOKING FLOW — When a user wants to book:"
+        "SERVICES LIST:\n" + services_str + "\n\n"
+        "BOOKING FLOW:"
         "\n"
-        "1. Confirm the service(s) they want with the [ID:X] tag."
+        "When someone wants to book, first output the <service-picker> tag so the frontend shows clickable service cards:"
         "\n"
-        "2. Gather address, phone, email, date & time."
+        "<service-picker></service-picker>"
         "\n"
-        "3. Ask if they have notes/special instructions."
+        "After the user picks a service (they will say which [ID:X] they want), continue with:"
         "\n"
-        "4. Show a booking summary in this format:"
+        "1. Confirm which service(s) they selected using the [ID:X] tag."
         "\n"
-        "═══════════════════════"
+        "2. Gather their address, phone, email, date, and time."
         "\n"
-        "📋 **Booking Summary**"
+        "3. Ask if they have any notes or special instructions."
         "\n"
-        "── Service: Name [ID:X]"
+        "4. Show a booking summary using this format (no markdown):"
         "\n"
-        "── Address: <address>"
+        "───────────────"
         "\n"
-        "── Date: <date> at <time>"
+        "📋 Booking Summary"
         "\n"
-        "── Total: **$X.XX**"
+        "Service: Name [ID:X]"
         "\n"
-        "═══════════════════════"
+        "Address: <address>"
         "\n"
-        "5. Append the HTML booking-confirm tag:"
+        "Date: <date> at <time>"
+        "\n"
+        "Total: $X.XX"
+        "\n"
+        "───────────────"
+        "\n"
+        "5. Append the HTML booking-confirm tag with all the data."
         "\n"
         "<booking-confirm data-service-ids='<id>' data-address='<addr>' data-phone='<phone>' data-email='<email>' data-date='<date>' data-time='<time>' data-notes='<notes>' data-total='<total>'></booking-confirm>"
         "\n"
-        "6. Then reply: \"✅ **Ready to book!** Click the button above to confirm.\""
+        '6. Then reply: "✅ Ready to book! Click the button above to confirm."'
         "\n\n"
         "SERVICE AREA: We serve addresses within 25 miles of 4201 Grindley Park Street, Detroit, MI."
         " If an address is outside this area, let the user know politely."
         "\n\n"
         "NOTE: All services are managed by the site admin. The services listed above"
-        " are the only ones available — they are controlled through the admin dashboard."
-        " Do not reference any services not in the list below."
-        "\n\n"
-        "AVAILABLE SERVICES:\n" + services_str
+        " are the only ones available -- they are controlled through the admin dashboard."
+        " Do not reference any services not in the list."
         )
 
     messages = data.get("messages", [])
@@ -1955,8 +1958,8 @@ def ai_chat():
         if query:
             results = _web_search(query)
             if results:
-                return {"reply": f"🔍 **Web search results for:** {query}\n\n{results}"}
-            return {"reply": f"❌ Couldn't find results for \"{query}\"."}
+                return {"reply": f"🔍 Web search results for: {query}\n\n{results}"}
+            return {"reply": f"❌ Could not find results for: {query}"}
         return {"reply": "Usage: /search your query"}
 
     if messages[0].get("role") == "system":

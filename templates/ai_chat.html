@@ -390,6 +390,47 @@ function deleteChat(id) {
        vioraMsgs.scrollTop = vioraMsgs.scrollHeight;
      }
 
+     function showServicePicker() {
+       fetch('/api/services/list')
+         .then(r => r.json())
+         .then(data => {
+           const services = data.services || [];
+           const row = document.createElement('div');
+           row.className = 'msg-row bot';
+           const avatar = document.createElement('div');
+           avatar.className = 'msg-avatar bot';
+           avatar.innerHTML = VIORA_AVATAR_HTML;
+           row.appendChild(avatar);
+           const bubble = document.createElement('div');
+           bubble.className = 'msg-bubble bot';
+           bubble.style.cssText = 'background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.05);border-radius:4px 14px 14px 14px;padding:12px 16px;';
+           let html = '<div style="font-weight:800;color:#c084fc;margin-bottom:10px;font-size:0.95rem;">📋 Available Services</div>';
+           html += '<div style="display:flex;flex-direction:column;gap:6px;">';
+           for (const s of services) {
+             const safeName = s.name.replace(/'/g, "\\'");
+             html += '<div onclick="selectService(' + s.id + ',\'' + safeName + '\')" style="background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.15);border-radius:10px;padding:10px 12px;cursor:pointer;transition:all 0.2s;display:flex;justify-content:space-between;align-items:center;" onmouseover="this.style.background=\'rgba(124,58,237,0.2)\'" onmouseout="this.style.background=\'rgba(124,58,237,0.1)\'">' +
+               '<div><div style="font-weight:700;color:#e8e0f0;font-size:0.88rem;">' + s.name + '</div><div style="font-size:0.75rem;color:rgba(255,255,255,0.4);margin-top:2px;">' + (s.description || '') + '</div></div>' +
+               '<div style="font-weight:800;color:#4caf50;font-size:0.95rem;white-space:nowrap;margin-left:10px;">$' + s.price + '</div>' +
+               '</div>';
+           }
+           html += '</div>';
+           html += '<div style="margin-top:8px;font-size:0.75rem;color:rgba(255,255,255,0.3);">Click a service above to select it</div>';
+           bubble.innerHTML = html;
+           row.appendChild(bubble);
+           vioraMsgs.appendChild(row);
+           vioraMsgs.scrollTop = vioraMsgs.scrollHeight;
+         })
+         .catch(() => {
+           addMsg('❌ Could not load services.', 'bot');
+         });
+     }
+
+     function selectService(id, name) {
+       const msg = 'I would like to book [ID:' + id + '] ' + name;
+       vioraInput.value = msg;
+       sendViora();
+     }
+
      async function sendViora() {
        const msg = vioraInput.value.trim();
        if (!msg) return;
@@ -406,21 +447,33 @@ function deleteChat(id) {
          });
          const d = await r.json();
          typingEl.remove();
-         if (d.reply) {
-           if (d.reply.includes('<booking-confirm')) {
-             const temp = document.createElement('div');
-             temp.innerHTML = d.reply;
-             const bookingEl = temp.querySelector('booking-confirm');
-             if (bookingEl) {
-               addMsg(d.reply.replace(bookingEl.outerHTML, '').trim(), 'bot');
-               showBookingConfirm(d.reply);
-             } else {
-               addMsg(d.reply, 'bot');
-             }
-           } else {
-             addMsg(d.reply, 'bot');
-           }
-           conversation.push({role:'assistant', content:d.reply});
+          if (d.reply) {
+            let text = d.reply;
+            let hasBooking = text.includes('<booking-confirm');
+            let hasPicker = text.includes('<service-picker');
+
+            if (hasPicker) {
+              const temp = document.createElement('div');
+              temp.innerHTML = text;
+              const pickerEl = temp.querySelector('service-picker');
+              if (pickerEl) {
+                text = text.replace(pickerEl.outerHTML, '').trim();
+              }
+            }
+
+            if (text) {
+              addMsg(text, 'bot');
+            }
+
+            if (hasBooking) {
+              showBookingConfirm(d.reply);
+            }
+
+            if (hasPicker) {
+              showServicePicker();
+            }
+
+            conversation.push({role:'assistant', content:d.reply});
            saveCurrentConversation();
            if (activeChatId !== 'current') {
              const list = loadChatList();
