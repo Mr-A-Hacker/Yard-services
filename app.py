@@ -2084,6 +2084,25 @@ def ai_book():
     except Exception as exc:
         print(f"ai_book sync error: {exc}")
 
+    try:
+        send_admin_notification(
+            subject=f"New AI booking from {current_user.email or current_user.name or 'Unknown'}",
+            body=(
+                f"A new booking was made through Viora AI:\n\n"
+                f"User: {current_user.email or current_user.name or 'Guest'}\n"
+                f"Service(s): {service_name}\n"
+                f"Address: {address}\n"
+                f"Phone: {phone}\n"
+                f"Email: {email}\n"
+                f"Date: {date}\n"
+                f"Time: {time_value}\n"
+                f"Notes: {note or 'None'}\n"
+                f"Total: ${base_price:.2f}"
+            ),
+        )
+    except Exception as exc:
+        print(f"ai_book notification error: {exc}")
+
     return {"success": True, "request_id": new_request_id, "message": f"✅ **Booking confirmed!**<br>═══<br>📋 **Booking Confirmed**<br>🧹 **Service:** {service_name}<br>📅 **Date:** {date} at {time_value}<br>💰 **Total:** ${base_price:.2f}<br>📝 **Notes:** {note or 'None'}<br>═══<br>📍 **Address:** {address}<br><br>🌿 Your booking is set! You'll receive a confirmation shortly."}
 
 
@@ -2133,6 +2152,10 @@ def admin_chat_send():
     )
     conn.commit()
     mark_db_dirty()
+    send_sms_notification(
+        f"New message from {current_user.email or current_user.name or 'User'}:\n"
+        f"{data['message'].strip()}"
+    )
     return {"ok": True}
 
 
