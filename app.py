@@ -942,18 +942,24 @@ def send_sms_notification(message):
         print("Requests library not available, skipping SMS notification.")
         return
 
+    clean = message.replace("\u2501", "-").replace("\u2500", "-")
     try:
+        print(f"Sending SMS to {to_number} via Twilio...")
         response = requests.post(
             f"https://api.twilio.com/2010-04-01/Accounts/{account_sid}/Messages.json",
             data={
                 "To": to_number,
                 "From": from_number,
-                "Body": message,
+                "Body": clean,
             },
             auth=(account_sid, auth_token),
             timeout=10,
         )
-        response.raise_for_status()
+        result = response.json()
+        if response.status_code == 201:
+            print(f"SMS sent OK: sid={result.get('sid', 'unknown')}, status={result.get('status', 'unknown')}")
+        else:
+            print(f"Twilio error {response.status_code}: {result.get('message', result)}")
     except Exception as exc:
         print(f"Failed to send SMS notification: {exc}")
 
@@ -1675,7 +1681,7 @@ def request_service():
             subject=f"New service request from {current_user.email}",
             body=(
                 f"New Request #{new_request_id}\n"
-                f"━━━━━━━━━━━━━━━━━\n"
+                f"---------------------\n"
                 f"User: {current_user.name or 'N/A'} ({current_user.email})\n"
                 f"Services:\n{services_list_text}\n"
                 f"Address: {address}\n"
@@ -2090,7 +2096,7 @@ def ai_book():
             subject=f"New AI booking from {current_user.email or current_user.name or 'Unknown'}",
             body=(
                 f"New AI Booking #{new_request_id}\n"
-                f"━━━━━━━━━━━━━━━━━\n"
+                f"---------------------\n"
                 f"User: {current_user.name or 'N/A'} ({current_user.email})\n"
                 f"Services:\n{chr(10).join(f'  - {s["name"]} (${float(s["price"]):.2f})' for s in selected_services)}\n"
                 f"Address: {address}\n"
