@@ -1849,7 +1849,7 @@ _NVIDIA_ENDPOINT = "https://integrate.api.nvidia.com/v1/chat/completions"
 def api_services_list():
     conn = get_db()
     services = conn.execute(
-        "SELECT id, name, description, price, category FROM services ORDER BY name"
+        "SELECT id, name, description, price FROM services ORDER BY name"
     ).fetchall()
     return {"services": [dict(s) for s in services]}
 
