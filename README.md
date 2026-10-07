@@ -1,3 +1,10 @@
+> ## 👋 Start Here
+> A service-oriented web project. **For users:** explore how a website can present and organize a local yard-service concept.
+>
+> **Safety:** Use security, camera, scanning, and network features only on systems and networks you own or are explicitly authorized to test.
+
+---
+
 # Yard-services
 
 ## Render setup
