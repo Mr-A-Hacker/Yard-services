@@ -1,3 +1,9 @@
+<div align="center">
+
+![Yard Services banner](docs/readme-banner.svg)
+
+</div>
+
 > ## 👋 Start Here
 > A service-oriented web project. **For users:** explore how a website can present and organize a local yard-service concept.
 >
